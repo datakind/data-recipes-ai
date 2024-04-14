@@ -19,12 +19,12 @@ client = docker.DockerClient(base_url='unix:///Users/matthewharris/.docker/run/d
 
 container_registry = "dkdsprototypesreg01.azurecr.io"
 tags = {
-    "ankane/pgvector:latest":     [f"{container_registry}/containergroup","haa-libre-chat-vectordb"],
-    "getmeili/meilisearch:v1.7.3":  [f"{container_registry}/containergroup","haa-libre-chat-meilisearch"],
-    "mongo":      [f"{container_registry}/containergroup","haa-libre-chat-mongodb"],
-    "humanitarian_ai_assistant-actions":      [f"{container_registry}/containergroup","haa-libre-robo-actions"],
-    "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest":      [f"{container_registry}/containergroup","haa-libre-chat-rag-api"],
-    "humanitarian_ai_assistant-api":              [f"{container_registry}/containergroup","haa-libre-chat"],
+    "ankane/pgvector:latest":     [f"{container_registry}/containergroup","vectordb"],
+    "getmeili/meilisearch:v1.7.3":  [f"{container_registry}/containergroup","meilisearch"],
+    "mongo":      [f"{container_registry}/containergroup","mongodb"],
+    "humanitarian_ai_assistant-actions":      [f"{container_registry}/containergroup","actions"],
+    "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest":      [f"{container_registry}/containergroup","rag_api"],
+    "humanitarian_ai_assistant-api":              [f"{container_registry}/containergroup","api"],
 }
 
 docker_compose_file = "docker-compose-azure.yml"
