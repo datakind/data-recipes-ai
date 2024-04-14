@@ -21,7 +21,7 @@ container_registry = "dkdsprototypesreg01.azurecr.io"
 tags = {
     "ankane/pgvector:latest":     [f"{container_registry}/containergroup","haa-libre-chat-vectordb"],
     "getmeili/meilisearch:v1.7.3":  [f"{container_registry}/containergroup","haa-libre-chat-meilisearch"],
-    "haa-libre-chat-mongodb":      [f"{container_registry}/containergroup","haa-libre-chat-mongodb"],
+    "mongo":      [f"{container_registry}/containergroup","haa-libre-chat-mongodb"],
     "humanitarian_ai_assistant-actions":      [f"{container_registry}/containergroup","haa-libre-robo-actions"],
     "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest":      [f"{container_registry}/containergroup","haa-libre-chat-rag-api"],
     "humanitarian_ai_assistant-api":              [f"{container_registry}/containergroup","haa-libre-chat"],
