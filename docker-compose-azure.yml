@@ -31,22 +31,22 @@ services:
       - MEILI_HOST=http://meilisearch:7700
       - RAG_PORT=${RAG_PORT:-8000}
       - RAG_API_URL=http://rag_api:${RAG_PORT:-8000}
-    volumes:
-      - type: bind
-        source: ./.env
-        target: /app/.env
-      - ./ui/recipes_assistant_chat/images:/app/client/public/images
-      - ./ui/recipes_assistant_chat/logs:/app/api/logs
-      - type: bind
-        source: ./ui/recipes_assistant_chat/librechat.yaml
-        target: /app/librechat.yaml
+    #volumes:
+      #- type: bind
+      #  source: ./.env
+      #  target: /app/.env
+      #- ./ui/recipes_assistant_chat/images:/app/client/public/images
+      #- ./ui/recipes_assistant_chat/logs:/app/api/logs
+      #- type: bind
+      #  source: ./ui/recipes_assistant_chat/librechat.yaml
+      #  target: /app/librechat.yaml
   mongodb:
     container_name: haa-libre-chat-mongodb
     image: mongo
     restart: always
     user: "${UID}:${GID}"
-    volumes:
-      - ./ui/recipes_assistant_chat/data-node:/data/db
+    #volumes:
+    #  - ./ui/recipes_assistant_chat/data-node:/data/db
     command: mongod --noauth
   meilisearch:
     container_name: haa-libre-chat-meilisearch
@@ -56,8 +56,8 @@ services:
     environment:
       - MEILI_HOST=http://meilisearch:7700
       - MEILI_NO_ANALYTICS=true
-    volumes:
-      - ./ui/recipes_assistant_chat/meili_data_v1.7:/meili_data
+    #volumes:
+    #  - ./ui/recipes_assistant_chat/meili_data_v1.7:/meili_data
   vectordb:
     container_name: haa-libre-chat-vectordb
     image: ankane/pgvector:latest
@@ -66,8 +66,8 @@ services:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
     restart: always
-    volumes:
-      - ./ui/recipes_assistant_chat/pgdata2:/var/lib/postgresql/data
+    #volumes:
+    #  - ./ui/recipes_assistant_chat/pgdata2:/var/lib/postgresql/data
   rag_api:
     container_name: haa-libre-chat-rag-api
     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
