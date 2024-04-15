@@ -61,7 +61,7 @@ services:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:actions"
     # linux/amd64 for Silicon Mac
     platform: linux/amd64
-    ports:
+    #ports:
       # API
       #- 3001:8080
       # Action server portal
