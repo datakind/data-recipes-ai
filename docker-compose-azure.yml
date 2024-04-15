@@ -22,8 +22,8 @@ services:
       - HOST=0.0.0.0
       - MONGO_URI=mongodb://mongodb:27017/LibreChat
       - MEILI_HOST=http://meilisearch:7700
-      - RAG_PORT=${RAG_PORT:-8000}
-      - RAG_API_URL=http://rag_api:${RAG_PORT:-8000}
+      - RAG_PORT=8000
+      - RAG_API_URL=http://rag_api:8000
   mongodb:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:mongodb"
     platform: "linux/amd64"
@@ -51,7 +51,7 @@ services:
     platform: "linux/amd64"
     environment:
       - DB_HOST=vectordb
-      - RAG_PORT=${RAG_PORT:-8000}
+      - RAG_PORT=8000
     restart: always
     depends_on:
       - vectordb
