@@ -2,19 +2,18 @@ version: "3.4"
 
 services:
   api:
-    container_name: haa-libre-chat
-    #image: ghcr.io/danny-avila/librechat:v0.7.0
-    image: ghcr.io/danny-avila/librechat-dev:latest
+    image: "dkdsprototypesreg01.azurecr.io/containergroup:api"
     ports:
-      - "${PORT}:${PORT}"
-      - '8080:8080'
+      #- "${PORT}:${PORT}"
       # DK Added
-      - 3080:3080
+      - 80:3080
     depends_on:
       - mongodb
       - rag_api
     restart: always
     user: "${UID}:${GID}"
+    env_file:
+      - .env
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -24,45 +23,38 @@ services:
       - RAG_PORT=${RAG_PORT:-8000}
       - RAG_API_URL=http://rag_api:${RAG_PORT:-8000}
   mongodb:
-    container_name: haa-libre-chat-mongodb
-    image: mongo
+    image: "dkdsprototypesreg01.azurecr.io/containergroup:mongodb"
     restart: always
     user: "${UID}:${GID}"
     command: mongod --noauth
   meilisearch:
-    container_name: haa-libre-chat-meilisearch
-    image: getmeili/meilisearch:v1.7.3
+    image: "dkdsprototypesreg01.azurecr.io/containergroup:meilisearch"
     restart: always
     user: "${UID}:${GID}"
     environment:
       - MEILI_HOST=http://meilisearch:7700
       - MEILI_NO_ANALYTICS=true
   vectordb:
-    container_name: haa-libre-chat-vectordb
-    image: ankane/pgvector:latest
+    image: "dkdsprototypesreg01.azurecr.io/containergroup:vectordb"
     environment:
       POSTGRES_DB: mydatabase
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
     restart: always
   rag_api:
-    container_name: haa-libre-chat-rag-api
-    image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
+    image: "dkdsprototypesreg01.azurecr.io/containergroup:rag_api"
     environment:
       - DB_HOST=vectordb
       - RAG_PORT=${RAG_PORT:-8000}
     restart: always
     depends_on:
       - vectordb
-    #env_file:
-    #  - .env
+    env_file:
+      - .env
   actions:
-    container_name: haa-libre-robo-actions
+    image: "dkdsprototypesreg01.azurecr.io/containergroup:actions"
     # linux/amd64 for Silicon Mac
     platform: linux/amd64
-    build:
-      context: .
-      dockerfile: ./actions/Dockerfile
     ports:
       # API
       - 3001:8080
