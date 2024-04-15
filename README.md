@@ -40,5 +40,9 @@ Note: You can reset Libre chat by removing contents of `ui/recipes_assistant_cha
     "http://actions:8080/api/actions/postgresql-universal-actions/init-postgres-connection/run"` .... replacing with correct postgres credentials`
 
 
+## Deploying to Azure
+
+Make dure docker has 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon' set in settings
+
 
 
