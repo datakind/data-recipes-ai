@@ -12,16 +12,16 @@ services:
       - rag_api
     restart: always
     user: ""
-    env_file:
-      - .env
+    #env_file:
+    #  - .env
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      - HOST=0.0.0.0
-      - MONGO_URI=mongodb://mongodb:27017/LibreChat
-      - MEILI_HOST=http://meilisearch:7700
-      - RAG_PORT=8000
-      - RAG_API_URL=http://rag_api:8000
+      - HOST:0.0.0.0
+      - MONGO_URI:mongodb://mongodb:27017/LibreChat
+      - MEILI_HOST:http://meilisearch:7700
+      - RAG_PORT:8000
+      - RAG_API_URL:http://rag_api:8000
   mongodb:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:mongodb"
     platform: "linux/amd64"
@@ -34,8 +34,8 @@ services:
     restart: always
     user: "${UID}:${GID}"
     environment:
-      - MEILI_HOST=http://meilisearch:7700
-      - MEILI_NO_ANALYTICS=true
+      - MEILI_HOST:http://meilisearch:7700
+      - MEILI_NO_ANALYTICS:true
   vectordb:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:vectordb"
     platform: "linux/amd64"
@@ -48,8 +48,8 @@ services:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:rag_api"
     platform: "linux/amd64"
     environment:
-      - DB_HOST=vectordb
-      - RAG_PORT=8000
+      - DB_HOST:vectordb
+      - RAG_PORT:8000
     restart: always
     depends_on:
       - vectordb
