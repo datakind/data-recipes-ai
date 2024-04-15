@@ -5,8 +5,8 @@ services:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:api"
     platform: "linux/amd64"
     ports:
-      - 443:3080
-      - 80:3080
+      - "443:3080"
+      - "80:3080"
     depends_on:
       - mongodb
       - rag_api
@@ -47,6 +47,8 @@ services:
     platform: "linux/amd64"
     environment:
       DB_HOST: vectordb
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
       RAG_PORT: 8000
     restart: always
     depends_on:
