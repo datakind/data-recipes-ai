@@ -4,5 +4,6 @@ postgres_connection.json
 data-node
 logs
 meili_data_v1.7
+images
 pgdata2
 tmp
