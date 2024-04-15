@@ -11,7 +11,7 @@ cache: true
 interface:
   # Privacy policy settings
   privacyPolicy:
-    externalUrl: 'https://librechat.ai/privacy-policy'
+    externalUrl: 'https://www.datakind.org/privacy-policy/#:~:text=We%20do%20not%20share%20personal,by%20law%20to%20do%20so.'
     openNewTab: true
 
   # Terms of service
