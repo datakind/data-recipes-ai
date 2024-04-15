@@ -6,6 +6,7 @@ version: "3.4"
 
 services:
   api:
+    platform: linux/amd64
     container_name: haa-libre-chat
     # Have to build a dockerfile as Azure multicontainer apps don't support bind mounts
     #image: ghcr.io/danny-avila/librechat:v0.7.0
@@ -41,6 +42,7 @@ services:
         source: ./ui/recipes_assistant_chat/librechat.yaml
         target: /app/librechat.yaml
   mongodb:
+    platform: linux/amd64
     container_name: haa-libre-chat-mongodb
     image: mongo
     restart: always
@@ -49,6 +51,7 @@ services:
       - ./ui/recipes_assistant_chat/data-node:/data/db
     command: mongod --noauth
   meilisearch:
+    platform: linux/amd64
     container_name: haa-libre-chat-meilisearch
     image: getmeili/meilisearch:v1.7.3
     restart: always
@@ -59,6 +62,7 @@ services:
     volumes:
       - ./ui/recipes_assistant_chat/meili_data_v1.7:/meili_data
   vectordb:
+    platform: linux/amd64
     container_name: haa-libre-chat-vectordb
     image: ankane/pgvector:latest
     environment:
@@ -70,6 +74,7 @@ services:
       - ./ui/recipes_assistant_chat/pgdata2:/var/lib/postgresql/data
   rag_api:
     container_name: haa-libre-chat-rag-api
+    platform: linux/amd64
     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
     environment:
       - DB_HOST=vectordb

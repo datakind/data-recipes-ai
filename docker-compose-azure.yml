@@ -3,9 +3,11 @@ version: "3.4"
 services:
   api:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:api"
+    platform: "linux/amd64"
     ports:
       #- "${PORT}:${PORT}"
       # DK Added
+      - 443:3080
       - 80:3080
     depends_on:
       - mongodb
@@ -24,11 +26,13 @@ services:
       - RAG_API_URL=http://rag_api:${RAG_PORT:-8000}
   mongodb:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:mongodb"
+    platform: "linux/amd64"
     restart: always
     user: "${UID}:${GID}"
     command: mongod --noauth
   meilisearch:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:meilisearch"
+    platform: "linux/amd64"
     restart: always
     user: "${UID}:${GID}"
     environment:
@@ -36,6 +40,7 @@ services:
       - MEILI_NO_ANALYTICS=true
   vectordb:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:vectordb"
+    platform: "linux/amd64"
     environment:
       POSTGRES_DB: mydatabase
       POSTGRES_USER: myuser
@@ -43,6 +48,7 @@ services:
     restart: always
   rag_api:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:rag_api"
+    platform: "linux/amd64"
     environment:
       - DB_HOST=vectordb
       - RAG_PORT=${RAG_PORT:-8000}
@@ -57,9 +63,9 @@ services:
     platform: linux/amd64
     ports:
       # API
-      - 3001:8080
+      #- 3001:8080
       # Action server portal
-      - 4001:8087
+      #- 4001:8087
 
 volumes:
   pgdata2:
