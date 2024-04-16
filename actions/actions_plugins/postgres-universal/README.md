@@ -53,6 +53,8 @@ To do this securely, go to your Action Server UI http://localhost:8080 and execu
 
 This action configures the connection and provides a schema overview for LLM to use.
 
+NOTE: For the dataKind build, I added the creation of the connection file so the end point does not need to be callled.
+
 ### Execute Query
 Use OpenAI's GPT to formulate and send your queries. The `execute_query` action will interpret these inputs and perform the necessary SQL queries in a read-only manner.
 
