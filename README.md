@@ -42,7 +42,7 @@ Note: You can reset Libre chat by removing contents of `ui/recipes_assistant_cha
 
 ## Deploying to Azure
 
-The environment has been configured to run on a multicontainer web app in Azure. This actually isn't a very robust solution, as we shall see below, and should be migrated onto something more formal for launch.
+The environment has been configured to run on a [ai-assistant-prototypes]https://portal.azure.com/#@DataKindO365.onmicrosoft.com/resource/subscriptions/21fe0672-504b-4b05-b7e1-a154142c9fd4/resourceGroups/DK-DS-Prototypes/providers/Microsoft.Web/sites/ai-assistants-prototypes/appServices) multicontainer web app in Azure. This actually isn't a very robust solution, as we shall see below, and should be migrated onto something more formal for launch.
 
 ### Not on a Mac
 
@@ -71,4 +71,4 @@ Then Revert back, to work on Mac
 9. `docker compose build`
 10. `docker compose up -d`
 
-
+Note, `docker-compose-azure.yml` is the configurtation used in the deployment center screen on the web app.
