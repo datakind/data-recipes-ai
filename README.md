@@ -42,7 +42,33 @@ Note: You can reset Libre chat by removing contents of `ui/recipes_assistant_cha
 
 ## Deploying to Azure
 
-Make dure docker has 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon' set in settings
+The environment has been configured to run on a multicontainer web app in Azure. This actually isn't a very robust solution, as we shall see below, and should be migrated onto something more formal for launch.
 
+### Not on a Mac
+
+Run ...
+
+`python3 deploy_azure.py`
+
+### On a Mac
+
+Make dure docker has 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon' set in settings if using a MAC silicon chip. You will also need to build the Docker image for platform: linux/amd64 so when pushed to Azure, they'll work. This is a bit tricky ...
+
+1. Make some change that needs to be released
+2. `docker compose down -v`
+3. `docker compose -f docker-compose-build-azure.yml pull`
+4. `docker compose -f docker-compose-build-azure.yml build`
+5. `docker compose -f docker-compose-build-azure.yml up -d`
+
+Note, this break the app for running locally, it's just to build images that will run in Azure when using Mac
+
+6. `python3 deploy_azure.py`
+
+Then Revert back, to work on Mac 
+
+7. `docker compose -f docker-compose-build-azure.yml down -v`
+8. `docker compose pull`
+9. `docker compose build`
+10. `docker compose up -d`
 
 

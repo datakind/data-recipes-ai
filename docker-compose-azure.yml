@@ -5,8 +5,7 @@ services:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:api"
     platform: "linux/amd64"
     ports:
-      - "443:3080"
-      - "80:3080"
+      - "80:80"
     depends_on:
       - mongodb
       - rag_api
@@ -28,7 +27,7 @@ services:
     command: mongod --noauth
   meilisearch:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:meilisearch"
-    platform: "linux/amd64"
+    #platform: "linux/amd64"
     restart: always
     user: "${UID}:${GID}"
     environment:
