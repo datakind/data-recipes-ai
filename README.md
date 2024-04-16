@@ -71,4 +71,10 @@ Then Revert back, to work on Mac
 9. `docker compose build`
 10. `docker compose up -d`
 
-Note, `docker-compose-azure.yml` is the configurtation used in the deployment center screen on the web app.
+Note: 
+
+`docker-compose-azure.yml` is the configurtation used in the deployment center screen on the web app
+`docker-compose.yml` is used for building locally
+`docker-compose-build-azure.yml` is used for building so that images run on Azure, if your local architecture is different
+
+TODU: The above is of course messy, and needs to be tidied up as part of migrating to production hardware
