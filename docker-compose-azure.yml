@@ -25,6 +25,8 @@ services:
     restart: always
     user: "${UID}:${GID}"
     command: mongod --noauth
+    volumes:
+      - ${WEBAPP_STORAGE_HOME}/data/mongodb:/data/db
   meilisearch:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:meilisearch"
     #platform: "linux/amd64"
@@ -33,6 +35,8 @@ services:
     environment:
       MEILI_HOST: http://meilisearch:7700
       MEILI_NO_ANALYTICS: true
+    volumes:
+      - ${WEBAPP_STORAGE_HOME}/data/meili_data:/meili_data
   vectordb:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:vectordb"
     platform: "linux/amd64"
@@ -41,6 +45,8 @@ services:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
     restart: always
+    volumes:
+      - ${WEBAPP_STORAGE_HOME}/data/vectordb:/var/lib/postgresql/data
   rag_api:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:rag_api"
     platform: "linux/amd64"

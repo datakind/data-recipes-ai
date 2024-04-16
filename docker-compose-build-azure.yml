@@ -87,6 +87,8 @@ services:
     build:
       context: .
       dockerfile: ./actions/Dockerfile
+      args:
+        DATA_DB_CONN_STRING: ${DATA_DB_CONN_STRING}
     ports:
       # API
       - 3001:8080
