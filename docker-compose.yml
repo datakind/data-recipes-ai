@@ -14,13 +14,13 @@ services:
       context: .
       dockerfile: ./ui/recipes_assistant_chat/Dockerfile
     ports:
-      - "${PORT}:${PORT}"
-      - '8080:8080'
+      #- "${PORT}:${PORT}"
+      - 8080:8080
       # DK Added
       - 3080:3080
     depends_on:
       - mongodb
-      - rag_api
+      - rag-api
     restart: always
     user: "${UID}:${GID}"
     extra_hosts:
@@ -30,7 +30,7 @@ services:
       MONGO_URI: mongodb://mongodb:27017/LibreChat
       MEILI_HOST: http://meilisearch:7700
       RAG_PORT: ${RAG_PORT:-8000}
-      RAG_API_URL: http://rag_api:${RAG_PORT:-8000}
+      RAG_API_URL: http://rag-api:${RAG_PORT:-8000}
     volumes:
       - type: bind
         source: ./.env
@@ -70,7 +70,7 @@ services:
     restart: always
     volumes:
       - ./ui/recipes_assistant_chat/pgdata2:/var/lib/postgresql/data
-  rag_api:
+  rag-api:
     #platform: linux/amd64
     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
     environment:
