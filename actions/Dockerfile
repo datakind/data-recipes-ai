@@ -1,5 +1,10 @@
 FROM debian:bookworm-slim
 
+RUN echo "Hi!"
+
+ARG DATA_DB_CONN_STRING
+ENV DATA_DB_CONN_STRING=$DATA_DB_CONN_STRING
+
 # Setup Nginx and Supervisor
 RUN apt-get update && apt-get install -y procps nginx supervisor && \
     rm -rf /var/lib/apt/lists/*
@@ -26,10 +31,15 @@ RUN chown -R as-user:as-user /action-server
 
 USER as-user
 
+ARG DATA_DB_CONN_STRING
+ENV DATA_DB_CONN_STRING=$DATA_DB_CONN_STRING
+
 # Load all actions
 # RUN action-server import --datadir=/action-server/datadir
 # Load individually
 RUN action-server import --dir=./actions_plugins/postgres-universal --datadir=/action-server/datadir
+
+RUN echo "{\"dsn\": \"$DATA_DB_CONN_STRING\"}" > ./actions_plugins/postgres-universal/postgres_connection.json
 
 EXPOSE 8080
 
