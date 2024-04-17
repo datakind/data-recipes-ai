@@ -5,6 +5,8 @@ from robocorp.actions import action
 
 CONNECTION_FILE_PATH = 'postgres_connection.json'
 
+MAX_CHARS_TOT = 10000
+
 class ReadOnlyConnection:
     def __init__(self, conn_params):
         self.conn_params = conn_params
@@ -22,7 +24,7 @@ class ReadOnlyConnection:
         self.conn.close()
 
 
-def truncate_output_with_beginning_clue(output: str, max_chars: int = 2000) -> str:
+def truncate_output_with_beginning_clue(output: str, max_chars: int = MAX_CHARS_TOT) -> str:
     beginning_clue = "[Cut] "  # A very short clue at the beginning to indicate possible truncation
 
     if len(output) > max_chars:
@@ -112,7 +114,7 @@ def get_database_schema(conn):
     return schema_info
 
 
-def truncate_query_results(results, max_chars=2000):
+def truncate_query_results(results, max_chars = MAX_CHARS_TOT):
     if not results:
         return ""
 

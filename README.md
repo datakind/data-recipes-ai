@@ -50,31 +50,17 @@ Run ...
 
 `python3 deploy_azure.py`
 
+One thing to mention on an Azure deploy, it that doesn't get pushed to the web app sometimes, until a user tries to access the web app's published URL. No idea why, but if your release is 'stuck', try this.
+
 ### On a Mac
 
-Make dure docker has 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon' set in settings if using a MAC silicon chip. You will also need to build the Docker image for platform: linux/amd64 so when pushed to Azure, they'll work. This is a bit tricky ...
-
-1. Make some change that needs to be released
-2. `docker compose down -v`
-3. `docker compose -f docker-compose-build-azure.yml pull`
-4. `docker compose -f docker-compose-build-azure.yml build`
-5. `docker compose -f docker-compose-build-azure.yml up -d`
-
-Note, this break the app for running locally, it's just to build images that will run in Azure when using Mac
-
-6. `python3 deploy_azure.py`
-
-Then Revert back, to work on Mac 
-
-7. `docker compose -f docker-compose-build-azure.yml down -v`
-8. `docker compose pull`
-9. `docker compose build`
-10. `docker compose up -d`
+Make dure docker has 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon' set in settings if using a MAC silicon chip. The deploy script can then build images that wwok on Azure then revert to images that work on your Mac.
 
 Note: 
 
 `docker-compose-azure.yml` is the configurtation used in the deployment center screen on the web app
 `docker-compose.yml` is used for building locally
-`docker-compose-build-azure.yml` is used for building so that images run on Azure, if your local architecture is different
 
-TODU: The above is of course messy, and needs to be tidied up as part of migrating to production hardware
+## Databases
+
+When running in Azure it is sueful to use remote databases, at least for the mongodb instance so that user logins are retained with each release. For example, a databse can be configured by following [these instructions](https://docs.librechat.ai/install/configuration/mongodb.html). If doing this, then docker-compose-azure.yml in Azure can have the mongo DB section removed, and any instance of the Mongo URL used by other containers updated with the cloud connection string accordingly.

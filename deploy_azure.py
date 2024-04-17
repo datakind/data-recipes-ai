@@ -26,8 +26,8 @@ tags = {
     "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest":      [f"{container_registry}/containergroup","rag_api"],
     "humanitarian_ai_assistant-api":              [f"{container_registry}/containergroup","api"],
 }
-
-docker_compose_file = "docker-compose-azure.yml"
+docker_compose_file = "docker-compose.yml"
+azure_platform = "linux/amd64"
 
 def run_cmd(cmd):
     print(cmd)
@@ -37,14 +37,22 @@ def run_cmd(cmd):
 run_cmd("az login")
 run_cmd(f"az acr login --name {container_registry}")
 
-# Docker build
-run_cmd(f"docker compose -f {docker_compose_file} build")
+# Reuild assuming Azure platform
+run_cmd(f"docker compose -f {docker_compose_file} down")
+run_cmd(f"DOCKER_DEFAULT_PLATFORM={azure_platform} && docker compose -f {docker_compose_file} pull")
+run_cmd(f"DOCKER_DEFAULT_PLATFORM={azure_platform} && docker compose -f {docker_compose_file} build")
 
 for image in tags.keys():
     print(f"Tagging {image} image ... with tag {tags[image][0]}:{tags[image][1]}")
     client.images.get(image).tag(tags[image][0],tags[image][1])
     print(f"Pushing {image} image ... to {tags[image][0]}:{tags[image][1]}")
     client.images.push(tags[image][0], tags[image][1])
+
+# Revert to host architecture
+run_cmd(f"docker compose -f {docker_compose_file} down")
+run_cmd(f"docker compose -f {docker_compose_file} pull")
+run_cmd(f"docker compose -f {docker_compose_file} build")
+run_cmd(f"docker compose -f {docker_compose_file} up -d")
 
 print("Done")
 
