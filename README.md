@@ -1,9 +1,19 @@
 # Introduction
 
-This repo contains components for the humanitarian AI Assitant developed by DataKind. It has the following components:
+NOTE: For now we reference internal documents, but this will be adjusted and added to the repo over time.
+
+This repo contains components for the humanitarian AI Assitant developed by DataKind. For more information see [here](https://datakind.atlassian.net/wiki/spaces/TT/pages/187105282/Technical+Summary)
+
+It has the following components:
 
 - [LibraChat](https://docs.librechat.ai/) chat interface
 - [Robocorp actions-server](https://github.com/robocorp/robocorp)
+
+Being added soon ....
+
+- Databases
+- Data Ingestion Pipeline
+- Assistant creation
 
 # To start the environment
 
@@ -42,7 +52,7 @@ Note: You can reset Libre chat by removing contents of `ui/recipes_assistant_cha
 
 ## Deploying to Azure
 
-The environment has been configured to run on a [ai-assistant-prototypes]https://portal.azure.com/#@DataKindO365.onmicrosoft.com/resource/subscriptions/21fe0672-504b-4b05-b7e1-a154142c9fd4/resourceGroups/DK-DS-Prototypes/providers/Microsoft.Web/sites/ai-assistants-prototypes/appServices) multicontainer web app in Azure. This actually isn't a very robust solution, as we shall see below, and should be migrated onto something more formal for launch.
+The environment has been configured to run on a [ai-assistant-prototypes](https://portal.azure.com/#@DataKindO365.onmicrosoft.com/resource/subscriptions/21fe0672-504b-4b05-b7e1-a154142c9fd4/resourceGroups/DK-DS-Prototypes/providers/Microsoft.Web/sites/ai-assistants-prototypes/appServices) multicontainer web app in Azure. This actually isn't a very robust solution, as we shall see below, and should be migrated onto something more formal for launch.
 
 ### Not on a Mac
 
