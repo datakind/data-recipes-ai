@@ -64,12 +64,31 @@ services:
     #platform: linux/amd64
     image: ankane/pgvector:latest
     environment:
-      POSTGRES_DB: mydatabase
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     restart: always
+    ports:
+      - 5432:5432
     volumes:
       - ./ui/recipes_assistant_chat/pgdata2:/var/lib/postgresql/data
+    env_file:
+      - .env
+  data_recipe_db:
+    #platform: linux/amd64
+    image: ankane/pgvector:latest
+    container_name: datarecipes
+    environment:
+      POSTGRES_DB: ${POSTGRES_RECIPE_DB}
+      POSTGRES_USER: ${POSTGRES_RECIPE_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
+    restart: always
+    ports:
+      - 5439:5432
+    volumes:
+      - ./actions/actions_plugins/recipe-server/db/:/docker-entrypoint-initdb.d
+    env_file:
+      - .env
   rag-api:
     #platform: linux/amd64
     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
