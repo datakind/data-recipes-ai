@@ -3,9 +3,10 @@ import os
 import psycopg2
 from robocorp.actions import action
 
-CONNECTION_FILE_PATH = 'postgres_connection.json'
+CONNECTION_FILE_PATH = "postgres_connection.json"
 
 MAX_CHARS_TOT = 10000
+
 
 class ReadOnlyConnection:
     def __init__(self, conn_params):
@@ -24,26 +25,33 @@ class ReadOnlyConnection:
         self.conn.close()
 
 
-def truncate_output_with_beginning_clue(output: str, max_chars: int = MAX_CHARS_TOT) -> str:
-    beginning_clue = "[Cut] "  # A very short clue at the beginning to indicate possible truncation
+def truncate_output_with_beginning_clue(
+    output: str, max_chars: int = MAX_CHARS_TOT
+) -> str:
+    beginning_clue = (
+        "[Cut] "  # A very short clue at the beginning to indicate possible truncation
+    )
 
     if len(output) > max_chars:
-        truncated_output = output[:max_chars - len(beginning_clue)]
+        truncated_output = output[: max_chars - len(beginning_clue)]
         chars_missed = len(output) - len(truncated_output)
         truncated_message = f"[+{chars_missed}]"
         return beginning_clue + truncated_output + truncated_message
     else:
         return output
 
+
 def get_database_schema(conn):
     schema_info = "Database Schema:\n"
 
     with conn.cursor() as cursor:
         # Retrieve triggers
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT event_object_table AS table_name, trigger_name
             FROM information_schema.triggers
-        """)
+        """
+        )
         trigger_records = cursor.fetchall()
 
         table_trigger_dict = {}
@@ -55,11 +63,13 @@ def get_database_schema(conn):
                     table_trigger_dict[table_name].append(trigger_name)
 
         # Retrieve tables
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT table_name
             FROM information_schema.tables
             WHERE table_schema = 'public'
-        """)
+        """
+        )
         tables = cursor.fetchall()
 
         for table in tables:
@@ -67,14 +77,19 @@ def get_database_schema(conn):
             schema_info += f"\nTable: {table_name}\n"
 
             if table_name in table_trigger_dict.keys():
-                schema_info += f"Triggers: {', '.join(table_trigger_dict[table_name])}\n"
-                
+                schema_info += (
+                    f"Triggers: {', '.join(table_trigger_dict[table_name])}\n"
+                )
+
             # Get columns and primary key info
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT column_name, data_type, is_nullable, column_default
                 FROM information_schema.columns
                 WHERE table_name = %s
-            """, (table_name,))
+            """,
+                (table_name,),
+            )
             columns = cursor.fetchall()
 
             for col in columns:
@@ -85,17 +100,21 @@ def get_database_schema(conn):
                 schema_info += "\n"
 
             # Get primary key info
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT kcu.column_name
                 FROM information_schema.table_constraints tc
                 JOIN information_schema.key_column_usage kcu
                 ON tc.constraint_name = kcu.constraint_name
                 WHERE tc.table_name = %s AND tc.constraint_type = 'PRIMARY KEY'
-            """, (table_name,))
+            """,
+                (table_name,),
+            )
             primary_keys = cursor.fetchall()
 
             # Get foreign key info
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT kcu.column_name, ccu.table_name AS foreign_table_name, ccu.column_name AS foreign_column_name
                 FROM information_schema.table_constraints AS tc 
                 JOIN information_schema.key_column_usage AS kcu
@@ -103,7 +122,9 @@ def get_database_schema(conn):
                 JOIN information_schema.constraint_column_usage AS ccu
                 ON ccu.constraint_name = tc.constraint_name
                 WHERE tc.table_name = %s AND tc.constraint_type = 'FOREIGN KEY'
-            """, (table_name,))
+            """,
+                (table_name,),
+            )
             foreign_keys = cursor.fetchall()
 
             for pk in primary_keys:
@@ -114,7 +135,7 @@ def get_database_schema(conn):
     return schema_info
 
 
-def truncate_query_results(results, max_chars = MAX_CHARS_TOT):
+def truncate_query_results(results, max_chars=MAX_CHARS_TOT):
     if not results:
         return ""
 
@@ -142,7 +163,7 @@ def truncate_query_results(results, max_chars = MAX_CHARS_TOT):
             cell_output = str(cell)
             # Truncate cell if necessary
             if len(cell_output) > cell_max:
-                cell_output = cell_output[:cell_max - 3] + "..."
+                cell_output = cell_output[: cell_max - 3] + "..."
             row_output += cell_output + ", "
 
         # Remove last comma and space, add newline
@@ -151,11 +172,10 @@ def truncate_query_results(results, max_chars = MAX_CHARS_TOT):
         # Check if we've reached the max characters
         if len(truncated_output) >= max_chars:
             # Further truncate and end the loop
-            truncated_output = truncated_output[:max_chars - 3] + "..."
+            truncated_output = truncated_output[: max_chars - 3] + "..."
             break
 
     return truncated_output
-
 
 
 @action
@@ -170,17 +190,18 @@ def init_postgres_connection(dsn: str) -> str:
     Returns:
         str: A textual representation of the database schema.
     """
-    conn_params = {'dsn': dsn}
+    conn_params = {"dsn": dsn}
 
     # Save connection parameters to a file
     try:
-        with open(CONNECTION_FILE_PATH, 'w') as file:
+        with open(CONNECTION_FILE_PATH, "w") as file:
             json.dump(conn_params, file)
         with ReadOnlyConnection(conn_params) as conn:
             schema = get_database_schema(conn)
         return truncate_output_with_beginning_clue(schema)
     except Exception as e:
         return f"Failed: {e}"
+
 
 @action
 def execute_query(query: str) -> str:
@@ -196,7 +217,7 @@ def execute_query(query: str) -> str:
     try:
         # Read connection parameters from the file
         if os.path.exists(CONNECTION_FILE_PATH):
-            with open(CONNECTION_FILE_PATH, 'r') as file:
+            with open(CONNECTION_FILE_PATH, "r") as file:
                 conn_params = json.load(file)
         else:
             return "Connection parameters file not found."
@@ -208,4 +229,3 @@ def execute_query(query: str) -> str:
             return truncate_query_results(results)
     except Exception as e:
         return f"An error occurred while executing the query: {e}"
-

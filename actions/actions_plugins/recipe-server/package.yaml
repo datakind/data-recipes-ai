@@ -1,15 +1,15 @@
 
 # Required: A short name for the action package
-name: Comparing timezones
+name: Get data recipe memory
     
 # Required: A description of what's in the action package.
-description: Compares user timezone time difference to given timezones
+description: This action contains logic to derive user intent from a conversation, and check the data recipe server for existing memories to reduce processing times.
 
 # Required: The current version of this action package.
 version: 0.0.1
 
 # Required: A link to where the documentation on the package lives.
-documentation: https://github.com/robocorp/actions-cookbook/blob/master/deploy-docker/README.md
+documentation: https://github.com/robocorp/actions-cookbook/blob/master/example-postgres-universal/README.md
 
 dependencies:
   conda-forge:
@@ -19,10 +19,11 @@ dependencies:
   pypi:
   - robocorp=1.6.2
   - robocorp-actions=0.0.7
-  - pytz=2024.1
   - langchain=0.1.16
   - langchain_community=0.0.34
   - langchain_openai=0.1.3
   - psycopg2-binary=2.9.3
   - pgvector=0.2.5
+  - python-dotenv=0.19.1
+  
 

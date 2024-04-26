@@ -79,6 +79,7 @@ services:
     image: ankane/pgvector:latest
     container_name: datarecipes
     environment:
+      #The following is only needed because in the .env file, there are two database configurations and we have to distinguish between them
       POSTGRES_DB: ${POSTGRES_RECIPE_DB}
       POSTGRES_USER: ${POSTGRES_RECIPE_USER}
       POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
@@ -113,6 +114,8 @@ services:
       - 3001:8080
       # Action server portal
       - 4001:8087
+    env_file:
+      - .env
 
 volumes:
   pgdata2:
