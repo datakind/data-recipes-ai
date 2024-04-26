@@ -45,4 +45,3 @@ RUN echo "{\"dsn\": \"$DATA_DB_CONN_STRING\"}" > ./actions_plugins/postgres-univ
 EXPOSE 8080
 
 CMD ["/usr/bin/supervisord"]
-#CMD ["python", "./actions_plugins/postgres-universal/main.py", "--dsn", "$DATA_DB_CONN_STRING]
