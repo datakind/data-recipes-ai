@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Humanitarian AI assistant - Memories",
+  "name_for_model": "haa_datarecipes",
+  "description_for_human": "Retrieves memories that have been created by other users, quality checked by administrators, and saved into a database.",
+  "description_for_model": "Retrieves memories that have been created by other users, quality checked by administrators, and saved into a database. Memories can either be text, or images.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "data_recipe_openapi.yaml",
+    "is_user_authenticated": false
+  },
+  "logo_url": "",
+  "contact_email": "Jan.Peter@Datakind.org",
+  "legal_info_url": "TBD"
+}

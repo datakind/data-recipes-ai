@@ -395,7 +395,7 @@ def generate_intent_from_history(chat_history: list, remove_code: bool = True) -
     return intent["intent"]
 
 
-@action(is_consequential=True)
+@action()
 def get_memory(user_input, chat_history, generate_intent=True) -> str:
     """
     Performs a search in the memory for a given intent and returns the best match found.
