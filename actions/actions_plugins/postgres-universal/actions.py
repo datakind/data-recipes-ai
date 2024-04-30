@@ -3,7 +3,7 @@ import os
 import psycopg2
 from robocorp.actions import action
 
-CONNECTION_FILE_PATH = "postgres_connection.json"
+CONNECTION_FILE_PATH = "postgres_data_connection.json"
 
 MAX_CHARS_TOT = 10000
 
@@ -178,29 +178,29 @@ def truncate_query_results(results, max_chars=MAX_CHARS_TOT):
     return truncated_output
 
 
-@action
-def init_postgres_connection(dsn: str) -> str:
-    """
-    Initializes a connection to a PostgreSQL database using the provided Data Source Name (DSN).
-
-    Args:
-        dsn (str): The connection string for the PostgreSQL database.
-                   This should be in the format 'postgresql://username:password@host:port/database'.
-
-    Returns:
-        str: A textual representation of the database schema.
-    """
-    conn_params = {"dsn": dsn}
-
-    # Save connection parameters to a file
-    try:
-        with open(CONNECTION_FILE_PATH, "w") as file:
-            json.dump(conn_params, file)
-        with ReadOnlyConnection(conn_params) as conn:
-            schema = get_database_schema(conn)
-        return truncate_output_with_beginning_clue(schema)
-    except Exception as e:
-        return f"Failed: {e}"
+# @action
+# def init_postgres_connection(dsn: str) -> str:
+#     """
+#     Initializes a connection to a PostgreSQL database using the provided Data Source Name (DSN).
+#
+#     Args:
+#         dsn (str): The connection string for the PostgreSQL database.
+#                    This should be in the format 'postgresql://username:password@host:port/database'.
+#
+#     Returns:
+#         str: A textual representation of the database schema.
+#     """
+#     conn_params = {"dsn": dsn}
+#
+#     # Save connection parameters to a file
+#     try:
+#         with open(CONNECTION_FILE_PATH, "w") as file:
+#             json.dump(conn_params, file)
+#         with ReadOnlyConnection(conn_params) as conn:
+#             schema = get_database_schema(conn)
+#         return truncate_output_with_beginning_clue(schema)
+#     except Exception as e:
+#         return f"Failed: {e}"
 
 
 @action

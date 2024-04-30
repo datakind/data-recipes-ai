@@ -40,7 +40,9 @@ ENV DATA_DB_CONN_STRING=$DATA_DB_CONN_STRING
 RUN action-server import --dir=./actions_plugins/postgres-universal --datadir=/action-server/datadir
 RUN action-server import --dir=./actions_plugins/recipe-server --datadir=/action-server/datadir
 
-RUN echo "{\"dsn\": \"$DATA_DB_CONN_STRING\"}" > ./actions_plugins/postgres-universal/postgres_connection.json
+RUN echo "{\"dsn\": \"$DATA_DB_CONN_STRING\"}" > ./actions_plugins/postgres-universal/postgres_data_connection.json
+
+RUN echo "{\"dsn\": \"$RECIPE_DB_CONN_STRING\"}" > ./actions_plugins/postgres-universal/postgres_recipe_connection.json
 
 EXPOSE 8080
 

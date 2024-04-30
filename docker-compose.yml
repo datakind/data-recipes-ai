@@ -42,7 +42,7 @@ services:
         target: /app/librechat.yaml
   mongodb:
     #platform: linux/amd64
-    container_name: chat-mongodb
+    container_name: haa-mongodb
     image: mongo
     restart: always
     user: "${UID}:${GID}"
@@ -51,7 +51,7 @@ services:
     command: mongod --noauth
   meilisearch:
     #platform: linux/amd64
-    container_name: chat-meilisearch
+    container_name: haa-meilisearch
     image: getmeili/meilisearch:v1.7.3
     restart: always
     user: "${UID}:${GID}"
@@ -60,13 +60,14 @@ services:
       MEILI_NO_ANALYTICS: true
     volumes:
       - ./ui/recipes_assistant_chat/meili_data_v1.7:/meili_data
-  vectordb:
+  datadb:
     #platform: linux/amd64
     image: ankane/pgvector:latest
+    container_name: haa-datadb
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DATA_DB}
+      POSTGRES_USER: ${POSTGRES_DATA_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
     restart: always
     ports:
       - 5432:5432
@@ -74,12 +75,11 @@ services:
       - ./ui/recipes_assistant_chat/pgdata2:/var/lib/postgresql/data
     env_file:
       - .env
-  data_recipe_db:
+  recipedb:
     #platform: linux/amd64
     image: ankane/pgvector:latest
-    container_name: datarecipes
+    container_name: haa-datarecipes
     environment:
-      #The following is only needed because in the .env file, there are two database configurations and we have to distinguish between them
       POSTGRES_DB: ${POSTGRES_RECIPE_DB}
       POSTGRES_USER: ${POSTGRES_RECIPE_USER}
       POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
@@ -93,17 +93,25 @@ services:
   rag-api:
     #platform: linux/amd64
     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
+    container_name: haa-rag-api
     environment:
-      DB_HOST: vectordb
+      DB_HOST: datadb
+      POSTGRES_DB: ${POSTGRES_DATA_DB}
+      POSTGRES_USER: ${POSTGRES_DATA_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
       RAG_PORT: ${RAG_PORT:-8000}
+      RAG_OPENAI_API_KEY: ${AZURE_API_KEY}
+      EMBEDDINGS_PROVIDER: azure
+      EMBEDDINGS_MODEL: text-embedding-ada-002
+      AZURE_OPENAI_ENDPOINT: https://dkopenai2.openai.azure.com/
     restart: always
     depends_on:
-      - vectordb
+      - datadb
     env_file:
       - .env
   actions:
     platform: linux/amd64
-    container_name: haa-libre-robo-actions
+    container_name: haa-robo-actions
     build:
       context: .
       dockerfile: ./actions/Dockerfile

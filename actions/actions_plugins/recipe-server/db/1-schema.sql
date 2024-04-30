@@ -1,6 +1,6 @@
 
-CREATE SCHEMA data_recipes;
-CREATE SCHEMA data;
+-- CREATE SCHEMA data_recipes;
+-- CREATE SCHEMA data;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "vector";
