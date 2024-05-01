@@ -48,9 +48,12 @@ If running locally, you can reset your environment - removing any data for your 
 ## Testing connection to actions server
 
 1. `docker exec -it haa-libre-chat  /bin/sh`
-2. `curl -X POST -H "Content-Type: application/json" \
+2. To test the SQL query action, run `curl -X POST -H "Content-Type: application/json" \
     -d '{"query": "select 1"}' \
-    "http://actions:8080/api/actions/postgresql-universal-actions/execute-query/run"``
+    "http://actions:8080/api/actions/postgresql-universal-actions/execute-query/run"`
+3. To get get-memory action, run ... `curl -X POST -H "Content-Type: application/json" \
+    -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}' \
+    "http://actions:8080/api/actions/get-data-recipe-memory/get-memory/run"``
 
 ## Deploying to Azure
 
