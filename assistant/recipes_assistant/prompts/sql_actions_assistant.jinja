@@ -12,7 +12,7 @@ When asked to do a task, first inform the user how you will perform the task
 NEVER EVER generate Python using sample data, you MUST always use data you got from calling the SQL action.
 
 If no data is retuned after trying, inform the user.
-adm0_code are 3-leter country ISO codes
+location_code are 3-leter country ISO codes
 
 Always display images if you analysis creates one
 
@@ -28,9 +28,9 @@ Unless reference_period_start or reference_period_start are part of an output gr
 Here is a list of tables and their columns ...
 
 Table, Column, Column Type
-hapi_3W	adm0_code	text
-hapi_3W	adm1_code	text
-hapi_3W	adm2_code	text
+hapi_3W	admin0_code	text
+hapi_3W	admin1_code	text
+hapi_3W	admin2_code	text
 hapi_3W	admin1_name	text
 hapi_3W	admin2_name	text
 hapi_3W	dataset_hapi_stub	text
@@ -43,13 +43,13 @@ hapi_3W	reference_period_start	text
 hapi_3W	resource_hapi_id	text
 hapi_3W	sector_code	text
 hapi_3W	sector_name	text
-hapi_admin1	adm0_code	text
+hapi_admin1	admin0_code	text
 hapi_admin1	code	text
 hapi_admin1	index	bigint
 hapi_admin1	location_name	text
 hapi_admin1	name	text
-hapi_admin2	adm0_code	text
-hapi_admin2	adm1_code	text
+hapi_admin2	admin0_code	text
+hapi_admin2	admin1_code	text
 hapi_admin2	admin1_name	text
 hapi_admin2	code	text
 hapi_admin2	index	bigint
@@ -67,9 +67,9 @@ hapi_dataset	hapi_provider_stub	text
 hapi_dataset	hapi_stub	text
 hapi_dataset	index	bigint
 hapi_dataset	title	text
-hapi_food_security	adm0_code	text
-hapi_food_security	adm1_code	text
-hapi_food_security	adm2_code	text
+hapi_food_security	admin0_code	text
+hapi_food_security	admin1_code	text
+hapi_food_security	admin2_code	text
 hapi_food_security	admin1_name	text
 hapi_food_security	admin2_name	text
 hapi_food_security	dataset_hapi_provider_stub	text
@@ -87,9 +87,9 @@ hapi_food_security	resource_hapi_id	text
 hapi_gender	code	text
 hapi_gender	description	text
 hapi_gender	index	bigint
-hapi_humanitarian_needs	adm0_code	text
-hapi_humanitarian_needs	adm1_code	text
-hapi_humanitarian_needs	adm2_code	text
+hapi_humanitarian_needs	admin0_code	text
+hapi_humanitarian_needs	admin1_code	text
+hapi_humanitarian_needs	admin2_code	text
 hapi_humanitarian_needs	admin1_name	text
 hapi_humanitarian_needs	admin2_name	text
 hapi_humanitarian_needs	age_range_code	double precision
@@ -110,7 +110,7 @@ hapi_humanitarian_needs	sector_name	double precision
 hapi_location	code	text
 hapi_location	index	bigint
 hapi_location	name	text
-hapi_national_risk	adm0_code	text
+hapi_national_risk	admin0_code	text
 hapi_national_risk	coping_capacity_risk	double precision
 hapi_national_risk	dataset_hapi_provider_stub	text
 hapi_national_risk	dataset_hapi_stub	text
@@ -134,9 +134,9 @@ hapi_org	org_type_description	text
 hapi_org_type	code	bigint
 hapi_org_type	description	text
 hapi_org_type	index	bigint
-hapi_population	adm0_code	text
-hapi_population	adm1_code	text
-hapi_population	adm2_code	text
+hapi_population	admin0_code	text
+hapi_population	admin1_code	text
+hapi_population	admin2_code	text
 hapi_population	admin1_name	text
 hapi_population	admin2_name	text
 hapi_population	age_range_code	text
@@ -173,60 +173,60 @@ hapi_resource	update_date	text
 hapi_sector	code	text
 hapi_sector	index	bigint
 hapi_sector	name	text
-hapi_shape_files	ADM0_AR	text
-hapi_shape_files	ADM0_EN	text
-hapi_shape_files	ADM0_ES	text
-hapi_shape_files	ADM0_FR	text
-hapi_shape_files	ADM0_HT	text
-hapi_shape_files	ADM0_MY	text
-hapi_shape_files	ADM0_PT	text
-hapi_shape_files	ADM0_RU	text
-hapi_shape_files	ADM0_UA	text
-hapi_shape_files	ADM1ALT1AR	text
-hapi_shape_files	ADM1ALT1EN	text
-hapi_shape_files	ADM1ALT1ES	text
-hapi_shape_files	ADM1ALT1FR	text
-hapi_shape_files	ADM1ALT1HT	text
-hapi_shape_files	ADM1ALT1PT	text
-hapi_shape_files	ADM1ALT2AR	text
-hapi_shape_files	ADM1ALT2EN	text
-hapi_shape_files	ADM1ALT2ES	text
-hapi_shape_files	ADM1ALT2FR	text
-hapi_shape_files	ADM1ALT2HT	text
-hapi_shape_files	ADM1ALT2PT	text
-hapi_shape_files	ADM1_ALTPC	text
-hapi_shape_files	ADM1_AR	text
-hapi_shape_files	ADM1_EN	text
-hapi_shape_files	ADM1_ES	text
-hapi_shape_files	ADM1_FR	text
-hapi_shape_files	ADM1_HT	text
-hapi_shape_files	ADM1_MY	text
-hapi_shape_files	ADM1_PT	text
-hapi_shape_files	ADM1_REF	text
-hapi_shape_files	ADM1_RU	text
-hapi_shape_files	ADM1_UA	text
-hapi_shape_files	ADM2ALT1AR	text
-hapi_shape_files	ADM2ALT1EN	text
-hapi_shape_files	ADM2ALT1ES	text
-hapi_shape_files	ADM2ALT1FR	text
-hapi_shape_files	ADM2ALT1HT	text
-hapi_shape_files	ADM2ALT1PT	text
-hapi_shape_files	ADM2ALT2AR	text
-hapi_shape_files	ADM2ALT2EN	text
-hapi_shape_files	ADM2ALT2ES	text
-hapi_shape_files	ADM2ALT2FR	text
-hapi_shape_files	ADM2ALT2HT	text
-hapi_shape_files	ADM2ALT2PT	text
-hapi_shape_files	ADM2_AR	text
-hapi_shape_files	ADM2_EN	text
-hapi_shape_files	ADM2_ES	text
-hapi_shape_files	ADM2_FR	text
-hapi_shape_files	ADM2_HT	text
-hapi_shape_files	ADM2_MY	text
-hapi_shape_files	ADM2_PT	text
-hapi_shape_files	ADM2_REF	text
-hapi_shape_files	ADM2_RU	text
-hapi_shape_files	ADM2_UA	text
+hapi_shape_files	admin0_AR	text
+hapi_shape_files	admin0_EN	text
+hapi_shape_files	admin0_ES	text
+hapi_shape_files	admin0_FR	text
+hapi_shape_files	admin0_HT	text
+hapi_shape_files	admin0_MY	text
+hapi_shape_files	admin0_PT	text
+hapi_shape_files	admin0_RU	text
+hapi_shape_files	admin0_UA	text
+hapi_shape_files	admin1ALT1AR	text
+hapi_shape_files	admin1ALT1EN	text
+hapi_shape_files	admin1ALT1ES	text
+hapi_shape_files	admin1ALT1FR	text
+hapi_shape_files	admin1ALT1HT	text
+hapi_shape_files	admin1ALT1PT	text
+hapi_shape_files	admin1ALT2AR	text
+hapi_shape_files	admin1ALT2EN	text
+hapi_shape_files	admin1ALT2ES	text
+hapi_shape_files	admin1ALT2FR	text
+hapi_shape_files	admin1ALT2HT	text
+hapi_shape_files	admin1ALT2PT	text
+hapi_shape_files	admin1_ALTPC	text
+hapi_shape_files	admin1_AR	text
+hapi_shape_files	admin1_EN	text
+hapi_shape_files	admin1_ES	text
+hapi_shape_files	admin1_FR	text
+hapi_shape_files	admin1_HT	text
+hapi_shape_files	admin1_MY	text
+hapi_shape_files	admin1_PT	text
+hapi_shape_files	admin1_REF	text
+hapi_shape_files	admin1_RU	text
+hapi_shape_files	admin1_UA	text
+hapi_shape_files	admin2ALT1AR	text
+hapi_shape_files	admin2ALT1EN	text
+hapi_shape_files	admin2ALT1ES	text
+hapi_shape_files	admin2ALT1FR	text
+hapi_shape_files	admin2ALT1HT	text
+hapi_shape_files	admin2ALT1PT	text
+hapi_shape_files	admin2ALT2AR	text
+hapi_shape_files	admin2ALT2EN	text
+hapi_shape_files	admin2ALT2ES	text
+hapi_shape_files	admin2ALT2FR	text
+hapi_shape_files	admin2ALT2HT	text
+hapi_shape_files	admin2ALT2PT	text
+hapi_shape_files	admin2_AR	text
+hapi_shape_files	admin2_EN	text
+hapi_shape_files	admin2_ES	text
+hapi_shape_files	admin2_FR	text
+hapi_shape_files	admin2_HT	text
+hapi_shape_files	admin2_MY	text
+hapi_shape_files	admin2_PT	text
+hapi_shape_files	admin2_REF	text
+hapi_shape_files	admin2_RU	text
+hapi_shape_files	admin2_UA	text
 hapi_shape_files	AREA_SQKM	double precision
 hapi_shape_files	OBJECTID	double precision
 hapi_shape_files	SD_EN	text
@@ -234,9 +234,9 @@ hapi_shape_files	SD_PCODE	text
 hapi_shape_files	Shape_Area	double precision
 hapi_shape_files	Shape_Leng	double precision
 hapi_shape_files	ValidTo	text
-hapi_shape_files	adm0_code	text
-hapi_shape_files	adm1_code	text
-hapi_shape_files	adm2_code	text
+hapi_shape_files	admin0_code	text
+hapi_shape_files	admin1_code	text
+hapi_shape_files	admin2_code	text
 hapi_shape_files	admin0Name	text
 hapi_shape_files	admin1Al_1	text
 hapi_shape_files	admin1AltN	text

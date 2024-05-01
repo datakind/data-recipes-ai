@@ -238,7 +238,9 @@ def main():
         #download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path)
 
         # Upload CSV files to the database
-        upload_csv_files(save_path, conn, api_name)
+        #upload_csv_files(save_path, conn, api_name)
+
+        # Upload metadata file here
 
 if __name__ == "__main__":
     main()
