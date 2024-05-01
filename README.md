@@ -47,11 +47,10 @@ If running locally, you can reset your environment - removing any data for your 
 
 ## Testing connection to actions server
 
-1. `exec -it LibreChat /bin/sh`
+1. `docker exec -it haa-libre-chat  /bin/sh`
 2. `curl -X POST -H "Content-Type: application/json" \
-    -d '{"dsn": "postgresql://username:password@host:port/database"}' \
-    "http://actions:8080/api/actions/postgresql-universal-actions/init-postgres-connection/run"` .... replacing with correct postgres credentials`
-
+    -d '{"query": "select 1"}' \
+    "http://actions:8080/api/actions/postgresql-universal-actions/execute-query/run"``
 
 ## Deploying to Azure
 
