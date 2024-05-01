@@ -13,22 +13,29 @@ APIS_CONFIG = "apis.config"
 # We use this to map column names to be the same in all files
 # Note that shapefile geopandas columns must be less than 10 characters
 # TODO, move this to API config
-admin0_code_name = "adm0_code"
-admin1_code_name = "adm1_code"
-admin2_code_name = "adm2_code"
-admin3_code_name = "adm3_code"
+admin0_code = "adm0_code"
+admin1_code = "adm1_code"
+admin2_code = "adm2_code"
+admin3_code = "adm3_code"
+admin0_name = "adm0_name"
+admin1_name = "adm1_name"
+admin2_name = "adm2_name"
+admin3_name = "adm3_name"
 col_map = {
-    "location_code": admin0_code_name,
-    "admin1_code": admin1_code_name,
-    "admin2_code": admin2_code_name,
-    "admin3_code": admin3_code_name,
-    "ADM0_PCODE": admin0_code_name,
-    "ADM1_PCODE": admin1_code_name,
-    "ADM2_PCODE": admin2_code_name,
-    "ADM3_PCODE": admin3_code_name,
-    "admin0Pcod": admin0_code_name,
-    "admin1Pcod": admin1_code_name,
-    "admin2Pcod": admin2_code_name,
+    "location_code": admin0_code,
+    "admin1_code": admin1_code,
+    "admin2_code": admin2_code,
+    "admin3_code": admin3_code,
+    "admin1_name": admin1_name,
+    "admin2_name": admin2_name,
+    "admin3_name": admin3_name,
+    "ADM0_PCODE": admin0_code,
+    "ADM1_PCODE": admin1_code,
+    "ADM2_PCODE": admin2_code,
+    "ADM3_PCODE": admin3_code,
+    "admin0Pcod": admin0_code,
+    "admin1Pcod": admin1_code,
+    "admin2Pcod": admin2_code,
 }
 
 def get_api_def(api):
@@ -290,10 +297,10 @@ def filter_hdx_df(df, **kwargs):
         return df_orig
 
     dfs = []
-    if admin0_code_name in df.columns:
-        for country in df[admin0_code_name].unique():
+    if admin0_code in df.columns:
+        for country in df[admin0_code].unique():
             df2 = df.copy()
-            df2 = df2[df2[admin0_code_name] == country]
+            df2 = df2[df2[admin0_code] == country]
 
             # Remove any columns where all null
             df2 = df2.dropna(axis=1, how="all")
