@@ -13,11 +13,28 @@ paths:
         the best match found.
       operationId: get_memory
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/getmemory_run_body'
-        required: true
+              type: object
+              properties:
+                user_input:
+                  type: string
+                  description: The user input text
+                chat_history:
+                  type: string
+                  description: The chat history text
+                generate_intent:
+                  type: string
+                  description: Flag to indicate if intent should be generated
+                  enum:
+                    - "true"
+                    - "false"
+                  default: "true"
+              required:
+                - user_input
+                - chat_history
       responses:
         "200":
           description: Successful Response
@@ -59,19 +76,3 @@ components:
           title: Message
         type:
           title: Error Type
-    getmemory_run_body:
-      required:
-      - chat_history
-      - user_input
-      properties:
-        user_input:
-          title: User Input
-          description: The user input to search for in the memory.
-        chat_history:
-          title: Chat History
-          description: The chat history.
-        generate_intent:
-          title: Generate Intent
-          description: A flag to indicate whether to generate the intent from the
-            chat history.
-          default: true

@@ -12,9 +12,8 @@
     "url": "haa_datarecipes.yaml",
     "is_user_authenticated": false
   },
-  "params": {
-    "user_input": "what is the total population of Mali?",
-    "chat_history": "[]"
+  "data": {
+    "generate_intent": "true"
   },
   "logo_url": "",
   "contact_email": "Matthew@Datakind.org",
