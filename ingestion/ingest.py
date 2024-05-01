@@ -10,6 +10,27 @@ from sqlalchemy import create_engine
 
 APIS_CONFIG = "apis.config"
 
+# We use this to map column names to be the same in all files
+# Note that shapefile geopandas columns must be less than 10 characters
+# TODO, move this to API config
+admin0_code_name = "adm0_code"
+admin1_code_name = "adm1_code"
+admin2_code_name = "adm2_code"
+admin3_code_name = "adm3_code"
+col_map = {
+    "location_code": admin0_code_name,
+    "admin1_code": admin1_code_name,
+    "admin2_code": admin2_code_name,
+    "admin3_code": admin3_code_name,
+    "ADM0_PCODE": admin0_code_name,
+    "ADM1_PCODE": admin1_code_name,
+    "ADM2_PCODE": admin2_code_name,
+    "ADM3_PCODE": admin3_code_name,
+    "admin0Pcod": admin0_code_name,
+    "admin1Pcod": admin1_code_name,
+    "admin2Pcod": admin2_code_name,
+}
+
 def get_api_def(api):
 
     api_name = api["api_name"]
@@ -104,8 +125,6 @@ def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
 
             print(len(data), "Before DF")
             df = pd.DataFrame(data)
-            #df = map_code_cols(df, col_map)
-            #df = filter_hdx_df(df)
             print(df.shape[0], "After DF")
             file_name = f"{save_path}/{endpoint_clean}.csv"
             df.to_csv(file_name, index=False)
@@ -122,6 +141,9 @@ def read_apis_config():
         apis = json.load(f)
     return apis
 
+def is_running_in_docker():
+    return os.path.exists('/.dockerenv')
+
 def connect_to_db():
     """
     Connects to the PostgreSQL database using the environment variables for host, port, database, user, and password.
@@ -132,7 +154,11 @@ def connect_to_db():
 
     load_dotenv("../.env")
 
-    host = os.getenv("POSTGRES_DATA_HOST")
+    if is_running_in_docker():
+        host = os.getenv("POSTGRES_DATA_HOST")
+    else:
+        host = 'localhost'        
+
     host = 'localhost'
     port = os.getenv("POSTGRES_DATA_PORT")
     database = os.getenv("POSTGRES_DATA_DB")
@@ -187,6 +213,11 @@ def upload_csv_files(files_dir, conn, api_name):
     for f in datafiles:
         if f.endswith(".csv"):
             df = pd.read_csv(f"{files_dir}/{f}")
+            df = map_code_cols(df, col_map)
+            # TODO: This is a temporary workaround to account for HAPI having 
+            # aggregate and disaggregated data in the same tables, where the hierarchy differs by country
+            if api_name == "hapi":
+                df = filter_hdx_df(df)
             table = f"{api_name}_{sanitize_name(f)}"
             print(f"Creating table {table} from {f}")
             df.to_sql(table, conn, if_exists="replace")
@@ -224,6 +255,59 @@ def upload_shape_files(files_dir, conn):
     all_shapes.to_postgis("hdx_shape_files", conn, if_exists="replace")
 
 
+def map_code_cols(df, col_map):
+    """
+    Map columns in a DataFrame to a new set of column names.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame to be mapped.
+        col_map (dict): A dictionary containing the mapping of old column names to new column names.
+
+    Returns:
+        pandas.DataFrame: The mapped DataFrame.
+    """
+    for c in col_map:
+        if c in df.columns:
+            df.rename(columns={c: col_map[c]}, inplace=True)
+
+    return df
+
+def filter_hdx_df(df, **kwargs):
+    """
+    Filter a pandas DataFrame by removing columns where all values are null and removing rows where any value is null.
+    Hack to get around the fact HDX mixes total values in with disaggregated values in the API
+
+    Args:
+        df (pandas.DataFrame): The DataFrame to be filtered.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        pandas.DataFrame: The filtered DataFrame.
+    """
+    df_orig = df.copy()
+
+    if df.shape[0] == 0:
+        return df_orig
+
+    dfs = []
+    if admin0_code_name in df.columns:
+        for country in df[admin0_code_name].unique():
+            df2 = df.copy()
+            df2 = df2[df2[admin0_code_name] == country]
+
+            # Remove any columns where all null
+            df2 = df2.dropna(axis=1, how="all")
+
+            # Remove any rows where one of the values is null
+            df2 = df2.dropna(axis=0, how="any")
+
+            dfs.append(df.iloc[df2.index])
+
+        df = pd.concat(dfs)
+
+    return df
+
+
 def main():
     apis = read_apis_config()
     conn = connect_to_db()
@@ -238,7 +322,7 @@ def main():
         #download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path)
 
         # Upload CSV files to the database
-        #upload_csv_files(save_path, conn, api_name)
+        upload_csv_files(save_path, conn, api_name)
 
         # Upload metadata file here
 
