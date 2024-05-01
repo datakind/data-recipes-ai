@@ -9,10 +9,14 @@
   },
   "api": {
     "type": "openapi",
-    "url": "data_recipe_openapi.yaml",
+    "url": "haa_datarecipes.yaml",
     "is_user_authenticated": false
   },
+  "params": {
+    "user_input": "what is the total population of Mali?",
+    "chat_history": "[]"
+  },
   "logo_url": "",
-  "contact_email": "Jan.Peter@Datakind.org",
+  "contact_email": "Matthew@Datakind.org",
   "legal_info_url": "TBD"
 }

@@ -57,7 +57,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      x-openai-isConsequential: true
+      x-openai-isConsequential: false
 components:
   schemas:
     HTTPValidationError:
