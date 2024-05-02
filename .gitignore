@@ -8,3 +8,4 @@ images
 pgdata2
 tmp
 ingestion/api/hapi/*
+ingestion/api/hdx/*
