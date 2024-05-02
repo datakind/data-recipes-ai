@@ -1,0 +1,11 @@
+geoalchemy2==0.14.6
+geopandas==0.10.2 
+hdx-python-api==6.2.1
+hdx-python-country==3.6.4
+hdx-python-utilities==3.6.5
+psycopg2_binary==2.9.9
+python-dotenv==1.0.0
+pandas==1.5.3     
+requests==2.31.0
+sqlalchemy==2.0.29
+

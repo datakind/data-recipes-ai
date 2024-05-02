@@ -32,23 +32,30 @@ Robocorp AI Actions API - [http://localhost:3001/](http://localhost:3001/)
 
 TODO: This will be automated, but for now ...
 
-1. Initialize the DB connection by going to [http://localhost:4001/](http://localhost:4001/) and running action `init_postgres_connection` to set Recipes DB in Azure (TO DO will be changed once we finish ingestion folders)
 1. Got to  [chat app](http://localhost:3080/) and register a user on the login page
 2. Log in
-3. Select Assistants, choose Humanitarian AI Assistant (alpha) (Note: As this is still a work in progress, the names might change over time)
-4. Under actions, create a new action and use the function definition from [here](http://localhost:4001/openapi.json). You'll need to remove the comments at the top and change the host to be 'url' in 'servers' to be "http://actions:8080"
-5. Save the action
-6. Update the agent
+3. `docker exec -it haa-ingestion /bin/bash`
+4. `python3 ingest.py`
+5. Select Assistants, choose HDeXpert SQL
+6. Under actions, create a new action and use the function definition from [here](http://localhost:4001/openapi.json). You'll need to remove the comments at the top and change the host to be 'url' in 'servers' to be "http://actions:8080"
+7. Save the action
+8. Update the agent
 
 Note: You can reset Libre chat by removing contents of `ui/recipes_assistant_chat/data-node/`. This is sometimes neccesary due to a bug in specifying actions.
 
+## Reseting your environment
+
+If running locally, you can reset your environment - removing any data for your databases, which means re-registration - by running `./cleanuop.sh`.
+
 ## Testing connection to actions server
 
-1. `exec -it LibreChat /bin/sh`
-2. `curl -X POST -H "Content-Type: application/json" \
-    -d '{"dsn": "postgresql://username:password@host:port/database"}' \
-    "http://actions:8080/api/actions/postgresql-universal-actions/init-postgres-connection/run"` .... replacing with correct postgres credentials`
-
+1. `docker exec -it haa-libre-chat  /bin/sh`
+2. To test the SQL query action, run `curl -X POST -H "Content-Type: application/json" \
+    -d '{"query": "select 1"}' \
+    "http://actions:8080/api/actions/postgresql-universal-actions/execute-query/run"`
+3. To get get-memory action, run ... `curl -X POST -H "Content-Type: application/json" \
+    -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}' \
+    "http://actions:8080/api/actions/get-data-recipe-memory/get-memory/run"``
 
 ## Deploying to Azure
 
