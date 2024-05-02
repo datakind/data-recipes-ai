@@ -6,7 +6,11 @@ from urllib.parse import urlencode
 import sys
 import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
+import geopandas as gpd
+import shutil
+
+from shapefiles import download_hdx_boundaries
 
 APIS_CONFIG = "apis.config"
 
@@ -162,17 +166,15 @@ def connect_to_db():
     load_dotenv("../.env")
 
     if is_running_in_docker():
+        print("Running in Docker ...")
         host = os.getenv("POSTGRES_DATA_HOST")
     else:
         host = 'localhost'        
-
-    host = 'localhost'
     port = os.getenv("POSTGRES_DATA_PORT")
     database = os.getenv("POSTGRES_DATA_DB")
     user = os.getenv("POSTGRES_DATA_USER")
     password = os.getenv("POSTGRES_DATA_PASSWORD")
     conn_str = f"postgresql://{user}:{password}@{host}:{port}/{database}"
-    print(conn_str)
     try:
         conn = create_engine(conn_str)
         return conn
@@ -203,10 +205,31 @@ def sanitize_name(name):
     
     return table_name
 
-
-def upload_csv_files(files_dir, conn, api_name):
+def get_cols_string(table, conn):
     """
-    Uploads CSV files from a directory to a SQLite database.
+    Get the columns of a table as a string.
+
+    Args:
+        table (str): The table name.
+        conn (sqlalchemy.engine.base.Connection): The database connection object.
+
+    Returns:
+        str: The columns of the table as a string.
+    """
+    cols = ""
+    with conn.connect() as connection:
+        statement = text(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+        result = connection.execute(statement)
+        cols = result.fetchall()
+        cols_str = ""
+        for c in cols:
+            cols_str += f"{c[0]} ({c[1]}); "
+    return cols_str
+
+def upload_openapi_csv_files(files_dir, conn, api_name):
+    """
+    Uploads CSV files from a directory to Postgres. It assumes files_dir contains CSV files as
+    well as a metadata json file for each CSV file.
 
     Args:
         files_dir (str): The directory path where the CSV files are located.
@@ -217,6 +240,7 @@ def upload_csv_files(files_dir, conn, api_name):
         None
     """
     datafiles = os.listdir(files_dir)
+    table_metadata = []
     for f in datafiles:
         if f.endswith(".csv"):
             df = pd.read_csv(f"{files_dir}/{f}")
@@ -227,10 +251,37 @@ def upload_csv_files(files_dir, conn, api_name):
                 df = filter_hdx_df(df)
             table = f"{api_name}_{sanitize_name(f)}"
             print(f"Creating table {table} from {f}")
-            df.to_sql(table, conn, if_exists="replace")
+            df.to_sql(table, conn, if_exists="replace", index=False)
 
+            # Collate metadata 
+            meta_file = f"{files_dir}/{f.replace('.csv', '_meta.json')}"
+            if os.path.exists(meta_file):
+                with open(meta_file) as mf:
+                    meta = json.load(mf)
+                    r = {}
+                    r["api_name"] = api_name
+                    r["table_name"] = table
+                    r["summary"] = str(meta["get"]["tags"])
+                    r["columns"] = get_cols_string(table, conn)
+                    r["api_description"] = meta["get"]["summary"]
+                    if 'description' in meta["get"]:
+                        r["api_description"] += f' : {meta["get"]["description"]}' 
+                    r["api_definition"] = str(meta)  
+                    r["file_name"] = f
+                    table_metadata.append(r)
 
-def upload_shape_files(files_dir, conn):
+    # We could also use Postgres comments, but this is simpler for LLM agents for now
+    table_metadata = pd.DataFrame(table_metadata)
+    table_metadata.to_sql("table_metadata", conn, if_exists="replace", index=False)
+
+def empty_folder(folder):
+    for f in os.listdir(folder):
+        try:
+            os.remove(f"{folder}/{f}")
+        except IsADirectoryError:
+            shutil.rmtree(f"{folder}/{f}")
+
+def upload_hdx_shape_files(files_dir, conn):
     """
     Uploads shape files from a directory to a PostgreSQL database.
 
@@ -241,26 +292,27 @@ def upload_shape_files(files_dir, conn):
     Returns:
         None
     """
-    if not os.path.exists("./tmp"):
-        os.makedirs("./tmp")
-    else:
-        for f in os.listdir("./tmp"):
-            os.remove(f"./tmp/{f}")
-    for f in os.listdir(files_dir):
-        if f.endswith(".zip"):
-            print(f"Unzipping {f}")
-            os.system(f"unzip {files_dir}/{f} -d ./tmp")
+
+    shape_files_table = "hdx_shape_files"
+
     df_list = []
-    for f in os.listdir("./tmp"):
+    for f in os.listdir(files_dir):
         if f.endswith(".shp"):
-            df = gpd.read_file(f"./tmp/{f}")
+            df = gpd.read_file(f"{files_dir}/{f}")
             table = sanitize_name(f)
             print(f"Processing table {table} from {f}")
             df_list.append(df)
     all_shapes = pd.concat(df_list, ignore_index=True)
     print(all_shapes.shape)
-    all_shapes.to_postgis("hdx_shape_files", conn, if_exists="replace")
+    all_shapes.to_postgis(shape_files_table, conn, if_exists="replace")
 
+    # Updatre
+    cols = get_cols_string(shape_files_table, conn)
+
+    with conn.connect() as connection:
+        statement = text(f"INSERT INTO table_metadata (api_name, table_name, summary, columns, api_description, api_definition, file_name) VALUES ('hdx', '{shape_files_table}', \
+                         'HDX Shape Files', '{cols}', 'HDX Shape Files', 'HDX Shape Files', 'HDX Shape Files')")
+        connection.execute(statement)
 
 def map_code_cols(df, col_map):
     """
@@ -319,6 +371,7 @@ def main():
     apis = read_apis_config()
     conn = connect_to_db()
     for api in apis:
+
         openapi_def = get_api_def(api)
         api_name = api["api_name"]
         save_path = f'./api/{api_name}/'
@@ -326,12 +379,18 @@ def main():
         excluded_endpoints = api["excluded_endpoints"]
 
         # Extract data from remote APIs which are defined in apis.config
-        #download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path)
+        download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path)
 
-        # Upload CSV files to the database
-        upload_csv_files(save_path, conn, api_name)
+        # Download shapefiles from HDX
+        download_hdx_boundaries(datafile="./api/hapi/api_v1_themes_population.csv", \
+                                    datafile_country_col='location_code', target_dir="./api/hdx/",\
+                                    col_map=col_map, map_code_cols=map_code_cols)
 
-        # Upload metadata file here
+        # Upload CSV files to the database, with supporting metadata
+        upload_openapi_csv_files(save_path, conn, api_name)
+
+        # Upload shapefiles to the database
+        upload_hdx_shape_files('./api/hdx', conn)
 
 if __name__ == "__main__":
     main()

@@ -62,7 +62,7 @@ services:
       - ./ui/recipes_assistant_chat/meili_data_v1.7:/meili_data
   datadb:
     #platform: linux/amd64
-    image: ankane/pgvector:latest
+    image: postgis/postgis:12-3.4
     container_name: haa-datadb
     environment:
       POSTGRES_DB: ${POSTGRES_DATA_DB}
@@ -124,6 +124,21 @@ services:
       - 4001:8087
     env_file:
       - .env
+  ingestion:
+    #platform: linux/amd64
+    container_name: haa-ingestion
+    build:
+      context: .
+      dockerfile: ./ingestion/Dockerfile
+    depends_on:
+      - datadb
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - type: bind
+        source: ./ingestion
+        target: /app
 
 volumes:
   pgdata2:
