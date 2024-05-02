@@ -76,4 +76,12 @@ Note:
 
 ## Databases
 
-When running in Azure it is sueful to use remote databases, at least for the mongodb instance so that user logins are retained with each release. For example, a databse can be configured by following [these instructions](https://docs.librechat.ai/install/configuration/mongodb.html). If doing this, then docker-compose-azure.yml in Azure can have the mongo DB section removed, and any instance of the Mongo URL used by other containers updated with the cloud connection string accordingly.
+When running in Azure it is useful to use remote databases, at least for the mongodb instance so that user logins are retained with each release. For example, a databse can be configured by following [these instructions](https://docs.librechat.ai/install/configuration/mongodb.html). If doing this, then docker-compose-azure.yml in Azure can have the mongo DB section removed, and any instance of the Mongo URL used by other containers updated with the cloud connection string accordingly.
+
+## LibraChat Plugins
+
+The robocorp get_memory action has been turned into a [plugin] (https://docs.librechat.ai/features/plugins/introduction.html) to be used in LibraChat and the following files serve as a template to create additional plugins for other robocorp actions:
+- [haa_datarecipes.yaml] (./ui/recipes_assistant_chat/tools/.well-known/openapi/haa_datarecipes.yaml): This is the OpenAPI spec of the robocorp action (i.e. the endpoint of the robocorp action server). The openapi.json file (available on localhost:3001 when the containers are up and running) should contain all necessary information of the endpoint and can be easily converted into a openapi.yaml file. Please note that robocorp expects inputs to the action in the body of the API call. For the docker setup, the url can be set to http://actions:8080 as all containers are running in the same network, but this has to be adjusted for the production environment. 
+- [haa_datarecipes.json] (./ui/recipes_assistant_chat/tools/haa_datarecipes.json): The plugin manifest file, describing the action for the LLM to determine when to call it. For local development, the open api spec file has to be added to the [openapi directory] (./ui/recipes_assistant_chat/tools/.well-known/openapi/) and can then be referenced as the url in the manifest.
+
+As the robocorp actions might differ slightly, this can lead to differing requirements in the openapi spec, and manifest files. The [LibraChat documentation] (https://docs.librechat.ai/features/plugins/chatgpt_plugins_openapi.html) provides tips and examples to form the files correctly. 
