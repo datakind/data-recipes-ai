@@ -329,7 +329,7 @@ def get_matching_candidates(intent, mem_type, db, cutoff=None):
     if cutoff is None:
         cutoff = similarity_cutoff[mem_type]
     print(f"\n\n======= Getting matches for {mem_type} and intent: {intent}\n\n")
-    docs = db[mem_type].similarity_search_with_score(intent, k=10)
+    docs = db[mem_type].similarity_search_with_score(intent, k=3)
     matches = []
     for d in docs:
         r = {}
@@ -395,7 +395,7 @@ def generate_intent_from_history(chat_history: list, remove_code: bool = True) -
     return intent["intent"]
 
 
-@action(is_consequential=True)
+@action()
 def get_memory(user_input, chat_history, generate_intent=True) -> str:
     """
     Performs a search in the memory for a given intent and returns the best match found.

@@ -37,6 +37,7 @@ services:
         target: /app/.env
       - ./ui/recipes_assistant_chat/images:/app/client/public/images
       - ./ui/recipes_assistant_chat/logs:/app/api/logs
+      - ./ui/recipes_assistant_chat/tools:/app/api/app/clients/tools
       - type: bind
         source: ./ui/recipes_assistant_chat/librechat.yaml
         target: /app/librechat.yaml

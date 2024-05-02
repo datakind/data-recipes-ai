@@ -1,0 +1,180 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Sema4.ai Action Server",
+      "version": "0.1.0",
+      "description": "This is the Sema4.ai Action Server API. It allows you to execute actions on the Sema4.ai platform."
+    },
+    "servers": [
+      {
+        "url": "http://actions:8080"
+      }
+    ],
+    "paths": {
+      "/api/actions/postgresql-universal-actions/execute-query/run": {
+        "post": {
+          "summary": "Execute Query",
+          "description": "Executes a given SQL query on a PostgreSQL database connection ensured to be read-only.",
+          "operationId": "execute_query",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "query": {
+                      "type": "string",
+                      "title": "Query",
+                      "description": "The SQL query to be executed. Only read queries are allowed."
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "query"
+                  ]
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string",
+                    "title": "Response Execute Query",
+                    "description": "The result of the query or an error message."
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/actions/get-data-recipe-memory/get-memory/run": {
+        "post": {
+          "summary": "Get Memory",
+          "description": "Determines the intent based on a user_input (latest chat message), and chat_history, performs a search in the memory database, and returns the best match found.",
+          "operationId": "get_memory",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "user_input": {
+                      "type": "string",
+                      "title": "User Input",
+                      "description": "The user input to search for in the memory."
+                    },
+                    "chat_history": {
+                      "type": "string",
+                      "title": "Chat History",
+                      "description": "The chat history."
+                    },
+                    "generate_intent": {
+                      "type": "string",
+                      "title": "Generate Intent",
+                      "description": "A flag to indicate whether to generate the intent from the chat history.",
+                      "default": true
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "user_input",
+                    "chat_history"
+                  ]
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string",
+                    "title": "Response Get Memory",
+                    "description": "The 3 best matches found in the memory."
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          },
+          "x-openai-isConsequential": true
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "HTTPValidationError": {
+          "properties": {
+            "errors": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationError"
+              },
+              "type": "array",
+              "title": "Errors"
+            }
+          },
+          "type": "object",
+          "title": "HTTPValidationError"
+        },
+        "ValidationError": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Location"
+            },
+            "msg": {
+              "type": "string",
+              "title": "Message"
+            },
+            "type": {
+              "type": "string",
+              "title": "Error Type"
+            }
+          },
+          "type": "object",
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "title": "ValidationError"
+        }
+      }
+    }
+  }
