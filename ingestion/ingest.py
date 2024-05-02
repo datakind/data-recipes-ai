@@ -306,13 +306,14 @@ def upload_hdx_shape_files(files_dir, conn):
     print(all_shapes.shape)
     all_shapes.to_postgis(shape_files_table, conn, if_exists="replace")
 
-    # Updatre
+    
     cols = get_cols_string(shape_files_table, conn)
-
     with conn.connect() as connection:
+        print(f"Creating metadata for {shape_files_table}")
         statement = text(f"INSERT INTO table_metadata (api_name, table_name, summary, columns, api_description, api_definition, file_name) VALUES ('hdx', '{shape_files_table}', \
                          'HDX Shape Files', '{cols}', 'HDX Shape Files', 'HDX Shape Files', 'HDX Shape Files')")
         connection.execute(statement)
+        connection.commit()
 
 def map_code_cols(df, col_map):
     """
