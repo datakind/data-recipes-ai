@@ -382,16 +382,16 @@ def main():
         # Extract data from remote APIs which are defined in apis.config
         download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path)
 
-        # Download shapefiles from HDX
-        download_hdx_boundaries(datafile="./api/hapi/api_v1_themes_population.csv", \
-                                    datafile_country_col='location_code', target_dir="./api/hdx/",\
-                                    col_map=col_map, map_code_cols=map_code_cols)
-
         # Upload CSV files to the database, with supporting metadata
         upload_openapi_csv_files(save_path, conn, api_name)
 
-        # Upload shapefiles to the database
-        upload_hdx_shape_files('./api/hdx', conn)
+    # Download shapefiles from HDX
+    download_hdx_boundaries(datafile="./api/hapi/api_v1_themes_population.csv", \
+                                datafile_country_col='location_code', target_dir="./api/hdx/",\
+                                col_map=col_map, map_code_cols=map_code_cols)
+    
+    # Upload shapefiles to the database
+    upload_hdx_shape_files('./api/hdx', conn)
 
 if __name__ == "__main__":
     main()
