@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Humanitarian Data Assistant",
+  "name_for_model": "haa_data_assistant",
+  "description_for_human": "Executes a given SQL query on a PostgreSQL database connection ensured to be read-only.",
+  "description_for_model": "Executes a given SQL query on a PostgreSQL database connection ensured to be read-only.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "haa_data_assistant.yaml",
+    "is_user_authenticated": false
+  },
+  "logo_url": "",
+  "contact_email": "Matthew@Datakind.org",
+  "legal_info_url": "TBD"
+}
