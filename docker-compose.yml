@@ -63,7 +63,7 @@ services:
       - ./ui/recipes_assistant_chat/meili_data_v1.7:/meili_data
   datadb:
     #platform: linux/amd64
-    image: ankane/pgvector:latest
+    image: postgis/postgis:12-3.4
     container_name: haa-datadb
     environment:
       POSTGRES_DB: ${POSTGRES_DATA_DB}
@@ -79,7 +79,7 @@ services:
   recipedb:
     #platform: linux/amd64
     image: ankane/pgvector:latest
-    container_name: haa-datarecipes
+    container_name: haa-datarecipesdb
     environment:
       POSTGRES_DB: ${POSTGRES_RECIPE_DB}
       POSTGRES_USER: ${POSTGRES_RECIPE_USER}
@@ -134,6 +134,31 @@ services:
     volumes:
       - shared-data:/usr/share/nginx/html
     restart: always
+  ingestion:
+    #platform: linux/amd64
+    container_name: haa-ingestion
+    build:
+      context: .
+      dockerfile: ./ingestion/Dockerfile
+    depends_on:
+      - datadb
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - type: bind
+        source: ./ingestion
+        target: /app
+  code-interpretor:
+    image: ghcr.io/iamgreggarcia/codesphera:latest
+    container_name: haa-code-interpretor
+    build:
+      context: code-interpretor
+    ports:
+      - "3333:3333"
+    volumes:
+      - ./code-interpretor/static:/app/static
+    command: python3 -c "import localserver.main; localserver.main.start()"
 
 volumes:
   pgdata2:

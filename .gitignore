@@ -6,3 +6,7 @@ logs
 meili_data_v1.7
 pgdata2
 tmp
+ingestion/api/hapi/*
+ingestion/api/hdx/*
+.vscode
+code-interpretor/static/*
