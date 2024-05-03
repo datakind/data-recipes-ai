@@ -10,3 +10,4 @@ tmp
 ingestion/api/hapi/*
 ingestion/api/hdx/*
 .vscode
+code-interpretor/static/*
