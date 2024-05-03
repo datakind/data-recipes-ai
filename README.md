@@ -80,7 +80,7 @@ When running in Azure it is useful to use remote databases, at least for the mon
 
 ## LibraChat Plugins
 
-With a defined set of functionalities, [plugins] (https://docs.librechat.ai/features/plugins/introduction.html) act as tools for the LLM application to use and extend their capabilities.
+With a defined set of functionalities, [plugins](https://docs.librechat.ai/features/plugins/introduction.html) act as tools for the LLM application to use and extend their capabilities.
 
 To create an additional plugin, perform the following steps:
 1. Create a new robocorp action in a new folder under [actions_plugins](./actions/actions_plugins/). You can reference the [recipe-server](./actions/actions_plugins/recipe-server/) action to see the relevant files, etc. 
