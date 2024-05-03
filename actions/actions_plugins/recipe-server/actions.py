@@ -426,8 +426,7 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
         response_text = result["metadata"]["response_text"]
         response_image = result["metadata"]["response_image"]
         if response_image is not None and response_image != "":
-            # result = process_image(response_image)
-            print(result)
+            result = f"![Visualization](http://localhost:9999/{result['metadata']['custom_id']}.png"
         else:
             result = response_text
     else:

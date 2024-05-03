@@ -3,7 +3,7 @@
   "name_for_human": "Humanitarian Data Recipes",
   "name_for_model": "haa_datarecipes",
   "description_for_human": "Retrieves memories that have been created by other users, quality checked by administrators, and saved into a database.",
-  "description_for_model": "Retrieves memories that have been created by other users, quality checked by administrators, and saved into a database. Memories can either be text, or images.",
+  "description_for_model": "Retrieves memories that have been created by other users, quality checked by administrators, and saved into a database.",
   "auth": {
     "type": "none"
   },
