@@ -144,7 +144,8 @@ services:
     image: ghcr.io/iamgreggarcia/codesphera:latest
     container_name: haa-code-interpretor
     build:
-      context: code-interpretor
+      context: .
+      dockerfile: ./code-interpretor/Dockerfile
     ports:
       - "3333:3333"
     volumes:
