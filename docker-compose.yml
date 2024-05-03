@@ -125,13 +125,16 @@ services:
       - 4001:8087
     env_file:
       - .env
+    volumes:
+      - shared-data:/action-server/actions/actions_plugins/recipe-server/images
   nginx:
     image: nginx:latest
     ports:
       - "9999:80"
     volumes:
-      - ./actions/actions_plugins/recipe-server/images:/usr/share/nginx/html
+      - shared-data:/usr/share/nginx/html
     restart: always
 
 volumes:
   pgdata2:
+  shared-data:

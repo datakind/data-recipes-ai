@@ -3,7 +3,9 @@ import json
 import logging
 import sys
 import os
-
+import base64
+from PIL import Image
+import io
 from langchain.schema import HumanMessage, SystemMessage
 from langchain_community.vectorstores.pgvector import PGVector
 from langchain_openai import (
@@ -100,7 +102,9 @@ conn_params = {
     "OPENAI_API_VERSION": os.getenv("OPENAI_API_VERSION_MEMORY"),
     "BASE_URL": os.getenv("BASE_URL_MEMORY"),
     "MODEL": os.getenv("MODEL"),
-    "OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME": os.getenv("OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME"),
+    "OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME": os.getenv(
+        "OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME"
+    ),
     "POSTGRES_DB": os.getenv("POSTGRES_RECIPE_DB"),
     "POSTGRES_USER": os.getenv("POSTGRES_RECIPE_USER"),
     "POSTGRES_HOST": os.getenv("POSTGRES_RECIPE_HOST"),
@@ -111,6 +115,36 @@ conn_params = {
 
 # Setting db to None so that we can initialize it in the first invocation
 db = None
+
+
+def process_image(encoded_string):
+    """
+    Takes a base64 encoded string of a picture, decodes it, and saves it as a PNG file.
+
+    Args:
+    encoded_string (str): Base64 encoded string of the image.
+
+    Returns:
+    str: Full path to the saved image file.
+    """
+
+    print("A visual memory was found. Processing image...")
+
+    # Decode the base64 string
+    image_data = base64.b64decode(encoded_string)
+
+    # Convert binary data to image
+    image = Image.open(io.BytesIO(image_data))
+
+    # Create the full path for saving the image
+    full_path = os.path.join("./images", "memory_image.png")
+
+    # Save the image
+    image.save(full_path, "PNG")
+
+    print("Image processed and saved successfully.")
+
+    return full_path
 
 
 def call_llm(instructions, prompt, chat):
@@ -420,13 +454,13 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
         user_input = generate_intent_from_history(history_list)
         # turn user_input into a proper json record
         user_input = json.dumps(user_input)
-    print(f"\n\n\n\n+++++++++User intent: {user_input}\n\n\n\n")
     memory_found, result = get_recipe_memory(user_input)
     if memory_found is True:
         response_text = result["metadata"]["response_text"]
         response_image = result["metadata"]["response_image"]
         if response_image is not None and response_image != "":
-            result = f"![Visualization](http://localhost:9999/{result['metadata']['custom_id']}.png )"
+            process_image(response_image.replace("data:image/png;base64,", ""))
+            result = "http://localhost:9999/memory_image.png"
         else:
             result = response_text
     else:
