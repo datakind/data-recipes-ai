@@ -47,6 +47,8 @@ endpoints:
       models:
         gpt-3.5-turbo:
           deploymentName: "gpt-35-turbo"
+        gpt-3.5-turbo-16k:
+          deploymentName: "gpt-35-turbo-16k"
         gpt-4:
           deploymentName: "gpt-4"
         gpt-4-turbo:
