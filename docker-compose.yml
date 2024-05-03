@@ -125,6 +125,15 @@ services:
       - 4001:8087
     env_file:
       - .env
+    volumes:
+      - shared-data:/action-server/actions/actions_plugins/recipe-server/images
+  nginx:
+    image: nginx:latest
+    ports:
+      - "9999:80"
+    volumes:
+      - shared-data:/usr/share/nginx/html
+    restart: always
   ingestion:
     #platform: linux/amd64
     container_name: haa-ingestion
@@ -153,3 +162,4 @@ services:
 
 volumes:
   pgdata2:
+  shared-data:
