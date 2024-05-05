@@ -18,9 +18,9 @@ import os
 client = docker.DockerClient(base_url='unix:///Users/matthewharris/.docker/run/docker.sock ')
 
 container_registry = "dkdsprototypesreg01.azurecr.io"
+# Note that the DB images are all changed to be DBs in Azure.
 tags = {
     "humanitarian_ai_assistant-api":              [f"{container_registry}/containergroup","api"],
-    "mongo":                                      [f"{container_registry}/containergroup","mongodb"],
     "getmeili/meilisearch:v1.7.3":                [f"{container_registry}/containergroup","meilisearch"],
     "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest":      [f"{container_registry}/containergroup","rag_api"],
     "humanitarian_ai_assistant-actions":          [f"{container_registry}/containergroup","actions"],
