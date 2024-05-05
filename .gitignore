@@ -11,3 +11,4 @@ ingestion/api/hdx/*
 .vscode
 code-interpretor/static/*
 actions/actions_plugins/recipe-server/images
+__pycache__
