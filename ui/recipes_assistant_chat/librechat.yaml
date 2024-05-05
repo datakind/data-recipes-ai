@@ -40,7 +40,7 @@ endpoints:
     assistants: true
     groups:
     - group: "region-eastus2"
-      apiKey: "${AZURE_API_KEY}"
+      apiKey: "${AZURE_API_KEY_ENV}"
       instanceName: "dkopenai2"
       version: "2024-02-15-preview"
       assistants: true
