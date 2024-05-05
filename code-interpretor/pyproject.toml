@@ -33,6 +33,7 @@ openpyxl = "^3.1.2"
 scikit-learn = "^1.2.2"
 geoalchemy2 = "^0.14.6"
 geopandas = "^0.10.2" 
+psycopg2_binary = "^2.9.9"
 
 
 [tool.poetry.group.dev.dependencies]
