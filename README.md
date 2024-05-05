@@ -33,6 +33,11 @@ Robocorp AI Actions API - [http://localhost:3001/](http://localhost:3001/)
 TODO: This will be automated, but for now ...
 
 1. Got to  [chat app](http://localhost:3080/) and register a user on the login page
+2. Select "Plugins' endpoint at top, then in the plugin box go to store and activate 
+   - Humanitariuan Data Assistant
+   - Humanitarian Data Recipes
+   - Code sherpa, when asked enter URL http://code-interpretor:3333
+3. Populate system prompts, see `./assistant/recipes_assistant/prompts`, build presets
 2. Log in
 3. `docker exec -it haa-ingestion /bin/bash`
 4. `python3 ingest.py`
@@ -71,11 +76,12 @@ One thing to mention on an Azure deploy, it that doesn't get pushed to the web a
 
 ### On a Mac
 
-Make dure docker has 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon' set in settings if using a MAC silicon chip. The deploy script can then build images that wwok on Azure then revert to images that work on your Mac.
+Make sure docker has 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon' set in settings if using a MAC silicon chip. The deploy script can then build images that wwok on Azure then 
+revert to images that work on your Mac.
 
 Note: 
 
-`docker-compose-azure.yml` is the configurtation used in the deployment center screen on the web app
+`docker-compose-azure.yml` is the configutation used in the deployment center screen on the web app
 `docker-compose.yml` is used for building locally
 
 ## Databases

@@ -43,7 +43,7 @@ services:
         target: /app/librechat.yaml
   mongodb:
     #platform: linux/amd64
-    container_name: haa-mongodb
+    container_name: haa-libre-chat-mongodb
     image: mongo
     restart: always
     user: "${UID}:${GID}"
@@ -52,7 +52,7 @@ services:
     command: mongod --noauth
   meilisearch:
     #platform: linux/amd64
-    container_name: haa-meilisearch
+    container_name: haa-libre-chat-meilisearch
     image: getmeili/meilisearch:v1.7.3
     restart: always
     user: "${UID}:${GID}"
@@ -61,40 +61,10 @@ services:
       MEILI_NO_ANALYTICS: true
     volumes:
       - ./ui/recipes_assistant_chat/meili_data_v1.7:/meili_data
-  datadb:
-    #platform: linux/amd64
-    image: postgis/postgis:12-3.4
-    container_name: haa-datadb
-    environment:
-      POSTGRES_DB: ${POSTGRES_DATA_DB}
-      POSTGRES_USER: ${POSTGRES_DATA_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
-    restart: always
-    ports:
-      - 5432:5432
-    volumes:
-      - ./ui/recipes_assistant_chat/pgdata2:/var/lib/postgresql/data
-    env_file:
-      - .env
-  recipedb:
-    #platform: linux/amd64
-    image: ankane/pgvector:latest
-    container_name: haa-datarecipesdb
-    environment:
-      POSTGRES_DB: ${POSTGRES_RECIPE_DB}
-      POSTGRES_USER: ${POSTGRES_RECIPE_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
-    restart: always
-    ports:
-      - 5439:5432
-    volumes:
-      - ./actions/actions_plugins/recipe-server/db/:/docker-entrypoint-initdb.d
-    env_file:
-      - .env
   rag-api:
     #platform: linux/amd64
     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
-    container_name: haa-rag-api
+    container_name: haa-libre-chat-rag-api
     environment:
       DB_HOST: datadb
       POSTGRES_DB: ${POSTGRES_DATA_DB}
@@ -107,7 +77,53 @@ services:
       AZURE_OPENAI_ENDPOINT: https://dkopenai2.openai.azure.com/
     restart: always
     depends_on:
-      - datadb
+      - docsdb
+    env_file:
+      - .env
+  datadb:
+    #platform: linux/amd64
+    image: postgis/postgis:12-3.4
+    container_name: haa-datadb
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATA_DB}
+      POSTGRES_USER: ${POSTGRES_DATA_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
+    restart: always
+    ports:
+      - 5433:5432
+    volumes:
+      - ./ui/recipes_assistant_chat/datadb:/var/lib/postgresql/data
+    env_file:
+      - .env
+  docsdb:
+    #platform: linux/amd64
+    image: ankane/pgvector:latest
+    container_name: haa-docsdb
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATA_DB}
+      POSTGRES_USER: ${POSTGRES_DATA_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
+    restart: always
+    ports:
+      - 5434:5432
+    volumes:
+      - ./ui/recipes_assistant_chat/docsdb:/var/lib/postgresql/data
+    env_file:
+      - .env
+  recipedb:
+    #platform: linux/amd64
+    image: ankane/pgvector:latest
+    container_name: haa-datarecipesdb
+    environment:
+      POSTGRES_DB: ${POSTGRES_RECIPE_DB}
+      POSTGRES_USER: ${POSTGRES_RECIPE_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
+    restart: always
+    ports:
+      - 5435:5432
+    volumes:
+      - ./actions/actions_plugins/recipe-server/db/:/docker-entrypoint-initdb.d
+      - ./ui/recipes_assistant_chat/recipesdb:/var/lib/postgresql/data
     env_file:
       - .env
   actions:
