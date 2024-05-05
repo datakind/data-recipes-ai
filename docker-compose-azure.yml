@@ -15,18 +15,10 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       HOST: 0.0.0.0
-      MONGO_URI: mongodb://mongodb:27017/LibreChat
+      MONGO_URI: mongodb+srv://matthew:c5tZja0psz5Qo7dC@hum-ai-libre-chat.mcyk70v.mongodb.net/?retryWrites=true&w=majority&appName=hum-ai-libre-chat
       MEILI_HOST: http://meilisearch:7700
       RAG_PORT: 8000
       RAG_API_URL: http://rag_api:8000
-  mongodb:
-    image: "dkdsprototypesreg01.azurecr.io/containergroup:mongodb"
-    platform: "linux/amd64"
-    restart: always
-    user: "${UID}:${GID}"
-    command: mongod --noauth
-    volumes:
-      - ${WEBAPP_STORAGE_HOME}/data/mongodb:/data/db
   meilisearch:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:meilisearch"
     #platform: "linux/amd64"
@@ -35,32 +27,48 @@ services:
     environment:
       MEILI_HOST: http://meilisearch:7700
       MEILI_NO_ANALYTICS: true
-    volumes:
-      - ${WEBAPP_STORAGE_HOME}/data/meili_data:/meili_data
-  vectordb:
-    image: "dkdsprototypesreg01.azurecr.io/containergroup:vectordb"
-    platform: "linux/amd64"
-    environment:
-      POSTGRES_DB: mydatabase
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-    restart: always
-    volumes:
-      - ${WEBAPP_STORAGE_HOME}/data/vectordb:/var/lib/postgresql/data
+  #vectordb:
+  #  image: "dkdsprototypesreg01.azurecr.io/containergroup:vectordb"
+  #  platform: "linux/amd64"
+  #  environment:
+  #    POSTGRES_DB: mydatabase
+  #    POSTGRES_USER: myuser
+  #    POSTGRES_PASSWORD: mypassword
+  #  restart: always
   rag_api:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:rag_api"
     platform: "linux/amd64"
     environment:
-      DB_HOST: vectordb
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
+      DB: hdexpert-alpha
+      DB_PORT: 5432
+      DB_HOST: postgres-prototypes.postgres.database.azure.com
+      POSTGRES_USER: bots_rule3
+      POSTGRES_PASSWORD: 96__Mou9!2Yl
       RAG_PORT: 8000
     restart: always
-    depends_on:
-      - vectordb
   actions:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:actions"
     platform: linux/amd64
+    volumes:
+      - shared-data:/action-server/actions/actions_plugins/recipe-server/images
+  init:
+    image: dkdsprototypesreg01.azurecr.io/containergroup:init
+    volumes:
+      - shared-data:/data
+    command: "sh -c 'chown -R 1000:1000 /data && chmod -R 775 /data'"
+    user: "root"
+    depends_on:
+      - actions
+  nginx:
+    image: dkdsprototypesreg01.azurecr.io/containergroup:nginx
+    volumes:
+      - shared-data:/usr/share/nginx/html
+    restart: always
+  code-interpretor:
+    image: dkdsprototypesreg01.azurecr.io/containergroup:code-interpreter
+    volumes:
+      - ./code-interpretor/static:/app/static
+    command: python3 -c "import localserver.main; localserver.main.start()"
 
 volumes:
-  pgdata2:
+  shared-data:

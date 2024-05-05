@@ -19,12 +19,14 @@ client = docker.DockerClient(base_url='unix:///Users/matthewharris/.docker/run/d
 
 container_registry = "dkdsprototypesreg01.azurecr.io"
 tags = {
-    "ankane/pgvector:latest":     [f"{container_registry}/containergroup","vectordb"],
-    "getmeili/meilisearch:v1.7.3":  [f"{container_registry}/containergroup","meilisearch"],
-    "mongo":      [f"{container_registry}/containergroup","mongodb"],
-    "humanitarian_ai_assistant-actions":      [f"{container_registry}/containergroup","actions"],
-    "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest":      [f"{container_registry}/containergroup","rag_api"],
     "humanitarian_ai_assistant-api":              [f"{container_registry}/containergroup","api"],
+    "mongo":                                      [f"{container_registry}/containergroup","mongodb"],
+    "getmeili/meilisearch:v1.7.3":                [f"{container_registry}/containergroup","meilisearch"],
+    "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest":      [f"{container_registry}/containergroup","rag_api"],
+    "humanitarian_ai_assistant-actions":          [f"{container_registry}/containergroup","actions"],
+    "busybox":                                    [f"{container_registry}/containergroup","init"],
+    "nginx:latest":                               [f"{container_registry}/containergroup","nginx"],
+    "ghcr.io/iamgreggarcia/codesphera:latest":    [f"{container_registry}/containergroup","code-interpreter"],
 }
 docker_compose_file = "docker-compose.yml"
 azure_platform = "linux/amd64"
