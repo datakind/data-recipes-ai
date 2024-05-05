@@ -12,3 +12,6 @@ ingestion/api/hdx/*
 code-interpretor/static/*
 actions/actions_plugins/recipe-server/images
 __pycache__
+ui/recipes_assistant_chat/datadb
+ui/recipes_assistant_chat/docsdb
+ui/recipes_assistant_chat/recipesdb

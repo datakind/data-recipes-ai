@@ -123,6 +123,8 @@ def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
         output = []
         while len(output) > 0 or offset == 0:
             output = get_api_data(url, {'limit':limit, 'offset': offset}) 
+            if 'no data' in output:
+                break
             print(output)
             data = data + output
             print(len(data), len(output))
