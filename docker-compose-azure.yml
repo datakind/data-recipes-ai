@@ -39,7 +39,7 @@ services:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:rag_api"
     platform: "linux/amd64"
     environment:
-      DB: hdexpert-alpha
+      POSTGRES_DB: hdexpert-alpha
       DB_PORT: 5432
       DB_HOST: postgres-prototypes.postgres.database.azure.com
       POSTGRES_USER: bots_rule3
