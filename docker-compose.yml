@@ -113,6 +113,7 @@ services:
   actions:
     platform: linux/amd64
     container_name: haa-robo-actions
+    user: "1000:1000"
     build:
       context: .
       dockerfile: ./actions/Dockerfile
@@ -127,8 +128,19 @@ services:
       - .env
     volumes:
       - shared-data:/action-server/actions/actions_plugins/recipe-server/images
+  # Init container 
+  init:
+    image: busybox
+    container_name: haa-init
+    volumes:
+      - shared-data:/data
+    command: "sh -c 'chown -R 1000:1000 /data && chmod -R 775 /data'"
+    user: "root"
+    depends_on:
+      - actions
   nginx:
     image: nginx:latest
+    container_name: haa-nginx-images
     ports:
       - "9999:80"
     volumes:

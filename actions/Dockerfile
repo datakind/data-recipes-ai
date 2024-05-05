@@ -27,15 +27,18 @@ ADD https://downloads.robocorp.com/action-server/releases/latest/linux64/action-
 RUN chmod +x /usr/local/bin/action-server
 
 COPY ./actions .
+
+RUN mkdir -p /action-server/actions/actions_plugins/recipe-server/images
+
 RUN chown -R as-user:as-user /action-server
+
+RUN chown -R as-user:as-user /action-server/actions/actions_plugins/recipe-server/images
 
 USER as-user
 
 ARG DATA_DB_CONN_STRING
 ENV DATA_DB_CONN_STRING=$DATA_DB_CONN_STRING
 
-# Load all actions
-# RUN action-server import --datadir=/action-server/datadir
 # Load individually
 RUN action-server import --dir=./actions_plugins/postgres-universal --datadir=/action-server/datadir
 RUN action-server import --dir=./actions_plugins/recipe-server --datadir=/action-server/datadir
