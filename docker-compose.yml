@@ -44,7 +44,7 @@ services:
   mongodb:
     #platform: linux/amd64
     container_name: haa-libre-chat-mongodb
-    image: mongo
+    image: mongo:4.4.6
     restart: always
     user: "${UID}:${GID}"
     volumes:
