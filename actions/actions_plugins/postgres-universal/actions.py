@@ -5,7 +5,7 @@ from robocorp.actions import action
 
 CONNECTION_FILE_PATH = "postgres_data_connection.json"
 
-MAX_CHARS_TOT = 10000
+MAX_CHARS_TOT = 100000
 
 
 class ReadOnlyConnection:
