@@ -33,6 +33,7 @@ registration:
 
 # Definition of custom endpoints
 endpoints:
+  plugins: true
   azureOpenAI:
     titleModel: "gpt-4"
     titleConvo: true
