@@ -66,15 +66,16 @@ services:
     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
     container_name: haa-libre-chat-rag-api
     environment:
-      DB_HOST: datadb
+      DB_HOST: docsdb
       POSTGRES_DB: ${POSTGRES_DATA_DB}
       POSTGRES_USER: ${POSTGRES_DATA_USER}
       POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
       RAG_PORT: ${RAG_PORT:-8000}
-      RAG_OPENAI_API_KEY: ${AZURE_API_KEY}
+      RAG_AZURE_OPENAI_API_KEY: ${AZURE_API_KEY_ENV}
       EMBEDDINGS_PROVIDER: azure
       EMBEDDINGS_MODEL: text-embedding-ada-002
       AZURE_OPENAI_ENDPOINT: https://dkopenai2.openai.azure.com/
+      DEBUG_RAG_API: "True"
     restart: always
     depends_on:
       - docsdb
