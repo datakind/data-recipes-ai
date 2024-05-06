@@ -31,24 +31,24 @@ services:
       MEILI_HOST: http://meilisearch:7700
       RAG_PORT: ${RAG_PORT:-8000}
       RAG_API_URL: http://rag-api:${RAG_PORT:-8000}
-    volumes:
-      - type: bind
-        source: ./.env
-        target: /app/.env
-      - ./ui/recipes_assistant_chat/images:/app/client/public/images
-      - ./ui/recipes_assistant_chat/logs:/app/api/logs
-      - ./ui/recipes_assistant_chat/tools:/app/api/app/clients/tools
-      - type: bind
-        source: ./ui/recipes_assistant_chat/librechat.yaml
-        target: /app/librechat.yaml
+    #volumes:
+      #- type: bind
+      #  source: ./.env
+      #  target: /app/.env
+      #- ./ui/recipes_assistant_chat/images:/app/client/public/images
+      #- ./ui/recipes_assistant_chat/logs:/app/api/logs
+      #- ./ui/recipes_assistant_chat/tools:/app/api/app/clients/tools
+      #- type: bind
+      #  source: ./ui/recipes_assistant_chat/librechat.yaml
+      #  target: /app/librechat.yaml
   mongodb:
     platform: linux/amd64
     container_name: haa-libre-chat-mongodb
     image: mongo:4.4.6
     restart: always
     user: "${UID}:${GID}"
-    volumes:
-      - ./ui/recipes_assistant_chat/data-node:/data/db
+    #volumes:
+    #  - ./ui/recipes_assistant_chat/data-node:/data/db
     command: mongod --noauth
   meilisearch:
     platform: linux/amd64
@@ -59,8 +59,8 @@ services:
     environment:
       MEILI_HOST: http://meilisearch:7700
       MEILI_NO_ANALYTICS: true
-    volumes:
-      - ./ui/recipes_assistant_chat/meili_data_v1.7:/meili_data
+    #volumes:
+    #  - ./ui/recipes_assistant_chat/meili_data_v1.7:/meili_data
   rag-api:
     platform: linux/amd64
     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
@@ -92,8 +92,8 @@ services:
     restart: always
     ports:
       - 5433:5432
-    volumes:
-      - ./ui/recipes_assistant_chat/datadb:/var/lib/postgresql/data
+    #volumes:
+    #  - ./ui/recipes_assistant_chat/datadb:/var/lib/postgresql/data
     env_file:
       - .env
   docsdb:
@@ -107,8 +107,8 @@ services:
     restart: always
     ports:
       - 5434:5432
-    volumes:
-      - ./ui/recipes_assistant_chat/docsdb:/var/lib/postgresql/data
+    #volumes:
+    #  - ./ui/recipes_assistant_chat/docsdb:/var/lib/postgresql/data
     env_file:
       - .env
   recipedb:
@@ -122,9 +122,9 @@ services:
     restart: always
     ports:
       - 5435:5432
-    volumes:
-      - ./actions/actions_plugins/recipe-server/db/:/docker-entrypoint-initdb.d
-      - ./ui/recipes_assistant_chat/recipesdb:/var/lib/postgresql/data
+    #volumes:
+    #  - ./actions/actions_plugins/recipe-server/db/:/docker-entrypoint-initdb.d
+    #  - ./ui/recipes_assistant_chat/recipesdb:/var/lib/postgresql/data
     env_file:
       - .env
   actions:
@@ -189,8 +189,8 @@ services:
       dockerfile: ./code-interpretor/Dockerfile
     ports:
       - "3333:3333"
-    volumes:
-      - ./code-interpretor/static:/app/static
+    #volumes:
+    #  - ./code-interpretor/static:/app/static
     command: python3 -c "import localserver.main; localserver.main.start()"
 
 volumes:
