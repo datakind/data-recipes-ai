@@ -27,14 +27,6 @@ services:
     environment:
       MEILI_HOST: http://meilisearch:7700
       MEILI_NO_ANALYTICS: true
-  #vectordb:
-  #  image: "dkdsprototypesreg01.azurecr.io/containergroup:vectordb"
-  #  platform: "linux/amd64"
-  #  environment:
-  #    POSTGRES_DB: mydatabase
-  #    POSTGRES_USER: myuser
-  #    POSTGRES_PASSWORD: mypassword
-  #  restart: always
   rag_api:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:rag_api"
     platform: "linux/amd64"
@@ -45,30 +37,30 @@ services:
       POSTGRES_USER: bots_rule3
       POSTGRES_PASSWORD: 96__Mou9!2Yl
       RAG_PORT: 8000
+      RAG_AZURE_OPENAI_API_KEY: ${AZURE_API_KEY_ENV}
+      EMBEDDINGS_PROVIDER: azure
+      EMBEDDINGS_MODEL: text-embedding-ada-002
+      AZURE_OPENAI_ENDPOINT: https://dkopenai2.openai.azure.com/
+      DEBUG_RAG_API: "True"
     restart: always
   actions:
     image: "dkdsprototypesreg01.azurecr.io/containergroup:actions"
     platform: linux/amd64
     volumes:
-      - shared-data:/action-server/actions/actions_plugins/recipe-server/images
-  init:
-    image: dkdsprototypesreg01.azurecr.io/containergroup:init
-    volumes:
-      - shared-data:/data
-    command: "sh -c 'chown -R 1000:1000 /data && chmod -R 775 /data'"
-    user: "root"
-    depends_on:
-      - actions
-  nginx:
-    image: dkdsprototypesreg01.azurecr.io/containergroup:nginx
-    volumes:
-      - shared-data:/usr/share/nginx/html
-    restart: always
-  code-interpretor:
-    image: dkdsprototypesreg01.azurecr.io/containergroup:code-interpreter
-    volumes:
-      - ./code-interpretor/static:/app/static
-    command: python3 -c "import localserver.main; localserver.main.start()"
-
-volumes:
-  shared-data:
+      - ${WEBAPP_STORAGE_HOME}/shared-data:/action-server/actions/actions_plugins/recipe-server/images
+  #init:
+  #  image: dkdsprototypesreg01.azurecr.io/containergroup:init
+  #  volumes:
+  #    - ${WEBAPP_STORAGE_HOME}/shared-data:/data
+  #  command: sh -c 'chown -R 1000:1000 /data && chmod -R 775 /data'
+  #  user: "root"
+  #  depends_on:
+  #    - actions
+  #nginx:
+  #  image: dkdsprototypesreg01.azurecr.io/containergroup:nginx
+  #  volumes:
+  #    - ${WEBAPP_STORAGE_HOME}/shared-data:/usr/share/nginx/html
+  #  restart: always
+  #code-interpretor:
+  #  image: dkdsprototypesreg01.azurecr.io/containergroup:code-interpreter
+  #  command: python3 -c "import localserver.main; localserver.main.start()"
