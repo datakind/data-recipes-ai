@@ -5,7 +5,6 @@ version: "3.4"
 
 services:
   api:
-    #platform: linux/amd64
     container_name: haa-libre-chat
     # Have to build a dockerfile as Azure multicontainer apps don't support bind mounts
     #image: ghcr.io/danny-avila/librechat:v0.7.0
@@ -31,18 +30,17 @@ services:
       MEILI_HOST: http://meilisearch:7700
       RAG_PORT: ${RAG_PORT:-8000}
       RAG_API_URL: http://rag-api:${RAG_PORT:-8000}
-    #volumes:
-      #- type: bind
-      #  source: ./.env
-      #  target: /app/.env
-      #- ./ui/recipes_assistant_chat/images:/app/client/public/images
-      #- ./ui/recipes_assistant_chat/logs:/app/api/logs
-      #- ./ui/recipes_assistant_chat/tools:/app/api/app/clients/tools
-      #- type: bind
-      #  source: ./ui/recipes_assistant_chat/librechat.yaml
-      #  target: /app/librechat.yaml
+    volumes:
+      - type: bind
+        source: ./.env
+        target: /app/.env
+      - ./ui/recipes_assistant_chat/images:/app/client/public/images
+      - ./ui/recipes_assistant_chat/logs:/app/api/logs
+      - ./ui/recipes_assistant_chat/tools:/app/api/app/clients/tools
+      - type: bind
+        source: ./ui/recipes_assistant_chat/librechat.yaml
+        target: /app/librechat.yaml
   mongodb:
-    #platform: linux/amd64
     container_name: haa-libre-chat-mongodb
     image: mongo:4.4.6
     restart: always
@@ -51,7 +49,6 @@ services:
       - ./ui/recipes_assistant_chat/data-node:/data/db
     command: mongod --noauth
   meilisearch:
-    #platform: linux/amd64
     container_name: haa-libre-chat-meilisearch
     image: getmeili/meilisearch:v1.7.3
     restart: always
@@ -62,7 +59,6 @@ services:
     volumes:
       - ./ui/recipes_assistant_chat/meili_data_v1.7:/meili_data
   rag-api:
-    #platform: linux/amd64
     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
     container_name: haa-libre-chat-rag-api
     environment:
@@ -82,7 +78,6 @@ services:
     env_file:
       - .env
   datadb:
-    #platform: linux/amd64
     image: postgis/postgis:12-3.4
     container_name: haa-datadb
     environment:
@@ -97,7 +92,6 @@ services:
     env_file:
       - .env
   docsdb:
-    #platform: linux/amd64
     image: ankane/pgvector:latest
     container_name: haa-docsdb
     environment:
@@ -112,7 +106,6 @@ services:
     env_file:
       - .env
   recipedb:
-    #platform: linux/amd64
     image: ankane/pgvector:latest
     container_name: haa-datarecipesdb
     environment:
@@ -164,7 +157,6 @@ services:
       - shared-data:/usr/share/nginx/html
     restart: always
   ingestion:
-    #platform: linux/amd64
     container_name: haa-ingestion
     build:
       context: .
@@ -179,7 +171,7 @@ services:
         source: ./ingestion
         target: /app
   code-interpretor:
-    image: ghcr.io/iamgreggarcia/codesphera:latest
+    # image: ghcr.io/iamgreggarcia/codesphera:latest
     container_name: haa-code-interpretor
     build:
       context: .
