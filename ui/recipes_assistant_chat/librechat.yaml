@@ -22,8 +22,8 @@ interface:
 # Example Registration Object Structure (optional)
 registration:
   socialLogins: ['github', 'google', 'discord', 'openid', 'facebook']
-  # allowedDomains:
-  # - "gmail.com"
+  allowedDomains:
+    - "datakind.org"
 # rateLimits:
 #   fileUploads:
 #     ipMax: 100
