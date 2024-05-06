@@ -28,7 +28,7 @@ tags = {
     "nginx:latest":                               [f"{container_registry}/containergroup","nginx"],
     "ghcr.io/iamgreggarcia/codesphera:latest":    [f"{container_registry}/containergroup","code-interpreter"],
 }
-docker_compose_file = "docker-compose.yml"
+docker_compose_file = "docker-compose-deploy.yml"
 azure_platform = "linux/amd64"
 
 def run_cmd(cmd):
@@ -56,5 +56,5 @@ run_cmd(f"docker compose -f {docker_compose_file} pull")
 run_cmd(f"docker compose -f {docker_compose_file} build")
 run_cmd(f"docker compose -f {docker_compose_file} up -d")
 
-print("Done")
+print("Now go and click on https://ai-assistants-prototypes.azurewebsites.net/c/new to trigger to deploy")
 
