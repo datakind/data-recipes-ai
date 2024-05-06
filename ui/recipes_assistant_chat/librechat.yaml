@@ -16,7 +16,7 @@ interface:
 
   # Terms of service
   termsOfService:
-    externalUrl: 'https://librechat.ai/tos'
+    externalUrl: 'https://www.datakind.org/privacy-policy/'
     openNewTab: true
 
 # Example Registration Object Structure (optional)
