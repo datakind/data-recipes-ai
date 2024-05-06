@@ -2,7 +2,7 @@ version: "3.4"
 
 services:
   api:
-    image: "dkdsprototypesreg01.azurecr.io/containergroup:api"
+    image: "dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:api"
     platform: "linux/amd64"
     ports:
       - "80:80"
@@ -20,7 +20,7 @@ services:
       RAG_PORT: 8000
       RAG_API_URL: http://rag_api:8000
   meilisearch:
-    image: "dkdsprototypesreg01.azurecr.io/containergroup:meilisearch"
+    image: "dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:meilisearch"
     #platform: "linux/amd64"
     restart: always
     user: "${UID}:${GID}"
@@ -28,7 +28,7 @@ services:
       MEILI_HOST: http://meilisearch:7700
       MEILI_NO_ANALYTICS: true
   rag_api:
-    image: "dkdsprototypesreg01.azurecr.io/containergroup:rag_api"
+    image: "dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:rag_api"
     platform: "linux/amd64"
     environment:
       POSTGRES_DB: hdexpert-alpha
@@ -44,12 +44,12 @@ services:
       DEBUG_RAG_API: "True"
     restart: always
   actions:
-    image: "dkdsprototypesreg01.azurecr.io/containergroup:actions"
+    image: "dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:actions"
     platform: linux/amd64
     volumes:
       - ${WEBAPP_STORAGE_HOME}/shared-data:/action-server/actions/actions_plugins/recipe-server/images
   #init:
-  #  image: dkdsprototypesreg01.azurecr.io/containergroup:init
+  #  image: dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:init
   #  volumes:
   #    - ${WEBAPP_STORAGE_HOME}/shared-data:/data
   #  command: sh -c 'chown -R 1000:1000 /data && chmod -R 775 /data'
@@ -57,10 +57,10 @@ services:
   #  depends_on:
   #    - actions
   #nginx:
-  #  image: dkdsprototypesreg01.azurecr.io/containergroup:nginx
+  #  image: dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:nginx
   #  volumes:
   #    - ${WEBAPP_STORAGE_HOME}/shared-data:/usr/share/nginx/html
   #  restart: always
   #code-interpretor:
-  #  image: dkdsprototypesreg01.azurecr.io/containergroup:code-interpreter
+  #  image: dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:code-interpreter
   #  command: python3 -c "import localserver.main; localserver.main.start()"

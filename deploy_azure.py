@@ -18,15 +18,17 @@ import os
 client = docker.DockerClient(base_url='unix:///Users/matthewharris/.docker/run/docker.sock ')
 
 container_registry = "dkdsprototypesreg01.azurecr.io"
+repo = "humanitarian-ai-assistant"
+
 # Note that the DB images are all changed to be DBs in Azure.
 tags = {
-    "humanitarian_ai_assistant-api":              [f"{container_registry}/containergroup","api"],
-    "getmeili/meilisearch:v1.7.3":                [f"{container_registry}/containergroup","meilisearch"],
-    "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest":      [f"{container_registry}/containergroup","rag_api"],
-    "humanitarian_ai_assistant-actions":          [f"{container_registry}/containergroup","actions"],
-    "busybox":                                    [f"{container_registry}/containergroup","init"],
-    "nginx:latest":                               [f"{container_registry}/containergroup","nginx"],
-    "ghcr.io/iamgreggarcia/codesphera:latest":    [f"{container_registry}/containergroup","code-interpreter"],
+    "humanitarian_ai_assistant-api":              [f"{container_registry}/{repo}}","api"],
+    "getmeili/meilisearch:v1.7.3":                [f"{container_registry}/{repo}}","meilisearch"],
+    "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest":      [f"{container_registry}/{repo}}","rag_api"],
+    "humanitarian_ai_assistant-actions":          [f"{container_registry}/{repo}}","actions"],
+    "busybox":                                    [f"{container_registry}/{repo}}","init"],
+    "nginx:latest":                               [f"{container_registry}/{repo}}","nginx"],
+    "ghcr.io/iamgreggarcia/codesphera:latest":    [f"{container_registry}/{repo}}","code-interpreter"],
 }
 docker_compose_file = "docker-compose-deploy.yml"
 azure_platform = "linux/amd64"
