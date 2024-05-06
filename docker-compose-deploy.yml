@@ -182,7 +182,7 @@ services:
         source: ./ingestion
         target: /app
   code-interpretor:
-    image: ghcr.io/iamgreggarcia/codesphera:latest
+    #image: ghcr.io/iamgreggarcia/codesphera:latest
     platform: linux/amd64
     container_name: haa-code-interpretor
     build:
