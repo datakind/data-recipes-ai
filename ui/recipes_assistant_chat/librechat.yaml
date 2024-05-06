@@ -5,9 +5,9 @@
 version: 1.0.5
 
 # Cache settings: Set to true to enable caching
-cache: true
+cache: false
 
-# Custom nterface configuration
+# Custom Interface configuration
 interface:
   # Privacy policy settings
   privacyPolicy:
@@ -33,7 +33,6 @@ registration:
 
 # Definition of custom endpoints
 endpoints:
-  plugins: true
   azureOpenAI:
     titleModel: "gpt-4"
     titleConvo: true
@@ -41,7 +40,7 @@ endpoints:
     assistants: true
     groups:
     - group: "region-eastus2"
-      apiKey: "${AZURE_API_KEY_ENV}"
+      apiKey: 21e38dd24f114ef7b7ea8cd96112603a
       instanceName: "dkopenai2"
       version: "2024-02-15-preview"
       assistants: true
