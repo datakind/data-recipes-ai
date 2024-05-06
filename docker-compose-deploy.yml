@@ -142,6 +142,13 @@ services:
       - 3001:8080
       # Action server portal
       - 4001:8087
+    environment:
+      OPENAI_API_TYPE: azure
+      OPENAI_API_ENDPOINT: https://dkopenai2.openai.azure.com/
+      OPENAI_API_VERSION_MEMORY: 2024-02-15-preview
+      BASE_URL_MEMORY: https://dkopenai2.openai.azure.com/
+      MODEL_MEMORY: gpt-4-turbo
+      OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME: text-embedding-ada-002
     env_file:
       - .env
     volumes:
