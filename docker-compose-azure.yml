@@ -13,14 +13,14 @@ services:
     user: ""
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    volumes:
+      - ${WEBAPP_STORAGE_HOME}/shared-data:/app/client/public/images
     environment:
       HOST: 0.0.0.0
       MONGO_URI: mongodb+srv://matthew:c5tZja0psz5Qo7dC@hum-ai-libre-chat.mcyk70v.mongodb.net/?retryWrites=true&w=majority&appName=hum-ai-libre-chat
       MEILI_HOST: http://meilisearch:7700
       RAG_PORT: 8000
       RAG_API_URL: http://rag_api:8000
-    volumes:
-      - shared-data:/app/client/public/images
   meilisearch:
     image: "dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:meilisearch"
     #platform: "linux/amd64"
@@ -71,6 +71,7 @@ services:
   #  user: "root"
   #  depends_on:
   #    - actions
-  #code-interpretor:
-  #  image: dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:code-interpreter
-  #  #command: 'python3 -c "import localserver.main; localserver.main.start()"'
+  code-interpretor:
+    image: dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:code-interpreter
+    volumes:
+      - ${WEBAPP_STORAGE_HOME}/shared-data:/app/static
