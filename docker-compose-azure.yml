@@ -71,11 +71,6 @@ services:
   #  user: "root"
   #  depends_on:
   #    - actions
-  nginx:
-    image: dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:nginx
-    volumes:
-      - ${WEBAPP_STORAGE_HOME}/shared-data:/usr/share/nginx/html
-    restart: always
   #code-interpretor:
   #  image: dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:code-interpreter
   #  #command: 'python3 -c "import localserver.main; localserver.main.start()"'

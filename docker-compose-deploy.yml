@@ -164,15 +164,6 @@ services:
     user: "root"
     depends_on:
       - actions
-  nginx:
-    image: nginx:latest
-    platform: linux/amd64
-    container_name: haa-nginx-images
-    ports:
-      - "9999:80"
-    volumes:
-      - shared-data:/usr/share/nginx/html
-    restart: always
   #ingestion:
   #  platform: linux/amd64
   #  container_name: haa-ingestion

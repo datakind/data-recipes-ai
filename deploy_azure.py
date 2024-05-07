@@ -28,7 +28,6 @@ tags = {
     "ankane/pgvector:latest":                     [f"{container_registry}/{repo}","docsdb"],
     "humanitarian_ai_assistant-actions":          [f"{container_registry}/{repo}","actions"],
     "busybox":                                    [f"{container_registry}/{repo}","init"],
-    "nginx:latest":                               [f"{container_registry}/{repo}","nginx"],
     "humanitarian_ai_assistant-code-interpretor":    [f"{container_registry}/{repo}","code-interpreter"],
 }
 docker_compose_file = "docker-compose-deploy.yml"
