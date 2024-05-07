@@ -462,7 +462,7 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
             process_image(response_image.replace("data:image/png;base64,", ""))
             #result = "http://localhost:9999/memory_image.png"
             result = f"{os.getenv('IMAGE_HOST')}/memory_image.png"
-}"
+
         else:
             result = response_text
     else:
