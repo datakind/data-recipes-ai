@@ -31,12 +31,16 @@ services:
       - type: bind
         source: ./.env
         target: /app/.env
-      - ./ui/recipes_assistant_chat/images:/app/client/public/images
+      - shared-data:/app/client/public/images
       - ./ui/recipes_assistant_chat/logs:/app/api/logs
       - ./ui/recipes_assistant_chat/tools:/app/api/app/clients/tools
       - type: bind
         source: ./ui/recipes_assistant_chat/librechat.yaml
         target: /app/librechat.yaml
+      # So we can share images. mjh
+      - type: bind
+        source: ./ui/recipes_assistant_chat/nginx.conf
+        target: /app/client/nginx.conf
   mongodb:
     container_name: haa-libre-chat-mongodb
     image: mongo:4.4.6
@@ -145,14 +149,6 @@ services:
     user: "root"
     depends_on:
       - actions
-  nginx:
-    image: nginx:latest
-    container_name: haa-nginx-images
-    ports:
-      - "9999:80"
-    volumes:
-      - shared-data:/usr/share/nginx/html
-    restart: always
   ingestion:
     container_name: haa-ingestion
     build:
@@ -176,7 +172,7 @@ services:
     ports:
       - "3333:3333"
     volumes:
-      - ./code-interpretor/static:/app/static
+      - shared-data:/app/static
     #command: python3 -c "import localserver.main; localserver.main.start()"
 
 volumes:
