@@ -19,7 +19,7 @@ services:
       # DK Added
       - 3080:3080
     depends_on:
-      #- mongodb
+      #- mongodb 
       - rag-api
     restart: always
     user: "${UID}:${GID}"
@@ -135,7 +135,7 @@ services:
       context: .
       dockerfile: ./actions/Dockerfile
       args:
-        # Assuming Azure deployment uses hosted postgres rather than Docker
+        # Assuming Azure deployment uses hosted postgres rather than Docker.
         DATA_DB_CONN_STRING: ${REMOTE_DB_CONN_STRING}
     ports:
       # API
