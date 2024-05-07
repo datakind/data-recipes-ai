@@ -97,13 +97,14 @@ prompt_map = {
 }
 
 conn_params = {
-    "OPENAI_API_TYPE": os.getenv("OPENAI_API_TYPE"),
-    "OPENAI_API_ENDPOINT": os.getenv("OPENAI_API_ENDPOINT"),
-    "OPENAI_API_VERSION": os.getenv("OPENAI_API_VERSION_MEMORY"),
-    "BASE_URL": os.getenv("BASE_URL_MEMORY"),
-    "MODEL": os.getenv("MODEL"),
-    "OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME": os.getenv(
-        "OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME"
+    "RECIPES_OPENAI_API_TYPE": os.getenv("RECIPES_OPENAI_API_TYPE"),
+    "RECIPES_OPENAI_API_KEY": os.getenv("RECIPES_OPENAI_API_KEY"),
+    "RECIPES_OPENAI_API_ENDPOINT": os.getenv("RECIPES_OPENAI_API_ENDPOINT"),
+    "RECIPES_OPENAI_API_VERSION": os.getenv("RECIPES_OPENAI_API_VERSION"),
+    "RECIPES_BASE_URL": os.getenv("RECIPES_BASE_URL"),
+    "RECIPES_MODEL": os.getenv("RECIPES_MODEL"),
+    "RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME": os.getenv(
+        "RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME"
     ),
     "POSTGRES_DB": os.getenv("POSTGRES_RECIPE_DB"),
     "POSTGRES_USER": os.getenv("POSTGRES_RECIPE_USER"),
@@ -205,11 +206,11 @@ def get_models(conn_params):
     Returns:
         _type_: _description_
     """
-    api_key = conn_params["OPENAI_API_KEY"]
-    base_url = conn_params["BASE_URL"]
-    api_version = conn_params["OPENAI_API_VERSION"]
-    api_type = conn_params["OPENAI_API_TYPE"]
-    completion_model = conn_params["OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME"]
+    api_key = conn_params["RECIPES_OPENAI_API_KEY"]
+    base_url = conn_params["RECIPES_BASE_URL"]
+    api_version = conn_params["RECIPES_OPENAI_API_VERSION"]
+    api_type = conn_params["RECIPES_OPENAI_API_TYPE"]
+    completion_model = conn_params["RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME"]
 
     if api_type == "openai":
         print("Using OpenAI API in memory.py")
@@ -435,7 +436,6 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
     Performs a search in the memory for a given intent and returns the best match found.
 
     Args:
-        conn_params (str): The connection parameters for the database.
         user_input (str): The user input to search for in the memory.
         chat_history (str): The chat history.
         generate_intent (str): A flag to indicate whether to generate the intent from the chat history.
