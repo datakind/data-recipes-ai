@@ -25,6 +25,7 @@ tags = {
     "humanitarian_ai_assistant-api":              [f"{container_registry}/{repo}","api"],
     "getmeili/meilisearch:v1.7.3":                [f"{container_registry}/{repo}","meilisearch"],
     "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest":      [f"{container_registry}/{repo}","rag_api"],
+    "ankane/pgvector:latest":                     [f"{container_registry}/{repo}","docsdb"],
     "humanitarian_ai_assistant-actions":          [f"{container_registry}/{repo}","actions"],
     "busybox":                                    [f"{container_registry}/{repo}","init"],
     "nginx:latest":                               [f"{container_registry}/{repo}","nginx"],
