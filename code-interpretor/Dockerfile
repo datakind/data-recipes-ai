@@ -54,4 +54,5 @@ ENV PATH="/app/.venv/bin:${PATH}"
 
 #COPY . /app/
 
-CMD ["python", "-c", "import server.main; server.main.start()"]
+#CMD ["python", "-c", "import server.main; server.main.start()"]
+CMD ["python", "-c", "import localserver.main; localserver.main.start()"]
