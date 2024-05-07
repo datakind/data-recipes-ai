@@ -180,7 +180,7 @@ services:
       - "3333:3333"
     volumes:
       - ./code-interpretor/static:/app/static
-    command: python3 -c "import localserver.main; localserver.main.start()"
+    #command: python3 -c "import localserver.main; localserver.main.start()"
 
 volumes:
   pgdata2:
