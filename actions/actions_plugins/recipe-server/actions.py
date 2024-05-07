@@ -461,7 +461,7 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
         if response_image is not None and response_image != "":
             process_image(response_image.replace("data:image/png;base64,", ""))
             #result = "http://localhost:9999/memory_image.png"
-            result = "{os.getenv('IMAGE_HOST')}/memory_image.png"
+            result = f"{os.getenv('IMAGE_HOST')}/memory_image.png"
 }"
         else:
             result = response_text
