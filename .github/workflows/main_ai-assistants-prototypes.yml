@@ -16,36 +16,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Log in to registry
-      uses: docker/login-action@v2
-      with:
-        registry: https://dkdsprototypesreg01.azurecr.io/
-        username: ${{ secrets.AzureAppService_ContainerUsername_4b053d2783474f8fb91b6b7466a44cdb }}
-        password: ${{ secrets.AzureAppService_ContainerPassword_89a95c54ea7d4ba0ad0e204cb32e0ed2 }}
-
-    - name: Build and push container image to registry
-      uses: docker/build-push-action@v3
-      with:
-        push: true
-        tags: dkdsprototypesreg01.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_4b053d2783474f8fb91b6b7466a44cdb }}/huamnitarian_ai_assistant:${{ github.sha }}
-        file: ./Dockerfile
-
-  deploy:
+  code-quality-checks:
     runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: 'production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-
     steps:
-    - name: Deploy to Azure Web App
-      id: deploy-to-webapp
-      uses: azure/webapps-deploy@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
-        app-name: 'ai-assistants-prototypes'
-        slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_eaabfbc635d240039a27175de69c5f36 }}
-        images: 'dkdsprototypesreg01.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_4b053d2783474f8fb91b6b7466a44cdb }}/huamnitarian_ai_assistant:${{ github.sha }}'
+        python-version: "3.11.4"
+    - uses: pre-commit/action@v3.0.1
+
