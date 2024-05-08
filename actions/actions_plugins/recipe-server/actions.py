@@ -1,11 +1,12 @@
 import ast
+import base64
+import io
 import json
 import logging
-import sys
 import os
-import base64
-from PIL import Image
-import io
+import sys
+
+from dotenv import load_dotenv
 from langchain.schema import HumanMessage, SystemMessage
 from langchain_community.vectorstores.pgvector import PGVector
 from langchain_openai import (
@@ -14,8 +15,8 @@ from langchain_openai import (
     ChatOpenAI,
     OpenAIEmbeddings,
 )
+from PIL import Image
 from robocorp.actions import action
-from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
@@ -448,7 +449,7 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
     logging.info("Python HTTP trigger function processed a request.")
     # Retrieve the CSV file from the request
 
-    if generate_intent is not None and generate_intent == True:
+    if generate_intent is not None and generate_intent is True:
         # chat history is passed from promptflow as a string representation of a list and this has to be converted back to a list for the intent generation to work!
         history_list = ast.literal_eval(chat_history)
         history_list.append({"inputs": {"question": user_input}})
@@ -462,8 +463,10 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
         recipe_id = result["metadata"]["custom_id"]
         print("Recipe ID: ", recipe_id)
         if response_image is not None and response_image != "":
-            process_image(response_image.replace("data:image/png;base64,", ""), recipe_id)
-            #result = "http://localhost:9999/memory_image.png"
+            process_image(
+                response_image.replace("data:image/png;base64,", ""), recipe_id
+            )
+            # result = "http://localhost:9999/memory_image.png"
             result = f"{os.getenv('IMAGE_HOST')}/memory_image_{recipe_id}.png"
 
         else:

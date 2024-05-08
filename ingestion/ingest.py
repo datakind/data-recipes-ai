@@ -1,16 +1,16 @@
-import requests
 import json
 import os
+import shutil
+import sys
 import time
 from urllib.parse import urlencode
-import sys
-import pandas as pd
-from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
-import geopandas as gpd
-import shutil
 
+import geopandas as gpd
+import pandas as pd
+import requests
+from dotenv import load_dotenv
 from shapefiles import download_hdx_boundaries
+from sqlalchemy import create_engine, text
 
 APIS_CONFIG = "apis.config"
 
@@ -42,6 +42,7 @@ col_map = {
     "admin2Pcod": admin2_code,
 }
 
+
 def get_api_def(api):
 
     api_name = api["api_name"]
@@ -49,7 +50,9 @@ def get_api_def(api):
     openapi_def = api["openapi_def"]
     openapi_filename = f"./api/{api_name}/{openapi_def.split('/')[-1]}"
 
-    print(f"Getting {api_name} API definition from {openapi_def} and saving it to {openapi_filename}")
+    print(
+        f"Getting {api_name} API definition from {openapi_def} and saving it to {openapi_filename}"
+    )
 
     api = requests.get(openapi_def)
     api = json.loads(api.text)
@@ -59,18 +62,15 @@ def get_api_def(api):
         f.write(apis_formatted)
 
     # Needed for some application using openapi's definition
-    if 'servers' not in api:
-        api['servers'] =   [
-            {
-                "url": f"https:/{api_host}"
-            }
-        ]
-    
+    if "servers" not in api:
+        api["servers"] = [{"url": f"https:/{api_host}"}]
+
     return api
+
 
 def get_api_data(endpoint, params):
 
-    print('URL', endpoint + '/?' + urlencode(params))
+    print("URL", endpoint + "/?" + urlencode(params))
     response = requests.get(endpoint, params=params)
     if response.status_code == 200:
         data = response.json()
@@ -88,7 +88,7 @@ def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
     """
     Downloads data based on the functions specified in the openapi.json definition file.
 
-    TODO: This currently assumes paging per the new HAPI API, and would need work to 
+    TODO: This currently assumes paging per the new HAPI API, and would need work to
     extend to other approaches.
 
     Args:
@@ -101,9 +101,9 @@ def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
     limit = 1000
     offset = 0
 
-    files = os.listdir(save_path)    
+    files = os.listdir(save_path)
     for f in files:
-        if 'openapi.json' not in f:
+        if "openapi.json" not in f:
             filename = f"{save_path}/{f}"
             os.remove(filename)
 
@@ -122,8 +122,8 @@ def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
         offset = 0
         output = []
         while len(output) > 0 or offset == 0:
-            output = get_api_data(url, {'limit':limit, 'offset': offset}) 
-            if 'No data' in output:
+            output = get_api_data(url, {"limit": limit, "offset": offset})
+            if "No data" in output:
                 break
             print(output)
             data = data + output
@@ -154,8 +154,10 @@ def read_apis_config():
         apis = json.load(f)
     return apis
 
+
 def is_running_in_docker():
-    return os.path.exists('/.dockerenv')
+    return os.path.exists("/.dockerenv")
+
 
 def connect_to_db():
     """
@@ -171,7 +173,7 @@ def connect_to_db():
         print("Running in Docker ...")
         host = os.getenv("POSTGRES_DATA_HOST")
     else:
-        host = 'localhost'        
+        host = "localhost"
     port = os.getenv("POSTGRES_DATA_PORT")
     database = os.getenv("POSTGRES_DATA_DB")
     user = os.getenv("POSTGRES_DATA_USER")
@@ -204,8 +206,9 @@ def sanitize_name(name):
         .replace("api_v1_themes_", "")
         .replace("api_v1_", "")
     )
-    
+
     return table_name
+
 
 def get_cols_string(table, conn):
     """
@@ -220,13 +223,16 @@ def get_cols_string(table, conn):
     """
     cols = ""
     with conn.connect() as connection:
-        statement = text(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'")
+        statement = text(
+            f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table}'"
+        )
         result = connection.execute(statement)
         cols = result.fetchall()
         cols_str = ""
         for c in cols:
             cols_str += f"{c[0]} ({c[1]}); "
     return cols_str
+
 
 def upload_openapi_csv_files(files_dir, conn, api_name):
     """
@@ -247,7 +253,7 @@ def upload_openapi_csv_files(files_dir, conn, api_name):
         if f.endswith(".csv"):
             df = pd.read_csv(f"{files_dir}/{f}")
             df = map_code_cols(df, col_map)
-            # TODO: This is a temporary workaround to account for HAPI having 
+            # TODO: This is a temporary workaround to account for HAPI having
             # aggregate and disaggregated data in the same tables, where the hierarchy differs by country
             if api_name == "hapi":
                 df = filter_hdx_df(df)
@@ -255,7 +261,7 @@ def upload_openapi_csv_files(files_dir, conn, api_name):
             print(f"Creating table {table} from {f}")
             df.to_sql(table, conn, if_exists="replace", index=False)
 
-            # Collate metadata 
+            # Collate metadata
             meta_file = f"{files_dir}/{f.replace('.csv', '_meta.json')}"
             if os.path.exists(meta_file):
                 with open(meta_file) as mf:
@@ -266,9 +272,9 @@ def upload_openapi_csv_files(files_dir, conn, api_name):
                     r["summary"] = str(meta["get"]["tags"])
                     r["columns"] = get_cols_string(table, conn)
                     r["api_description"] = meta["get"]["summary"]
-                    if 'description' in meta["get"]:
-                        r["api_description"] += f' : {meta["get"]["description"]}' 
-                    r["api_definition"] = str(meta)  
+                    if "description" in meta["get"]:
+                        r["api_description"] += f' : {meta["get"]["description"]}'
+                    r["api_definition"] = str(meta)
                     r["file_name"] = f
                     table_metadata.append(r)
 
@@ -276,12 +282,14 @@ def upload_openapi_csv_files(files_dir, conn, api_name):
     table_metadata = pd.DataFrame(table_metadata)
     table_metadata.to_sql("table_metadata", conn, if_exists="replace", index=False)
 
+
 def empty_folder(folder):
     for f in os.listdir(folder):
         try:
             os.remove(f"{folder}/{f}")
         except IsADirectoryError:
             shutil.rmtree(f"{folder}/{f}")
+
 
 def upload_hdx_shape_files(files_dir, conn):
     """
@@ -308,14 +316,16 @@ def upload_hdx_shape_files(files_dir, conn):
     print(all_shapes.shape)
     all_shapes.to_postgis(shape_files_table, conn, if_exists="replace")
 
-    
     cols = get_cols_string(shape_files_table, conn)
     with conn.connect() as connection:
         print(f"Creating metadata for {shape_files_table}")
-        statement = text(f"INSERT INTO table_metadata (api_name, table_name, summary, columns, api_description, api_definition, file_name) VALUES ('hdx', '{shape_files_table}', \
-                         'HDX Shape Files', '{cols}', 'HDX Shape Files', 'HDX Shape Files', 'HDX Shape Files')")
+        statement = text(
+            f"INSERT INTO table_metadata (api_name, table_name, summary, columns, api_description, api_definition, file_name) VALUES ('hdx', '{shape_files_table}', \
+                         'HDX Shape Files', '{cols}', 'HDX Shape Files', 'HDX Shape Files', 'HDX Shape Files')"
+        )
         connection.execute(statement)
         connection.commit()
+
 
 def map_code_cols(df, col_map):
     """
@@ -333,6 +343,7 @@ def map_code_cols(df, col_map):
             df.rename(columns={c: col_map[c]}, inplace=True)
 
     return df
+
 
 def filter_hdx_df(df, **kwargs):
     """
@@ -377,7 +388,7 @@ def main():
 
         openapi_def = get_api_def(api)
         api_name = api["api_name"]
-        save_path = f'./api/{api_name}/'
+        save_path = f"./api/{api_name}/"
         api_host = api["openapi_def"].split("/")[2]
         excluded_endpoints = api["excluded_endpoints"]
 
@@ -388,12 +399,17 @@ def main():
         upload_openapi_csv_files(save_path, conn, api_name)
 
     # Download shapefiles from HDX
-    download_hdx_boundaries(datafile="./api/hapi/api_v1_themes_population.csv", \
-                                datafile_country_col='location_code', target_dir="./api/hdx/",\
-                                col_map=col_map, map_code_cols=map_code_cols)
-    
+    download_hdx_boundaries(
+        datafile="./api/hapi/api_v1_themes_population.csv",
+        datafile_country_col="location_code",
+        target_dir="./api/hdx/",
+        col_map=col_map,
+        map_code_cols=map_code_cols,
+    )
+
     # Upload shapefiles to the database
-    upload_hdx_shape_files('./api/hdx', conn)
+    upload_hdx_shape_files("./api/hdx", conn)
+
 
 if __name__ == "__main__":
     main()

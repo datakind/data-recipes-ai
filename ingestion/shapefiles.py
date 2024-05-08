@@ -1,13 +1,15 @@
+import glob
 import os
+import shutil
+import zipfile
+
+import geopandas as gpd
 import pandas as pd
 from dotenv import load_dotenv
 from hdx.api.configuration import Configuration
 from hdx.data.dataset import Dataset
 from hdx.utilities.easy_logging import setup_logging
-import geopandas as gpd
-import glob
-import shutil
-import zipfile
+
 
 def get_hdx_config():
     """
@@ -27,6 +29,7 @@ def get_hdx_config():
             print(f"DEBUG: Exception: {e}")
             return {"file_location": ""}
     return Configuration
+
 
 def get_hdx_shapefile(country_code, admin_level):
     """
@@ -88,6 +91,7 @@ def get_hdx_shapefile(country_code, admin_level):
 
     return response
 
+
 def normalize_hdx_boundaries(datafile, col_map, map_code_cols, datafile_country_col):
     """
     HDX Boundaries have inconsistent naming conventions and pcode variable names. This function
@@ -139,9 +143,13 @@ def normalize_hdx_boundaries(datafile, col_map, map_code_cols, datafile_country_
     return output_dir
 
 
-def download_hdx_boundaries(datafile="./api/hapi/hapi_population.csv", datafile_country_col='location_code', \
-                            target_dir="./api/hdx/", col_map={}, map_code_cols=None):
-
+def download_hdx_boundaries(
+    datafile="./api/hapi/hapi_population.csv",
+    datafile_country_col="location_code",
+    target_dir="./api/hdx/",
+    col_map={},
+    map_code_cols=None,
+):
     """
     Downloads HDX boundaries for all countries and administrative levels.
 
@@ -153,7 +161,7 @@ def download_hdx_boundaries(datafile="./api/hapi/hapi_population.csv", datafile_
         files_prefix (str): The prefix to use for the files.
         col_map (dict): A dictionary of column names mapping, used to rename columns to standard names.
         map_code_cols (function): A function to map the code columns to standard names.
-        
+
     Returns:
         None
     """
@@ -168,7 +176,7 @@ def download_hdx_boundaries(datafile="./api/hapi/hapi_population.csv", datafile_
     countries = df[datafile_country_col].unique()
     countries = [c.lower() for c in countries]
     # TODO: Remove Columbia, it's too big
-    #countries = [c for c in countries if "col" not in c]
+    # countries = [c for c in countries if "col" not in c]
 
     for country in countries:
         for admin in ["admin1", "admin2"]:
@@ -176,7 +184,9 @@ def download_hdx_boundaries(datafile="./api/hapi/hapi_population.csv", datafile_
             get_hdx_shapefile(country, admin)
 
     # Align field names with other datasets
-    output_dir = normalize_hdx_boundaries(datafile, col_map, map_code_cols, datafile_country_col)
+    output_dir = normalize_hdx_boundaries(
+        datafile, col_map, map_code_cols, datafile_country_col
+    )
 
     # Copy normalized files to target_dir
     files = glob.glob(f"{output_dir}/*")
@@ -197,9 +207,11 @@ def download_hdx_boundaries(datafile="./api/hapi/hapi_population.csv", datafile_
                 letters = [chr(i) for i in range(ord(letters[0]), ord(letters[1]) + 1)]
                 country_sublist = [c for c in countries if c[0].lower() in letters]
 
-                zipfile_path = f"{target_dir}/geoBoundaries-{admin}-countries_{letter_range}.zip"
+                zipfile_path = (
+                    f"{target_dir}/geoBoundaries-{admin}-countries_{letter_range}.zip"
+                )
 
-                with zipfile.ZipFile(zipfile_path, 'w') as zipf:
+                with zipfile.ZipFile(zipfile_path, "w") as zipf:
                     # Iterate over all files in the output directory
                     for foldername, subfolders, filenames in os.walk(output_dir):
                         for filename in filenames:
@@ -208,5 +220,7 @@ def download_hdx_boundaries(datafile="./api/hapi/hapi_population.csv", datafile_
                                 # Get the full file path
                                 file_path = os.path.join(foldername, filename)
                                 # Add the file to the zip file
-                                zipf.write(file_path, arcname=os.path.relpath(file_path, output_dir))                
-
+                                zipf.write(
+                                    file_path,
+                                    arcname=os.path.relpath(file_path, output_dir),
+                                )

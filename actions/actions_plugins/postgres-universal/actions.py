@@ -1,5 +1,6 @@
 import json
 import os
+
 import psycopg2
 from robocorp.actions import action
 
@@ -10,10 +11,22 @@ MAX_CHARS_TOT = 100000
 
 class ReadOnlyConnection:
     def __init__(self, conn_params):
+        """
+        Initializes a new instance of the PostgresUniversalActions class.
+
+        Args:
+            conn_params (dict): A dictionary containing the connection parameters for the PostgreSQL database.
+        """
         self.conn_params = conn_params
         self.conn = None
 
     def __enter__(self):
+        """
+        Establishes a connection to the PostgreSQL database and sets the transaction mode to READ ONLY.
+
+        Returns:
+            psycopg2.extensions.connection: The connection object to the PostgreSQL database.
+        """
         self.conn = psycopg2.connect(**self.conn_params)
         cur = self.conn.cursor()
         cur.execute("SET TRANSACTION READ ONLY;")
@@ -21,6 +34,14 @@ class ReadOnlyConnection:
         return self.conn
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Exit the context manager and perform necessary cleanup operations.
+
+        Args:
+            exc_type (type): The type of the exception raised, if any.
+            exc_val (Exception): The exception raised, if any.
+            exc_tb (traceback): The traceback object associated with the exception, if any.
+        """
         self.conn.rollback()  # Rollback any changes (though there shouldn't be any)
         self.conn.close()
 
@@ -28,6 +49,17 @@ class ReadOnlyConnection:
 def truncate_output_with_beginning_clue(
     output: str, max_chars: int = MAX_CHARS_TOT
 ) -> str:
+    """
+    Truncates the given output string if its length exceeds the maximum number of characters.
+    Adds a beginning clue and a truncated message to indicate possible truncation.
+
+    Args:
+        output (str): The output string to be truncated.
+        max_chars (int, optional): The maximum number of characters allowed. Defaults to MAX_CHARS_TOT.
+
+    Returns:
+        str: The truncated output string with the beginning clue and truncated message.
+    """
     beginning_clue = (
         "[Cut] "  # A very short clue at the beginning to indicate possible truncation
     )
@@ -42,6 +74,16 @@ def truncate_output_with_beginning_clue(
 
 
 def get_database_schema(conn):
+    """
+    Retrieves the schema information of a PostgreSQL database.
+
+    Args:
+        conn (psycopg2.extensions.connection): The connection object to the PostgreSQL database.
+
+    Returns:
+        str: The database schema information.
+
+    """
     schema_info = "Database Schema:\n"
 
     with conn.cursor() as cursor:
@@ -116,7 +158,7 @@ def get_database_schema(conn):
             cursor.execute(
                 """
                 SELECT kcu.column_name, ccu.table_name AS foreign_table_name, ccu.column_name AS foreign_column_name
-                FROM information_schema.table_constraints AS tc 
+                FROM information_schema.table_constraints AS tc
                 JOIN information_schema.key_column_usage AS kcu
                 ON tc.constraint_name = kcu.constraint_name
                 JOIN information_schema.constraint_column_usage AS ccu
@@ -136,6 +178,16 @@ def get_database_schema(conn):
 
 
 def truncate_query_results(results, max_chars=MAX_CHARS_TOT):
+    """
+    Truncates the query results to a specified maximum number of characters.
+
+    Args:
+        results (list): The query results to be truncated.
+        max_chars (int, optional): The maximum number of characters allowed. Defaults to MAX_CHARS_TOT.
+
+    Returns:
+        str: The truncated query results.
+    """
     if not results:
         return ""
 
