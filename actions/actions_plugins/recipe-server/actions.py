@@ -118,12 +118,13 @@ conn_params = {
 db = None
 
 
-def process_image(encoded_string):
+def process_image(encoded_string, recipe_id):
     """
     Takes a base64 encoded string of a picture, decodes it, and saves it as a PNG file.
 
     Args:
     encoded_string (str): Base64 encoded string of the image.
+    recipe_id (str): The recipe ID to use in the image file name.
 
     Returns:
     str: Full path to the saved image file.
@@ -138,7 +139,7 @@ def process_image(encoded_string):
     image = Image.open(io.BytesIO(image_data))
 
     # Create the full path for saving the image
-    full_path = os.path.join("./images", "memory_image.png")
+    full_path = os.path.join("./images", f"memory_image_{recipe_id}.png")
 
     # Save the image
     image.save(full_path, "PNG")
@@ -458,10 +459,12 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
     if memory_found is True:
         response_text = result["metadata"]["response_text"]
         response_image = result["metadata"]["response_image"]
+        recipe_id = result["metadata"]["custom_id"]
+        print("Recipe ID: ", recipe_id)
         if response_image is not None and response_image != "":
-            process_image(response_image.replace("data:image/png;base64,", ""))
+            process_image(response_image.replace("data:image/png;base64,", ""), recipe_id)
             #result = "http://localhost:9999/memory_image.png"
-            result = f"{os.getenv('IMAGE_HOST')}/memory_image.png"
+            result = f"{os.getenv('IMAGE_HOST')}/memory_image_{recipe_id}.png"
 
         else:
             result = response_text
