@@ -62,32 +62,6 @@ If running locally, you can reset your environment - removing any data for your 
     -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}' \
     "http://actions:8080/api/actions/get-data-recipe-memory/get-memory/run"``
 
-## Deploying to Azure
-
-The environment has been configured to run on a [ai-assistant-prototypes](https://portal.azure.com/#@DataKindO365.onmicrosoft.com/resource/subscriptions/21fe0672-504b-4b05-b7e1-a154142c9fd4/resourceGroups/DK-DS-Prototypes/providers/Microsoft.Web/sites/ai-assistants-prototypes/appServices) multicontainer web app in Azure. This actually isn't a very robust solution, as we shall see below, and should be migrated onto something more formal for launch.
-
-### Not on a Mac
-
-Run ...
-
-`python3 deploy_azure.py`
-
-One thing to mention on an Azure deploy, it that doesn't get pushed to the web app sometimes, until a user tries to access the web app's published URL. No idea why, but if your release is 'stuck', try this.
-
-### On a Mac
-
-Make sure docker has 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon' set in settings if using a MAC silicon chip. The deploy script can then build images that wwok on Azure then 
-revert to images that work on your Mac.
-
-Note: 
-
-`docker-compose-azure.yml` is the configutation used in the deployment center screen on the web app
-`docker-compose.yml` is used for building locally
-
-## Databases
-
-When running in Azure it is useful to use remote databases, at least for the mongodb instance so that user logins are retained with each release. For example, a databse can be configured by following [these instructions](https://docs.librechat.ai/install/configuration/mongodb.html). If doing this, then docker-compose-azure.yml in Azure can have the mongo DB section removed, and any instance of the Mongo URL used by other containers updated with the cloud connection string accordingly.
-
 ## LibraChat Plugins
 
 With a defined set of functionalities, [plugins](https://docs.librechat.ai/features/plugins/introduction.html) act as tools for the LLM application to use and extend their capabilities.
@@ -98,3 +72,32 @@ To create an additional plugin, perform the following steps:
 3. Create plugin manigest to describe the plugin for the LLM to determine when and how to use it. You can use [haa_datarecipes.json](./ui/recipes_assistant_chat/tools/haa_datarecipes.json) as a template 
 
 As the robocorp actions might differ slightly, this can lead to differing requirements in the openapi spec, and manifest files. The [LibraChat documentation](https://docs.librechat.ai/features/plugins/chatgpt_plugins_openapi.html) provides tips and examples to form the files correctly. 
+
+## Deploying to Azure
+
+The environment has been configured to run on a [ai-assistant-prototypes](https://portal.azure.com/#@DataKindO365.onmicrosoft.com/resource/subscriptions/21fe0672-504b-4b05-b7e1-a154142c9fd4/resourceGroups/DK-DS-Prototypes/providers/Microsoft.Web/sites/ai-assistants-prototypes/appServices) multicontainer web app in Azure. This actually isn't a very robust solution, as we shall see below, and should be migrated onto something more formal for launch.
+
+### Not on a Mac
+
+Run ...
+
+`python3 ./deployment/deploy_azure.py`
+
+One thing to mention on an Azure deploy, it that doesn't get pushed to the web app sometimes, until a user tries to access the web app's published URL. No idea why, but if your release is 'stuck', try this.
+
+### On a Mac
+
+Make sure docker has 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon' set in settings if using a MAC silicon chip. The deploy script can then build images that wwok on Azure then 
+revert to images that work on your Mac.
+
+Note: 
+
+`./deployment/./deployment/docker-compose-azure.yml` is the configutation used in the deployment center screen on the web app
+`./deployment/./deployment/docker-compose-deploy.yml` is the configutation used when building the deployment
+`docker-compose.yml` is used for building locally
+
+TODO: The azure versions will be refactored in future to leverage the main `docker-compose.yml` and even retird for the production infratsructure.
+
+## Databases
+
+When running in Azure it is useful to use remote databases, at least for the mongodb instance so that user logins are retained with each release. For example, a databse can be configured by following [these instructions](https://docs.librechat.ai/install/configuration/mongodb.html). If doing this, then docker-compose-azure.yml in Azure can have the mongo DB section removed, and any instance of the Mongo URL used by other containers updated with the cloud connection string accordingly.
