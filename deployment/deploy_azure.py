@@ -12,11 +12,7 @@ import os
 
 import docker
 
-# client = docker.from_env()
-# On Mac, see 'docker context ls'
-client = docker.DockerClient(
-    base_url="unix:///Users/matthewharris/.docker/run/docker.sock "
-)
+client = docker.from_env()
 
 container_registry = os.getenv("AZURE_CONTAINER_REGISTRY")
 repo = os.getenv("AZURE_CONTAINER_REGISTRY_REPO")
