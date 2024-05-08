@@ -1,0 +1,20 @@
+repos:
+-   repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1
+    hooks:
+    - id: isort
+-   repo: https://github.com/ambv/black
+    rev: 24.4.2
+    hooks:
+    - id: black
+      language_version: python3.11
+-   repo: https://github.com/pycqa/flake8.git
+    rev: 7.0.0
+    hooks:
+    - id: flake8
+      exclude: 'tests|env|docs'
+-   repo: https://github.com/econchick/interrogate
+    rev: 1.7.0
+    hooks:
+    - id: interrogate
+      args: [--fail-under=65, --verbose]
