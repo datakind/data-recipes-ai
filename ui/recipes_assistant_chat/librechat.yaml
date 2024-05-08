@@ -34,7 +34,7 @@ registration:
 # Definition of custom endpoints
 endpoints:
   azureOpenAI:
-    titleModel: "gpt-4"
+    titleModel: "gpt-3.5-turbo"
     titleConvo: true
     plugins: true
     assistants: true
@@ -43,7 +43,7 @@ endpoints:
       apiKey: 21e38dd24f114ef7b7ea8cd96112603a
       instanceName: "dkopenai2"
       version: "2024-02-15-preview"
-      assistants: true
+      assistants: true 
       models:
         gpt-3.5-turbo:
           deploymentName: "gpt-35-turbo"
