@@ -183,7 +183,7 @@ def download_hdx_boundaries(
     for country in countries:
         for admin in ["admin1", "admin2"]:
             print(country, admin)
-            get_hdx_shapefile(country, admin)
+            # get_hdx_shapefile(country, admin)
 
     # Align field names with other datasets
     output_dir = normalize_hdx_boundaries(
@@ -200,10 +200,7 @@ def download_hdx_boundaries(
     for admin in ["adm0", "adm1", "adm2"]:
         files = glob.glob(f"{output_dir}/*{admin}*")
         if len(files) > 0:
-            if admin != "adm2":
-                ranges = ["a-z"]
-            else:
-                ranges = ["a-c", "d-h", "i-z"]
+            ranges = ["a-c", "d-h", "i-z"]
             for letter_range in ranges:
                 letters = letter_range.split("-")
                 letters = [chr(i) for i in range(ord(letters[0]), ord(letters[1]) + 1)]
