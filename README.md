@@ -18,6 +18,8 @@ Data recipes supports datasources accessed via API, but in some cases it is pref
 
 Finally, for reviewing/updating/creating new recipes, though we provide some experimental assistants that can generate and run code, in talking with developers and datascientists, most would prefer to use their existing environment for development, such as VS Code + GitHub Copilot. For this reason we provide a sync process that will allow recipe managers to check out and work on recipes locally, then publish them back into the recipes database for wider consumption.
 
+Some more discussion on design decisions can also be found [here](https://www.loom.com/share/500e960fd91c44c282076be4b0126461?sid=83af2d6c-622c-4bda-b21b-8f528d6eafba).
+
 # What's in this repo?
 
 ![alt text](./assets/system.png)
@@ -38,6 +40,8 @@ The following sets you up with data recipes, as provided using the OpenAI plugin
 ## One-time Setup 
 
 :warning: *This is very much a work in progress, much of the following will be automated*
+
+You can find a video of the quick start [here](https://www.loom.com/share/9e63bc1efe244dc6ad52b29a698bc3af?sid=0204a95b-aae6-40b7-9ea1-46fbffbb09d5), running through the steps below.
 
 First, start the environment ...
 
