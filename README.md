@@ -1,6 +1,6 @@
 # Data Recipes AI
 
-:warning: This repo is being actively developed and is in a pre-release mode. Expect lots of changes and updates!
+:warning: *This repo is being actively developed and is in a pre-release mode. Expect lots of changes and updates!*
 
 Data recipes AI is a Large Language Model-powered platform for creating a library of data analysis 'Recipes' people can use in a chat interface ... 
 
