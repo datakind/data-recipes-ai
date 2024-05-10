@@ -6,11 +6,8 @@ This repo contains components for the humanitarian AI Assitant developed by Data
 
 It has the following components:
 
-- [LibraChat](https://docs.librechat.ai/) chat interface
+- [LibreChat](https://docs.librechat.ai/) chat interface
 - [Robocorp actions-server](https://github.com/robocorp/robocorp)
-
-Being added soon ....
-
 - Databases
 - Data Ingestion Pipeline
 - Assistant creation
@@ -46,7 +43,15 @@ TODO: This will be automated, but for now ...
 7. Save the action
 8. Update the agent
 
-Note: You can reset Libre chat by removing contents of `ui/recipes_assistant_chat/data-node/`. This is sometimes neccesary due to a bug in specifying actions.
+>>>>>> GOT TO HAPI TO GET KEY
+
+Note: You can reset Libre chat by removing contents of `ui/recipes-chat/data-node/`. This is sometimes neccesary due to a bug in specifying actions.
+
+## managing Assistants
+
+You can create new Azure OpenAI or OpenAI assistants as follows:
+
+<TO DO Add instructions on create_update_assistant.py and importing >
 
 ## Reseting your environment
 
@@ -62,14 +67,14 @@ If running locally, you can reset your environment - removing any data for your 
     -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}' \
     "http://actions:8080/api/actions/get-data-recipe-memory/get-memory/run"``
 
-## LibraChat Plugins
+## LibreChat Plugins
 
 With a defined set of functionalities, [plugins](https://docs.librechat.ai/features/plugins/introduction.html) act as tools for the LLM application to use and extend their capabilities.
 
 To create an additional plugin, perform the following steps:
 1. Create a new robocorp action in a new folder under [actions_plugins](./actions/actions_plugins/). You can reference the [recipe-server](./actions/actions_plugins/recipe-server/) action to see the relevant files, etc. 
-2. Create OpenAPI specification to describe your enpoint. The openapi.json file of the robocorps actions (available on localhost:3001 when the containers are up and running) should contain all necessary information of the endpoint and can be easily converted into a openapi.yaml file. For local development, the open api spec file has to be added to the [openapi directory](./ui/recipes_assistant_chat/tools/.well-known/openapi/) and can then be referenced as the url in the manifest. You can use the [haa_datarecipes.yaml](./ui/recipes_assistant_chat/tools/.well-known/openapi/haa_datarecipes.yaml) as a template. Please note that robocorp expects inputs to the actions in the body of the API call. For the docker setup, the url can be set to http://actions:8080 as all containers are running in the same network, but this has to be adjusted for the production environment. 
-3. Create plugin manigest to describe the plugin for the LLM to determine when and how to use it. You can use [haa_datarecipes.json](./ui/recipes_assistant_chat/tools/haa_datarecipes.json) as a template 
+2. Create OpenAPI specification to describe your enpoint. The openapi.json file of the robocorps actions (available on localhost:3001 when the containers are up and running) should contain all necessary information of the endpoint and can be easily converted into a openapi.yaml file. For local development, the open api spec file has to be added to the [openapi directory](./ui/recipes-chat/tools/.well-known/openapi/) and can then be referenced as the url in the manifest. You can use the [haa_datarecipes.yaml](./ui/recipes-chat/tools/.well-known/openapi/haa_datarecipes.yaml) as a template. Please note that robocorp expects inputs to the actions in the body of the API call. For the docker setup, the url can be set to http://actions:8080 as all containers are running in the same network, but this has to be adjusted for the production environment. 
+3. Create plugin manigest to describe the plugin for the LLM to determine when and how to use it. You can use [haa_datarecipes.json](./ui/recipes-chat/tools/haa_datarecipes.json) as a template 
 
 As the robocorp actions might differ slightly, this can lead to differing requirements in the openapi spec, and manifest files. The [LibraChat documentation](https://docs.librechat.ai/features/plugins/chatgpt_plugins_openapi.html) provides tips and examples to form the files correctly. 
 

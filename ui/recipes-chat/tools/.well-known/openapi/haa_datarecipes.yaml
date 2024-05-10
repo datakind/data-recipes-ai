@@ -31,7 +31,7 @@ paths:
                   enum:
                     - "true"
                     - "false"
-                  default: "true"
+                  #default: "true"
               required:
                 - user_input
                 - chat_history
