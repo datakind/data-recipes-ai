@@ -31,7 +31,11 @@ This repo contains a docker-compose environment that will run the following comp
 - A recipes management environment for people approving/improving/creating recipes using the favorite IDE (eg VS Code + GitHub Copilot)
 - (Azure) Open AI Assistant creation tools to create assistants that are aware of the data sources available in the data recipes ai environment 
 
-# One-time Setup
+# Quick start
+
+The following sets you up with data recipes, as provided using the OpenAI plugin architecture. The plugin calls the recipe server, which extracts recipes and memories of data analysis tasks, and presents back to the user. A
+
+## One-time Setup 
 
 :warning: *This is very much a work in progress, much of the following will be automated*
 
@@ -44,42 +48,69 @@ First, start the environment ...
 
 Then configure the chat platform ...
 
-1. Got to  [chat app](http://localhost:3080/) and register a user on the login page
+1. Go to  [chat app](http://localhost:3080/) and register a user on the login page
 2. Select "Plugins" endpoint at top, then in the plugin box go to store and activate 
    - Humanitariuan Data Assistant
    - Humanitarian Data Recipes
    - Code Sherpa, when asked enter URL http://code-interpretor:3333
-3. Import the presets ...
+3. Import the Data Recipe presets ...
    - In the top row of the chat window, there is a small icon with two squares, click it
+   - Click the import button
    - Navigate to the preset files in './assistants/plugin_assistants' 
-   - Import each file
-4. Next ingest data ...
-   - `docker exec -it haa-ingestion /bin/bash`
-   - `python3 ingest.py`
+   - Import file 'IN_PROGRESS! Recipes Plugin.json'
+   - Click the two squares icon again and select the preset
 
 Note: If you reset your docker environment you will need to run the above steps again.
 
-The above will provide basic data recipes via the plugins architecture. If you want to also explore using Azure or Open AI assistants ...
+## Using Recipes
 
-5. Review the settings in `.env` that start with 'ASSISTANTS'
-6. In directory `assistants/openai_assistants` run `create_update_assistant.py`, this will upload data files and create an assistant. See also prompts in sub-directory `templates`.
-7. Under the 'Assistants' dialogue in http://localhost:3080/, choose your new assistantL
-8. Under actions, create a new action and use the function definition from [here](http://localhost:4001/openapi.json). You'll need to remove the comments at the top and change the host to be 'url' in 'servers' to be "http://actions:8080"
-9. Save the action
-10. Update the agent
+We are in a phase of research to identify and improve recipes, but for now the systems comes with some basic examples to illustrate. To see these try asking one of the following questions ...
+
+- What is the hazard exposure risk for Mali?
+- Retrieve full details for Tombouctou region
+- Request a situation report for Mali
+- plot bar chart for food insecurity by state in Cameroon
+- plot bar chart for food insecurity by state in Cameroon
+- plot population pyramids all on one page for Nigeria, Sudan, Chad, Niger
+- Generate an administrative level 2 map of food security in Chad
+- Plot a world map of overall risk by country with light gray outlines for all countries
+
+The first time you run a recipe it will be slow as it spins up a process, but should be a bit faster thereafter. We are working on making this even faster in the coming months.
+
+## Additional features
+
+### Analysis on Ingested Data 
+
+To run the ingestion module for ingested datasets, so assistants and plugins can analysis data on-the-fly as an experimental feature:
+
+1. `docker exec -it haa-ingestion /bin/bash`
+2. `python3 ingest.py`
+
+It may take a while!
+
+### Recipes in Open AI (or Azure OpenAI) assistants
+
+The above will provide basic data recipes via the plugins architecture. If you want to also explore using Azure or Open AI assistants, the repo includes an approach where data files are uploaded to the assistant, and a prompt for it to analyse. 
+
+1. Run the ingestion as mentioned above
+2. Review the settings in `.env` that start with 'ASSISTANTS'
+3. In directory `assistants/openai_assistants` run `create_update_assistant.py`, this will upload data files and create an assistant. See also prompts in sub-directory `templates`.
+4. Under the 'Assistants' dialogue in http://localhost:3080/, choose your new assistantL
+5. Under actions, create a new action and use the function definition from [here](http://localhost:4001/openapi.json). You'll need to remove the comments at the top and change the host to be 'url' in 'servers' to be "http://actions:8080"
+6. Save the action
+7. Update the agent
 
 # To start the environment
 
-To configure your environment the first time, see 'One Time Setup' below. Once done,
+To configure your environment the first time, see 'One Time Setup' below. Once done, anytime after that all you need is ...
 
-1. Copy `.env.example` to `.env` and set variables
-2. `docker compose down`
-3. `docker compose pull`
-4. `docker compose up`
+1. `docker compose up`
+2. Got to [chat app](http://localhost:3080/) 
+3. Log in
+4. Choose your preset and start chatting!
 
-Once running, you can access  
+You can also access the recipe server monitoring endpoint (Robocorp actions server):
 
-- Chat platform: [http://localhost:3080/](http://localhost:3080/)
 - Recipes server (Robocorp AI Actions): [http://localhost:4001/](http://localhost:4001/)
 - Robocorp AI Actions API: [http://localhost:3001/](http://localhost:3001/)
 
