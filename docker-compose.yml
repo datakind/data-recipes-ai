@@ -137,8 +137,6 @@ services:
       - 4001:8087
     env_file:
       - .env
-    volumes:
-      - shared-data:/action-server/actions/actions_plugins/recipe-server/images
   # Init container 
   init:
     image: busybox

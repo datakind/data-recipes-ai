@@ -12,7 +12,7 @@ By building a library, certain risks of using LLMs are reduced because data reci
 
 Data recipes have two types: (i) Exact memories, eg '*What is the population of Mali?*' which can be served directly to the user when they ask this question; (ii) Generic skills which can be run when requested for a scenario not in memory, eg a skill for 'What is the population of country X?' which can be called when the user asks something like '*What is the population of Nigeria?*'. In both cases the match to the user's intent is made using semantic search with LLM-reranking.
 
-Given the rapidly changing landscape of LLMs, we have tried as much as possible to implement data recipes in such as way that it can be intergrated with various semantic architectures and frameworks. By implementing recipes using a recipes server (powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme)), it can be called from [Open AI assistant](https://platform.openai.com/docs/assistants/overview) actions and [Copilot Studio](https://www.microsoft.com/en-us/microsoft-copilot/microsoft-copilot-studio) as well from any custom code. Also included in this repo is an example of using recipes via OpenAI format plugins, as supported by frameworks such as [semantic kernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/?tabs=Csharp). 
+Given the rapidly changing landscape of LLMs, we have tried as much as possible to implement data recipes in such a way that it can be intergrated with various semantic architectures and frameworks. By implementing recipes using a recipes server (powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme)), it can be called from [Open AI assistant](https://platform.openai.com/docs/assistants/overview) actions and [Copilot Studio](https://www.microsoft.com/en-us/microsoft-copilot/microsoft-copilot-studio) as well from any custom code. Also included in this repo is an example of using recipes via OpenAI format plugins, as supported by frameworks such as [semantic kernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/?tabs=Csharp). 
 
 Data recipes supports datasources accessed via API, but in some cases it is preferable to ingest data in order to leverage LLM SQL capabilities. We include an initial set of data sources specific to Humanitarian Response in the ingestion module, which can be extended to include additional sources as required.
 
@@ -25,7 +25,7 @@ Finally, for reviewing/updating/creating new recipes, though we provide some exp
 This repo contains a docker-compose environment that will run the following components:
 
 - A [LibreChat](https://docs.librechat.ai/) platform with configured examples of using data recipes in plugins or assistants 
-- A Data Recipes AI server powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme) and a basic code execution environment run running recipes
+- A Data Recipes AI server powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme) and a basic code execution environment to run recipes
 - Data ingestion pipeline, with simple configuration that can add new sources if they have an 'openapi.json' file 
 - Postgres Databases for storing recipes and data with extensions for [PGVector](https://github.com/pgvector/pgvector) (for vector search) and [Postgis](https://postgis.net/) (for supporting the storage of Geospatial Shape files)
 - A recipes management environment for people approving/improving/creating recipes using the favorite IDE (eg VS Code + GitHub Copilot)
@@ -50,8 +50,8 @@ Then configure the chat platform ...
 2. Select "Plugins" endpoint at top, then in the plugin box go to store and activate 
    - Humanitariuan Data Assistant
    - Humanitarian Data Recipes
-   - Code Sherpa, when asked enter URL http://code-interpretor:3333
-3. Import the Data Recipe presets ...
+   - Code Sherpa, when asked enter URL http://code-interpreter:3333
+3. Import the presets ...
    - In the top row of the chat window, there is a small icon with two squares, click it
    - Click the import button
    - Navigate to the preset files in './assistants/plugin_assistants' 
@@ -114,7 +114,7 @@ You can also access the recipe server monitoring endpoint (Robocorp actions serv
 
 ## Reseting your environment
 
-If running locally, you can reset your environment - removing any data for your databases, which means re-registration - by running `./cleanuop.sh`.
+If running locally, you can reset your environment - removing any data for your databases, which means re-registration - by running `./cleanup.sh`.
 
 # Development
 
