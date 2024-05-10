@@ -56,7 +56,9 @@ def get_api_data(endpoint, params):
         return msg
 
 
-def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
+def download_openapi_data(
+    api_host, openapi_def, excluded_endpoints, save_path, query_extra=""
+):
     """
     Downloads data based on the functions specified in the openapi.json definition file.
 
@@ -64,9 +66,11 @@ def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
     extend to other approaches.
 
     Args:
-        api_hiost: Host URL
+        api_host: Host URL
         openapi_def (str): The path to the openapi JSON file.
         save_path (str): Where to save the data
+        excluded_endpoints (list): List of endpoints to exclude
+        query_extra (str): Extra query parameters to add to the request
 
     """
 
@@ -88,13 +92,17 @@ def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
             print(f"Skipping endpoint with no 'get' method {endpoint}")
             continue
         url = f"https://{api_host}/{endpoint}"
+
         print(url)
 
         data = []
         offset = 0
         output = []
         while len(output) > 0 or offset == 0:
-            output = get_api_data(url, {"limit": limit, "offset": offset})
+            query = {"limit": limit, "offset": offset}
+            if query_extra:
+                query.update(query_extra)
+            output = get_api_data(url, query)
             if "No data" in output:
                 break
             print(output)
@@ -412,8 +420,27 @@ def main():
         api_host = api["openapi_def"].split("/")[2]
         excluded_endpoints = api["excluded_endpoints"]
 
+        if "authentication" in api:
+            query_extra = ""
+            print("Authentication required for", api_name)
+            if api["authentication"]["type"] == "bearer_token":
+                print("Bearer token required for", api_name)
+            elif api["authentication"]["type"] == "api_key":
+                print("API key required for", api_name)
+            elif api["authentication"]["type"] == "basic":
+                print("Basic authentication required for", api_name)
+            elif api["authentication"]["type"] == "query_parameter":
+                print("Query parameter required for", api_name)
+                query_extra = {
+                    api["authentication"]["name"]: api["authentication"]["value"]
+                }
+            else:
+                print("Unknown authentication type for", api_name)
+
         # Extract data from remote APIs which are defined in apis.config
-        download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path)
+        download_openapi_data(
+            api_host, openapi_def, excluded_endpoints, save_path, query_extra
+        )
 
         # Standardize column names
         process_openapi_data(api_name, save_path, field_map, standard_names)
