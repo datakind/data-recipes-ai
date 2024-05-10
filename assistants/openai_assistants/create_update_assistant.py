@@ -37,7 +37,10 @@ elif api_type == "azure":
     print("Using Azure API")
     print(f"Endpoint: {api_endpoint}")
     client = AzureOpenAI(
-        api_key=api_key, api_version=api_version, azure_endpoint=api_endpoint
+        api_key=api_key,
+        api_version=api_version,
+        azure_endpoint=api_endpoint,
+        default_headers={"OpenAI-Beta": "assistants=v2"},
     )
 else:
     print("API type not supported")
