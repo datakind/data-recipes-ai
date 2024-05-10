@@ -1,8 +1,14 @@
-# Introduction
+# Data Recipes AI
 
-Data recipes AI is a Large Language Model-powered platform for creating a library of data analysis 'Recipes' people can use in a chat interface. 
+Data recipes AI is a Large Language Model-powered platform for creating a library of data analysis 'Recipes' people can use in a chat interface ... 
 
 ![alt text](./assets/data-recipes-concept.png)
+
+By building a library, certain risks of using LLMs are reduced because data recipes will give exactly the same result every time and can be reviewed to ensure the answer is right. It's a way of using the awesome power of LLMs in a safer and more cost effective way. As an extension of [Large Language Models as Tool makers (LATM)](https://arxiv.org/abs/2305.17126), data recipes ai adds in memory of reusable recipes as well as a human-in-the-loop review concept. 
+
+# What's in this repo?
+
+![alt text](./assets/system.png)
 
 NOTE: For now we reference internal documents, but this will be adjusted and added to the repo over time.
 
