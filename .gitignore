@@ -17,5 +17,6 @@ ui/recipes_assistant_chat/docsdb
 ui/recipes_assistant_chat/recipesdb
 instructions.txt
 dataset_details.json
+.DS_Store
 recipes-management/checked_out
 
