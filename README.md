@@ -42,9 +42,7 @@ The following sets you up with data recipes, as provided using the OpenAI plugin
 First, start the environment ...
 
 1. Copy `.env.example` to `.env` and set variables according to instructions in the file
-2. `docker compose down`
-3. `docker compose pull`
-4. `docker compose up`
+2. `docker compose up -d --build`
 
 Then configure the chat platform ...
 
