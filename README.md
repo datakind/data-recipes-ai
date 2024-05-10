@@ -1,5 +1,7 @@
 # Introduction
 
+![alt text](./assets/datarecipes-concepts.png)
+
 NOTE: For now we reference internal documents, but this will be adjusted and added to the repo over time.
 
 This repo contains components for the humanitarian AI Assitant developed by DataKind. For more information see [here](https://datakind.atlassian.net/wiki/spaces/TT/pages/187105282/Technical+Summary)
