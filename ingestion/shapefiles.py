@@ -92,7 +92,9 @@ def get_hdx_shapefile(country_code, admin_level):
     return response
 
 
-def normalize_hdx_boundaries(datafile, col_map, map_code_cols, datafile_country_col):
+def normalize_hdx_boundaries(
+    datafile, field_map, map_field_names, datafile_country_col
+):
     """
     HDX Boundaries have inconsistent naming conventions and pcode variable names. This function
     attempts to standardize them for easier use in HDeXpert.
@@ -100,8 +102,8 @@ def normalize_hdx_boundaries(datafile, col_map, map_code_cols, datafile_country_
     Args:
         datafile (str): Path to the data file containing location codes. Default is "./data/hdx_population.csv".
         files_prefix (str): The prefix to use for the files.
-        col_map (dict): A dictionary of column names mapping, used to rename columns to standard names.
-        map_code_cols (function): A function to map the code columns to standard names.
+        field_map (dict): A dictionary of column names mapping, used to rename columns to standard names.
+        map_field_names (function): A function to map the code columns to standard names.
         datafile_country_col (str): The column name in the data file containing the country codes.
 
     Returns:
@@ -135,7 +137,7 @@ def normalize_hdx_boundaries(datafile, col_map, map_code_cols, datafile_country_
                         shp_file = [f for f in shp_file if f"{admin}.shp" in f]
                     shp_file = shp_file[0]
                     gdf = gpd.read_file(shp_file)
-                    gdf = map_code_cols(gdf, col_map)
+                    gdf = map_field_names(gdf, field_map)
                     shp_file = shp_file.split(admin)[0] + admin + ".shp"
                     shp_file = shp_file.replace("./tmp", "")
                     shp_file = f"{output_dir}/{shp_file[1:]}"
@@ -147,8 +149,8 @@ def download_hdx_boundaries(
     datafile="./api/hapi/hapi_population.csv",
     datafile_country_col="location_code",
     target_dir="./api/hdx/",
-    col_map={},
-    map_code_cols=None,
+    field_map={},
+    map_field_names=None,
 ):
     """
     Downloads HDX boundaries for all countries and administrative levels.
@@ -159,8 +161,8 @@ def download_hdx_boundaries(
         datafile (str): Path to the data file containing location codes. Default is "./data/hdx_population.csv".
         datafile_country_col (str): The column name in the data file containing the country codes.
         files_prefix (str): The prefix to use for the files.
-        col_map (dict): A dictionary of column names mapping, used to rename columns to standard names.
-        map_code_cols (function): A function to map the code columns to standard names.
+        field_map (dict): A dictionary of column names mapping, used to rename columns to standard names.
+        map_field_names (function): A function to map the code columns to standard names.
 
     Returns:
         None
@@ -175,8 +177,6 @@ def download_hdx_boundaries(
     df = pd.read_csv(datafile)
     countries = df[datafile_country_col].unique()
     countries = [c.lower() for c in countries]
-    # TODO: Remove Columbia, it's too big
-    # countries = [c for c in countries if "col" not in c]
 
     for country in countries:
         for admin in ["admin1", "admin2"]:
@@ -185,7 +185,7 @@ def download_hdx_boundaries(
 
     # Align field names with other datasets
     output_dir = normalize_hdx_boundaries(
-        datafile, col_map, map_code_cols, datafile_country_col
+        datafile, field_map, map_field_names, datafile_country_col
     )
 
     # Copy normalized files to target_dir
@@ -198,10 +198,7 @@ def download_hdx_boundaries(
     for admin in ["adm0", "adm1", "adm2"]:
         files = glob.glob(f"{output_dir}/*{admin}*")
         if len(files) > 0:
-            if admin != "adm2":
-                ranges = ["a-z"]
-            else:
-                ranges = ["a-c", "d-h", "i-z"]
+            ranges = ["a-c", "d-h", "i-z"]
             for letter_range in ranges:
                 letters = letter_range.split("-")
                 letters = [chr(i) for i in range(ord(letters[0]), ord(letters[1]) + 1)]

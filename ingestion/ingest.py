@@ -12,35 +12,7 @@ from dotenv import load_dotenv
 from shapefiles import download_hdx_boundaries
 from sqlalchemy import create_engine, text
 
-APIS_CONFIG = "apis.config"
-
-# We use this to map column names to be the same in all files
-# Note that shapefile geopandas columns must be less than 10 characters
-# TODO, move this to API config
-admin0_code = "adm0_code"
-admin1_code = "adm1_code"
-admin2_code = "adm2_code"
-admin3_code = "adm3_code"
-admin0_name = "adm0_name"
-admin1_name = "adm1_name"
-admin2_name = "adm2_name"
-admin3_name = "adm3_name"
-col_map = {
-    "location_code": admin0_code,
-    "admin1_code": admin1_code,
-    "admin2_code": admin2_code,
-    "admin3_code": admin3_code,
-    "admin1_name": admin1_name,
-    "admin2_name": admin2_name,
-    "admin3_name": admin3_name,
-    "ADM0_PCODE": admin0_code,
-    "ADM1_PCODE": admin1_code,
-    "ADM2_PCODE": admin2_code,
-    "ADM3_PCODE": admin3_code,
-    "admin0Pcod": admin0_code,
-    "admin1Pcod": admin1_code,
-    "admin2Pcod": admin2_code,
-}
+INTEGRATION_CONFIG = "ingestion.config"
 
 
 def get_api_def(api):
@@ -84,7 +56,9 @@ def get_api_data(endpoint, params):
         return msg
 
 
-def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
+def download_openapi_data(
+    api_host, openapi_def, excluded_endpoints, save_path, query_extra=""
+):
     """
     Downloads data based on the functions specified in the openapi.json definition file.
 
@@ -92,9 +66,11 @@ def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
     extend to other approaches.
 
     Args:
-        api_hiost: Host URL
+        api_host: Host URL
         openapi_def (str): The path to the openapi JSON file.
         save_path (str): Where to save the data
+        excluded_endpoints (list): List of endpoints to exclude
+        query_extra (str): Extra query parameters to add to the request
 
     """
 
@@ -116,13 +92,17 @@ def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
             print(f"Skipping endpoint with no 'get' method {endpoint}")
             continue
         url = f"https://{api_host}/{endpoint}"
+
         print(url)
 
         data = []
         offset = 0
         output = []
         while len(output) > 0 or offset == 0:
-            output = get_api_data(url, {"limit": limit, "offset": offset})
+            query = {"limit": limit, "offset": offset}
+            if query_extra:
+                query.update(query_extra)
+            output = get_api_data(url, query)
             if "No data" in output:
                 break
             print(output)
@@ -149,13 +129,30 @@ def download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path):
 
 
 def read_apis_config():
-    with open(APIS_CONFIG) as f:
-        print("Reading apis.config")
-        apis = json.load(f)
-    return apis
+    """
+    Read the APIs configuration from the integration config file.
+
+    Returns:
+        apis (dict): A dictionary containing the API configurations.
+        field_map (dict): A dictionary containing the field mappings.
+        standard_names (dict): A dictionary containing the standard names.
+    """
+    with open(INTEGRATION_CONFIG) as f:
+        print(f"Reading {INTEGRATION_CONFIG}")
+        config = json.load(f)
+        apis = config["openapi_interfaces"]
+        field_map = config["field_map"]
+        standard_names = config["standard_names"]
+    return apis, field_map, standard_names
 
 
 def is_running_in_docker():
+    """
+    Check if the code is running inside a Docker container.
+
+    Returns:
+        bool: True if running inside a Docker container, False otherwise.
+    """
     return os.path.exists("/.dockerenv")
 
 
@@ -234,7 +231,34 @@ def get_cols_string(table, conn):
     return cols_str
 
 
-def upload_openapi_csv_files(files_dir, conn, api_name):
+def process_openapi_data(api_name, files_dir, field_map, standard_names):
+    """
+    Process OpenAPI data by reading CSV files from a directory, mapping field names,
+    filtering specific data based on the API name, and saving the modified data back to the CSV files.
+
+    Args:
+        api_name (str): The name of the OpenAPI.
+        files_dir (str): The directory path where the CSV files are located.
+        field_map (dict): A dictionary mapping original field names to new field names.
+        standard_names (dict): A dictionary containing the standard names for the fields.
+
+    Returns:
+        None
+    """
+    datafiles = os.listdir(files_dir)
+    for f in datafiles:
+        if f.endswith(".csv"):
+            filename = f"{files_dir}/{f}"
+            df = pd.read_csv(filename)
+            df = map_field_names(df, field_map)
+            # TODO: This is a temporary workaround to account for HAPI having
+            # aggregate and disaggregated data in the same tables, where the hierarchy differs by country
+            if api_name == "hapi":
+                df = filter_hdx_df(df, standard_names["admin0_code_field"])
+            df.to_csv(filename, index=False)
+
+
+def save_openapi_data(files_dir, conn, api_name):
     """
     Uploads CSV files from a directory to Postgres. It assumes files_dir contains CSV files as
     well as a metadata json file for each CSV file.
@@ -252,11 +276,6 @@ def upload_openapi_csv_files(files_dir, conn, api_name):
     for f in datafiles:
         if f.endswith(".csv"):
             df = pd.read_csv(f"{files_dir}/{f}")
-            df = map_code_cols(df, col_map)
-            # TODO: This is a temporary workaround to account for HAPI having
-            # aggregate and disaggregated data in the same tables, where the hierarchy differs by country
-            if api_name == "hapi":
-                df = filter_hdx_df(df)
             table = f"{api_name}_{sanitize_name(f)}"
             print(f"Creating table {table} from {f}")
             df.to_sql(table, conn, if_exists="replace", index=False)
@@ -284,6 +303,15 @@ def upload_openapi_csv_files(files_dir, conn, api_name):
 
 
 def empty_folder(folder):
+    """
+    Remove all files and subdirectories within the specified folder.
+
+    Args:
+        folder (str): The path to the folder.
+
+    Raises:
+        IsADirectoryError: If the specified folder is a directory.
+    """
     for f in os.listdir(folder):
         try:
             os.remove(f"{folder}/{f}")
@@ -327,32 +355,32 @@ def upload_hdx_shape_files(files_dir, conn):
         connection.commit()
 
 
-def map_code_cols(df, col_map):
+def map_field_names(df, field_map):
     """
     Map columns in a DataFrame to a new set of column names.
 
     Args:
         df (pandas.DataFrame): The DataFrame to be mapped.
-        col_map (dict): A dictionary containing the mapping of old column names to new column names.
+        field_map (dict): A dictionary containing the mapping of old column names to new column names.
 
     Returns:
         pandas.DataFrame: The mapped DataFrame.
     """
-    for c in col_map:
+    for c in field_map:
         if c in df.columns:
-            df.rename(columns={c: col_map[c]}, inplace=True)
+            df.rename(columns={c: field_map[c]}, inplace=True)
 
     return df
 
 
-def filter_hdx_df(df, **kwargs):
+def filter_hdx_df(df, admin0_code_field):
     """
     Filter a pandas DataFrame by removing columns where all values are null and removing rows where any value is null.
     Hack to get around the fact HDX mixes total values in with disaggregated values in the API
 
     Args:
         df (pandas.DataFrame): The DataFrame to be filtered.
-        **kwargs: Additional keyword arguments.
+        admin0_code_field (str): The name of the column containing the admin0 code.
 
     Returns:
         pandas.DataFrame: The filtered DataFrame.
@@ -363,10 +391,10 @@ def filter_hdx_df(df, **kwargs):
         return df_orig
 
     dfs = []
-    if admin0_code in df.columns:
-        for country in df[admin0_code].unique():
+    if admin0_code_field in df.columns:
+        for country in df[admin0_code_field].unique():
             df2 = df.copy()
-            df2 = df2[df2[admin0_code] == country]
+            df2 = df2[df2[admin0_code_field] == country]
 
             # Remove any columns where all null
             df2 = df2.dropna(axis=1, how="all")
@@ -382,7 +410,7 @@ def filter_hdx_df(df, **kwargs):
 
 
 def main():
-    apis = read_apis_config()
+    apis, field_map, standard_names = read_apis_config()
     conn = connect_to_db()
     for api in apis:
 
@@ -392,19 +420,41 @@ def main():
         api_host = api["openapi_def"].split("/")[2]
         excluded_endpoints = api["excluded_endpoints"]
 
+        if "authentication" in api:
+            query_extra = ""
+            print("Authentication required for", api_name)
+            if api["authentication"]["type"] == "bearer_token":
+                print("Bearer token required for", api_name)
+            elif api["authentication"]["type"] == "api_key":
+                print("API key required for", api_name)
+            elif api["authentication"]["type"] == "basic":
+                print("Basic authentication required for", api_name)
+            elif api["authentication"]["type"] == "query_parameter":
+                print("Query parameter required for", api_name)
+                query_extra = {
+                    api["authentication"]["name"]: api["authentication"]["value"]
+                }
+            else:
+                print("Unknown authentication type for", api_name)
+
         # Extract data from remote APIs which are defined in apis.config
-        download_openapi_data(api_host, openapi_def, excluded_endpoints, save_path)
+        download_openapi_data(
+            api_host, openapi_def, excluded_endpoints, save_path, query_extra
+        )
+
+        # Standardize column names
+        process_openapi_data(api_name, save_path, field_map, standard_names)
 
         # Upload CSV files to the database, with supporting metadata
-        upload_openapi_csv_files(save_path, conn, api_name)
+        save_openapi_data(save_path, conn, api_name)
 
-    # Download shapefiles from HDX
+    # Download shapefiles from HDX. Note, this also standardizes column names
     download_hdx_boundaries(
         datafile="./api/hapi/api_v1_themes_population.csv",
-        datafile_country_col="location_code",
+        datafile_country_col=standard_names["country_code_field"],
         target_dir="./api/hdx/",
-        col_map=col_map,
-        map_code_cols=map_code_cols,
+        field_map=field_map,
+        map_field_names=map_field_names,
     )
 
     # Upload shapefiles to the database
