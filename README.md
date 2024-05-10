@@ -121,9 +121,9 @@ One thing to mention on an Azure deploy, it that doesn't get pushed to the web a
 
 Note: 
 
-`./deployment/./deployment/docker-compose-azure.yml` is the configutation used in the deployment center screen on the web app
-`./deployment/./deployment/docker-compose-deploy.yml` is the configutation used when building the deployment
-`docker-compose.yml` is used for building locally
+- `./deployment/./deployment/docker-compose-azure.yml` is the configutation used in the deployment center screen on the web app
+- `./deployment/./deployment/docker-compose-deploy.yml` is the configutation used when building the deployment
+- `docker-compose.yml` is used for building locally
 
 :warning: *This is very much a work in progress, deployment will be automated with fewer compose files soon*
 
