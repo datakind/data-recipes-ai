@@ -15,5 +15,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./ingestion .
+COPY ./utils ./utils
 
 CMD [ "tail", "-f" , "/dev/null" ]

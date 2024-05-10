@@ -12,8 +12,8 @@ ingestion/api/hdx/*
 code-interpretor/static/*
 actions/actions_plugins/recipe-server/images
 __pycache__
-ui/recipes_assistant_chat/datadb
-ui/recipes_assistant_chat/docsdb
-ui/recipes_assistant_chat/recipesdb
+ui/recipes-chat/datadb
+ui/recipes-chat/docsdb
+ui/recipes-chat/recipesdb
 instructions.txt
 dataset_details.json

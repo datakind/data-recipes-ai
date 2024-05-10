@@ -55,7 +55,7 @@ services:
     #ports:
     #  - 5434:5432
   #  #volumes:
-  #  #  - ./ui/recipes_assistant_chat/docsdb:/var/lib/postgresql/data
+  #  #  - ./ui/recipes-chat/docsdb:/var/lib/postgresql/data
     env_file:
       - .env
   actions:
