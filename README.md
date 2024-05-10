@@ -1,6 +1,6 @@
 # Introduction
 
-![alt text](./assets/datarecipes-concepts.png)
+![alt text](./assets/data-recipes-concept.png)
 
 NOTE: For now we reference internal documents, but this will be adjusted and added to the repo over time.
 
