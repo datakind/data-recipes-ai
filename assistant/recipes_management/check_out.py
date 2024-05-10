@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import logging
 import json
+import subprocess
 
 logging.basicConfig(level=logging.INFO)
 
@@ -78,7 +79,12 @@ def save_data(df):
             calling_code = metadata["calling_code"]
             functions_code = metadata["functions_code"]
             # Concatenate functions_code and calling_code into recipe code
-            recipe_code = functions_code + "\n\n" + calling_code
+            recipe_code = (
+                f"# Functions code:\n{functions_code}\n\n"
+                f"# Calling code:\n{calling_code}\n\n"
+                "if __name__ == '__main__':\n"
+                "    main()"
+            )
             output = metadata["response_text"]
 
             # Save files
@@ -100,9 +106,19 @@ def save_data(df):
         except Exception as e:
             logging.error(f"Error while saving data for row {index}: {e}")
 
+
+def format_code_with_black():
+    # Define the command to run black on the current directory with --force-exclude ''
+    command = ["black", ".", "--force-exclude", ""]
+
+    # Run the command
+    result = subprocess.run(command, stdout=subprocess.PIPE, text=True)
+
+
 def main():
     memories = get_memories()
     save_data(memories)
+    format_code_with_black()
 
 
 if __name__ == "__main__":
