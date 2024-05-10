@@ -2,7 +2,7 @@ FROM python:3.11.4
 
 WORKDIR /app
 
-COPY ./assistant/recipes_management/requirements.txt ./
+COPY ./recipes-management/requirements.txt ./
 
 RUN pip install --no-cache-dir -r requirements.txt
 

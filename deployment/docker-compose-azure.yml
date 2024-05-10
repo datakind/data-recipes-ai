@@ -71,7 +71,7 @@ services:
   #  user: "root"
   #  depends_on:
   #    - actions
-  code-interpretor:
+  code-interpreter:
     image: dkdsprototypesreg01.azurecr.io/humanitarian-ai-assistant:code-interpreter
     volumes:
       - ${WEBAPP_STORAGE_HOME}/shared-data:/app/static
