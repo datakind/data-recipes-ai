@@ -10,7 +10,7 @@ services:
     #image: ghcr.io/danny-avila/librechat-dev:latest
     build:
       context: .
-      dockerfile: ./ui/recipes_assistant_chat/Dockerfile
+      dockerfile: ./ui/recipes-chat/Dockerfile
     ports:
       #- "${PORT}:${PORT}"
       - 8080:8080
@@ -34,11 +34,11 @@ services:
       #- type: bind
       #  source: ./.env
       #  target: /app/.env
-      #- ./ui/recipes_assistant_chat/images:/app/client/public/images
-      #- ./ui/recipes_assistant_chat/logs:/app/api/logs
-      #- ./ui/recipes_assistant_chat/tools:/app/api/app/clients/tools
+      #- ./ui/recipes-chat/images:/app/client/public/images
+      #- ./ui/recipes-chat/logs:/app/api/logs
+      #- ./ui/recipes-chat/tools:/app/api/app/clients/tools
       #- type: bind
-      #  source: ./ui/recipes_assistant_chat/librechat.yaml
+      #  source: ./ui/recipes-chat/librechat.yaml
       #  target: /app/librechat.yaml
   #mongodb:
   #  platform: linux/amd64
@@ -47,7 +47,7 @@ services:
   #  restart: always
   #  user: "${UID}:${GID}"
   #  #volumes:
-  #  #  - ./ui/recipes_assistant_chat/data-node:/data/db
+  #  #  - ./ui/recipes-chat/data-node:/data/db
   #  command: mongod --noauth
   meilisearch:
     platform: linux/amd64
@@ -59,7 +59,7 @@ services:
       MEILI_HOST: http://meilisearch:7700
       MEILI_NO_ANALYTICS: true
     #volumes:
-    #  - ./ui/recipes_assistant_chat/meili_data_v1.7:/meili_data
+    #  - ./ui/recipes-chat/meili_data_v1.7:/meili_data
   rag-api:
     platform: linux/amd64
     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
@@ -93,7 +93,7 @@ services:
   #  ports:
   #    - 5433:5432
   #  #volumes:
-  #  #  - ./ui/recipes_assistant_chat/datadb:/var/lib/postgresql/data
+  #  #  - ./ui/recipes-chat/datadb:/var/lib/postgresql/data
   #  env_file:
   #    - .env
   docsdb:
@@ -108,7 +108,7 @@ services:
     #ports:
     #  - 5434:5432
   #  #volumes:
-  #  #  - ./ui/recipes_assistant_chat/docsdb:/var/lib/postgresql/data
+  #  #  - ./ui/recipes-chat/docsdb:/var/lib/postgresql/data
     env_file:
       - .env
   #recipedb:
@@ -124,7 +124,7 @@ services:
   #    - 5435:5432
   #  #volumes:
   #  #  - ./actions/actions_plugins/recipe-server/db/:/docker-entrypoint-initdb.d
-  #  #  - ./ui/recipes_assistant_chat/recipesdb:/var/lib/postgresql/data
+  #  #  - ./ui/recipes-chat/recipesdb:/var/lib/postgresql/data
   #  env_file:
   #    - .env
   actions:

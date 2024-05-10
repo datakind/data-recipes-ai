@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shutil
 import sys
 import time
@@ -12,7 +13,12 @@ from dotenv import load_dotenv
 from shapefiles import download_hdx_boundaries
 from sqlalchemy import create_engine, text
 
+# This is copied into Docker env
+from utils.utils import is_running_in_docker, read_integration_config
+
 INTEGRATION_CONFIG = "ingestion.config"
+
+load_dotenv("../.env")
 
 
 def get_api_def(api):
@@ -126,34 +132,6 @@ def download_openapi_data(
                 f.write(json.dumps(full_meta, indent=4))
 
             print(f"Saved {file_name}")
-
-
-def read_apis_config():
-    """
-    Read the APIs configuration from the integration config file.
-
-    Returns:
-        apis (dict): A dictionary containing the API configurations.
-        field_map (dict): A dictionary containing the field mappings.
-        standard_names (dict): A dictionary containing the standard names.
-    """
-    with open(INTEGRATION_CONFIG) as f:
-        print(f"Reading {INTEGRATION_CONFIG}")
-        config = json.load(f)
-        apis = config["openapi_interfaces"]
-        field_map = config["field_map"]
-        standard_names = config["standard_names"]
-    return apis, field_map, standard_names
-
-
-def is_running_in_docker():
-    """
-    Check if the code is running inside a Docker container.
-
-    Returns:
-        bool: True if running inside a Docker container, False otherwise.
-    """
-    return os.path.exists("/.dockerenv")
 
 
 def connect_to_db():
@@ -410,7 +388,7 @@ def filter_hdx_df(df, admin0_code_field):
 
 
 def main():
-    apis, field_map, standard_names = read_apis_config()
+    apis, field_map, standard_names = read_integration_config(INTEGRATION_CONFIG)
     conn = connect_to_db()
     for api in apis:
 
