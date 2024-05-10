@@ -1,14 +1,24 @@
 # Data Recipes AI
 
+**Please note**: This repo is being actively developed and is in a pre-release mode. Expect lots of changes and updates!
+
 Data recipes AI is a Large Language Model-powered platform for creating a library of data analysis 'Recipes' people can use in a chat interface ... 
 
 ![alt text](./assets/data-recipes-concept.png)
 
-By building a library, certain risks of using LLMs are reduced because data recipes will give exactly the same result every time and can be reviewed to ensure the answer is right. It's a way of using the awesome power of LLMs in a safer and more cost effective way. As an extension of [Large Language Models as Tool makers (LATM)](https://arxiv.org/abs/2305.17126), data recipes ai adds in memory of reusable recipes as well as a human-in-the-loop review concept. 
+By building a library, certain risks of using LLMs are reduced because data recipes will give exactly the same result every time and can be reviewed to ensure the answer is right. It's a way of using the awesome power of LLMs in a safer and more cost effective way. As an extension of [Large Language Models as Tool makers (LATM)](https://arxiv.org/abs/2305.17126), data recipes ai extends this to include memory management as well as human-in-the-loop review concept. 
+
+# Design Concepts
+
+Given the rapidly changing landscape of LLMs, we have tried as much as possible to implement data recipes in such as way that it can be intergrated with various 
 
 # What's in this repo?
 
 ![alt text](./assets/system.png)
+
+This repo contains the following main components:
+
+
 
 NOTE: For now we reference internal documents, but this will be adjusted and added to the repo over time.
 
@@ -22,6 +32,8 @@ It has the following components:
 - Data Ingestion Pipeline
 - Assistant creation
 
+# Design principals
+
 # To start the environment
 
 1. Copy `.env.example` to `.env` and set variables
@@ -34,6 +46,9 @@ It has the following components:
 Chatbot - [http://localhost:3080/](http://localhost:3080/)
 Robocorp AI Actions (used for SQL querying), Dashboard - [http://localhost:4001/](http://localhost:4001/)
 Robocorp AI Actions API - [http://localhost:3001/](http://localhost:3001/)
+
+
+
 
 # One time setup
 
