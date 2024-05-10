@@ -43,6 +43,8 @@ TODO: This will be automated, but for now ...
 7. Save the action
 8. Update the agent
 
+>>>>>> GOT TO HAPI TO GET KEY
+
 Note: You can reset Libre chat by removing contents of `ui/recipes_assistant_chat/data-node/`. This is sometimes neccesary due to a bug in specifying actions.
 
 ## managing Assistants

@@ -177,8 +177,6 @@ def download_hdx_boundaries(
     df = pd.read_csv(datafile)
     countries = df[datafile_country_col].unique()
     countries = [c.lower() for c in countries]
-    # TODO: Remove Columbia, it's too big
-    # countries = [c for c in countries if "col" not in c]
 
     for country in countries:
         for admin in ["admin1", "admin2"]:
