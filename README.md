@@ -87,15 +87,13 @@ Once running, you can access
 
 If running locally, you can reset your environment - removing any data for your databases, which means re-registration - by running `./cleanuop.sh`.
 
+# Development
+
 ## Testing connection to actions server
 
 1. `docker exec -it haa-libre-chat  /bin/sh`
-2. To test the SQL query action, run `curl -X POST -H "Content-Type: application/json" \
-    -d '{"query": "select 1"}' \
-    "http://actions:8080/api/actions/postgresql-universal-actions/execute-query/run"`
-3. To get get-memory action, run ... `curl -X POST -H "Content-Type: application/json" \
-    -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}' \
-    "http://actions:8080/api/actions/get-data-recipe-memory/get-memory/run"``
+2. To test the SQL query action, run `curl -X POST -H "Content-Type: application/json"  -d '{"query": "select 1"}' "http://actions:8080/api/actions/postgresql-universal-actions/execute-query/run"`
+3. To get get-memory action, run ... `curl -X POST -H "Content-Type: application/json"  -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}'  "http://actions:8080/api/actions/get-data-recipe-memory/get-memory/run"`
 
 ## LibreChat Plugins
 
@@ -108,6 +106,10 @@ To create an additional plugin, perform the following steps:
 3. Create plugin manigest to describe the plugin for the LLM to determine when and how to use it. You can use [haa_datarecipes.json](./ui/recipes-chat/tools/haa_datarecipes.json) as a template 
 
 As the robocorp actions might differ slightly, this can lead to differing requirements in the openapi spec, and manifest files. The [LibraChat documentation](https://docs.librechat.ai/features/plugins/chatgpt_plugins_openapi.html) provides tips and examples to form the files correctly. 
+
+# Deployment
+
+We will add more details here soon, for now, here are some notes on Azure ...
 
 ## Deploying to Azure
 
