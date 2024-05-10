@@ -18,53 +18,34 @@ Data recipes supports datasources accessed via API, but in some cases it is pref
 
 ![alt text](./assets/system.png)
 
-This repo contains a docker-comose environment that will run the following components:
+This repo contains a docker-compose environment that will run the following components:
 
-- A Librechat platform  
-- A Data Recipes AI server and basic code execution environment run running recipes
+- A [LibreChat](https://docs.librechat.ai/) platform with configured examples of using data recipes in plugins or assistants 
+- A Data Recipes AI server powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme) and a basic code execution environment run running recipes
 - Data ingestion pipeline 
+- A recipes management environment for people approving/improving/creating recipes using the favorite IDE (eg VS Code + GitHub Copilot)
+- (Azure) Open AI Assistant creation tools to create assistants 
 
+# One-time Setup
 
+:warning: *This is very much a work in progress, much of the following will be automated*
 
-NOTE: For now we reference internal documents, but this will be adjusted and added to the repo over time.
-
-This repo contains components for the humanitarian AI Assitant developed by DataKind. For more information see [here](https://datakind.atlassian.net/wiki/spaces/TT/pages/187105282/Technical+Summary)
-
-It has the following components:
-
-- [LibreChat](https://docs.librechat.ai/) chat interface
-- [Robocorp actions-server](https://github.com/robocorp/robocorp)
-- Databases
-- Data Ingestion Pipeline
-- Assistant creation
-
-# Design principals
-
-# To start the environment
+First, start the environment ...
 
 1. Copy `.env.example` to `.env` and set variables
 2. `docker compose down`
 3. `docker compose pull`
 4. `docker compose up`
 
-# Apps
-
-Chatbot - [http://localhost:3080/](http://localhost:3080/)
-Robocorp AI Actions (used for SQL querying), Dashboard - [http://localhost:4001/](http://localhost:4001/)
-Robocorp AI Actions API - [http://localhost:3001/](http://localhost:3001/)
-
-
-
-
-# One time setup
-
-TODO: This will be automated, but for now ...
+Then configure the chat platform ...
 
 1. Got to  [chat app](http://localhost:3080/) and register a user on the login page
 2. Select "Plugins' endpoint at top, then in the plugin box go to store and activate 
    - Humanitariuan Data Assistant
    - Humanitarian Data Recipes
-   - Code sherpa, when asked enter URL http://code-interpretor:3333
+   - Code Sherpa, when asked enter URL http://code-interpretor:3333
+
+   
 3. Populate system prompts, see `./assistant/recipes_assistant/prompts`, build presets
 2. Log in
 3. `docker exec -it haa-ingestion /bin/bash`
@@ -77,6 +58,26 @@ TODO: This will be automated, but for now ...
 >>>>>> GOT TO HAPI TO GET KEY
 
 Note: You can reset Libre chat by removing contents of `ui/recipes-chat/data-node/`. This is sometimes neccesary due to a bug in specifying actions.
+
+# To start the environment
+
+To configure your environment the first time, see 'One Time Setup' below. Once done,
+
+1. Copy `.env.example` to `.env` and set variables
+2. `docker compose down`
+3. `docker compose pull`
+4. `docker compose up`
+
+Once running, you can access  
+
+- Chat platform: [http://localhost:3080/](http://localhost:3080/)
+- Recipes server (Robocorp AI Actions): [http://localhost:4001/](http://localhost:4001/)
+- Robocorp AI Actions API: [http://localhost:3001/](http://localhost:3001/)
+
+
+
+
+
 
 ## managing Assistants
 
