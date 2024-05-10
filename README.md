@@ -66,14 +66,14 @@ Note: If you reset your docker environment you will need to run the above steps 
 
 We are in a phase of research to identify and improve recipes, but for now the systems comes with some basic examples to illustrate. To see these try asking one of the following questions ...
 
-- What is the hazard exposure risk for Mali?
-- Retrieve full details for Tombouctou region
-- Request a situation report for Mali
-- plot bar chart for food insecurity by state in Cameroon
-- plot bar chart for food insecurity by state in Cameroon
-- plot population pyramids all on one page for Nigeria, Sudan, Chad, Niger
-- Generate an administrative level 2 map of food security in Chad
-- Plot a world map of overall risk by country with light gray outlines for all countries
+- "*What is the hazard exposure risk for Mali?*"
+- "*Retrieve full details for Tombouctou region*"
+- "*Request a situation report for Mali*"
+- "*plot bar chart for food insecurity by state in Cameroon*"
+- "*plot bar chart for food insecurity by state in Cameroon*"
+- "*plot population pyramids all on one page for Nigeria, Sudan, Chad, Niger*"
+- "*Generate an administrative level 2 map of food security in Chad*"
+- "*Plot a world map of overall risk by country with light gray outlines for all countries*"
 
 The first time you run a recipe it will be slow as it spins up a process, but should be a bit faster thereafter. We are working on making this even faster in the coming months.
 
