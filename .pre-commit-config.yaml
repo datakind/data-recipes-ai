@@ -18,3 +18,4 @@ repos:
     hooks:
     - id: interrogate
       args: [--fail-under=65, --verbose]
+      exclude: __init__.py
