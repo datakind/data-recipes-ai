@@ -182,8 +182,14 @@ services:
     depends_on:
       - recipedb
     restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_RECIPE_DB}
+      POSTGRES_USER: ${POSTGRES_RECIPE_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
     env_file:
       - .env
+    volumes:
+      - ./assistant/recipes_management:/app
 
 volumes:
   pgdata2:
