@@ -179,17 +179,17 @@ services:
   #    - type: bind
   #      source: ./ingestion
   #      target: /app
-  code-interpretor:
+  code-interpreter:
     #image: ghcr.io/iamgreggarcia/codesphera:latest
     platform: linux/amd64
-    container_name: haa-code-interpretor
+    container_name: haa-code-interpreter
     build:
       context: .
-      dockerfile: ./code-interpretor/Dockerfile
+      dockerfile: ./code-interpreter/Dockerfile
     ports:
       - "3333:3333"
     #volumes:
-    #  - ./code-interpretor/static:/app/static
+    #  - ./code-interpreter/static:/app/static
 
 volumes:
   pgdata2:

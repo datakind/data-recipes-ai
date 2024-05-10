@@ -4,6 +4,7 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "vector";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Create Langchain tables. Langchain will do this also, but more convenient to have as part of build.
 
@@ -22,6 +23,7 @@ CREATE TABLE public.langchain_pg_embedding (
 	cmetadata json NULL,
 	custom_id varchar NULL,
 	uuid uuid NOT NULL,
+  "checksum" varchar NULL,
 	CONSTRAINT langchain_pg_embedding_pkey PRIMARY KEY (uuid)
 );
 

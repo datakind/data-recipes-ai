@@ -1,10 +1,11 @@
+import json
+import logging
+import os
+import subprocess
+
+import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
-import os
-import pandas as pd
-import logging
-import json
-import subprocess
 
 logging.basicConfig(level=logging.INFO)
 
@@ -40,6 +41,12 @@ def connect_to_db():
 
 
 def get_memories():
+    """
+    Retrieves memories from the database.
+
+    Returns:
+        pandas.DataFrame: A DataFrame containing the retrieved memories.
+    """
     conn = connect_to_db()
     query = text(
         "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding"
@@ -53,6 +60,18 @@ def get_memories():
 
 
 def save_data(df):
+    """
+    Save data from a DataFrame to the file system.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame containing the data to be saved.
+
+    Raises:
+        Exception: If there is an error while saving the data.
+
+    Returns:
+        None
+    """
     base_path = "./checked_out"
 
     # Iterate through each row in the DataFrame
@@ -108,14 +127,31 @@ def save_data(df):
 
 
 def format_code_with_black():
+    """
+    Formats the code in the current directory using the Black code formatter.
+
+    This function runs the Black command-line tool on the current directory to automatically format the code.
+    It uses the `subprocess` module to execute the Black command and captures the output.
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
     # Define the command to run black on the current directory with --force-exclude ''
     command = ["black", ".", "--force-exclude", ""]
 
     # Run the command
     result = subprocess.run(command, stdout=subprocess.PIPE, text=True)
+    print(result.stdout)
 
 
 def main():
+    """
+    This is the main function that executes the check out process.
+    It retrieves memories, saves data, and formats the code using black.
+    """
     memories = get_memories()
     save_data(memories)
     format_code_with_black()

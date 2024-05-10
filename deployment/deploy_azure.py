@@ -64,7 +64,7 @@ def deploy():
             "actions",
         ],
         "busybox": [f"{container_registry}/{repo}", "init"],
-        "humanitarian_ai_assistant-code-interpretor": [
+        "humanitarian_ai_assistant-code-interpreter": [
             f"{container_registry}/{repo}",
             "code-interpreter",
         ],
