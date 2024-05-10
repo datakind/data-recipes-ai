@@ -181,7 +181,7 @@ services:
     container_name: haa-recipe-manager
     build:
       context: .
-      dockerfile: ./assistant/recipes_management/Dockerfile
+      dockerfile: ./recipes-management/Dockerfile
     depends_on:
       - recipedb
     restart: always
@@ -192,7 +192,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./assistant/recipes_management:/app
+      - ./recipes-management:/app
 
 volumes:
   pgdata2:
