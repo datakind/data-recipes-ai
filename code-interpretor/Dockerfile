@@ -33,7 +33,7 @@ WORKDIR /app
 RUN git clone https://github.com/iamgreggarcia/codesherpa.git
 RUN mv codesherpa/* /app/
 
-COPY ./code-interpretor/pyproject.toml /app/
+COPY ./code-interpreter/pyproject.toml /app/
 RUN rm ./poetry.lock
 
 RUN pip install --no-cache-dir poetry

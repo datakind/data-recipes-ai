@@ -9,7 +9,7 @@ tmp
 ingestion/api/hapi/*
 ingestion/api/hdx/*
 .vscode
-code-interpretor/static/*
+code-interpreter/static/*
 actions/actions_plugins/recipe-server/images
 __pycache__
 ui/recipes_assistant_chat/datadb

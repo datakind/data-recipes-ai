@@ -33,7 +33,7 @@ TODO: This will be automated, but for now ...
 2. Select "Plugins' endpoint at top, then in the plugin box go to store and activate 
    - Humanitariuan Data Assistant
    - Humanitarian Data Recipes
-   - Code sherpa, when asked enter URL http://code-interpretor:3333
+   - Code sherpa, when asked enter URL http://code-interpreter:3333
 3. Populate system prompts, see `./assistant/recipes_assistant/prompts`, build presets
 2. Log in
 3. `docker exec -it haa-ingestion /bin/bash`
