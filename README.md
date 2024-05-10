@@ -1,5 +1,7 @@
 # Introduction
 
+Data recipes AI is a Large Language Model-powered platform for creating a library of data analysis 'Recipes' people can use in a chat interface. 
+
 ![alt text](./assets/data-recipes-concept.png)
 
 NOTE: For now we reference internal documents, but this will be adjusted and added to the repo over time.
