@@ -183,7 +183,7 @@ def download_hdx_boundaries(
     for country in countries:
         for admin in ["admin1", "admin2"]:
             print(country, admin)
-            # get_hdx_shapefile(country, admin)
+            get_hdx_shapefile(country, admin)
 
     # Align field names with other datasets
     output_dir = normalize_hdx_boundaries(
