@@ -1,0 +1,8 @@
+{
+    "presetId": "26fadd1e-15d5-452e-91d4-c4a178b9761c",
+    "model": "gpt-4-turbo",
+    "assistant_id": "asst_Qt7aUFQK1DGwbMaqVb9IJzXF",
+    "promptPrefix": null,
+    "endpoint": "assistants",
+    "title": "Azure Open AI Assistant (uploaded data files)"
+}
