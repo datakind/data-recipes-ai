@@ -13,7 +13,7 @@
     "is_user_authenticated": false
   },
   "data": {
-    "generate_intent": "true"
+    "generate_intent": "false"
   },
   "logo_url": "",
   "contact_email": "Matthew@Datakind.org",

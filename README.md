@@ -6,11 +6,8 @@ This repo contains components for the humanitarian AI Assitant developed by Data
 
 It has the following components:
 
-- [LibraChat](https://docs.librechat.ai/) chat interface
+- [LibreChat](https://docs.librechat.ai/) chat interface
 - [Robocorp actions-server](https://github.com/robocorp/robocorp)
-
-Being added soon ....
-
 - Databases
 - Data Ingestion Pipeline
 - Assistant creation
@@ -48,6 +45,12 @@ TODO: This will be automated, but for now ...
 
 Note: You can reset Libre chat by removing contents of `ui/recipes_assistant_chat/data-node/`. This is sometimes neccesary due to a bug in specifying actions.
 
+## managing Assistants
+
+You can create new Azure OpenAI or OpenAI assistants as follows:
+
+<TO DO Add instructions on create_update_assistant.py and importing >
+
 ## Reseting your environment
 
 If running locally, you can reset your environment - removing any data for your databases, which means re-registration - by running `./cleanuop.sh`.
@@ -62,7 +65,7 @@ If running locally, you can reset your environment - removing any data for your 
     -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}' \
     "http://actions:8080/api/actions/get-data-recipe-memory/get-memory/run"``
 
-## LibraChat Plugins
+## LibreChat Plugins
 
 With a defined set of functionalities, [plugins](https://docs.librechat.ai/features/plugins/introduction.html) act as tools for the LLM application to use and extend their capabilities.
 
