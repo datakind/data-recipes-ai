@@ -24,10 +24,10 @@ This repo contains a docker-compose environment that will run the following comp
 
 - A [LibreChat](https://docs.librechat.ai/) platform with configured examples of using data recipes in plugins or assistants 
 - A Data Recipes AI server powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme) and a basic code execution environment run running recipes
-- Data ingestion pipeline 
-- Databases for storing recipes 
+- Data ingestion pipeline, with simple configuration that can add new sources if they have an 'openapi.json' file 
+- Postgres Databases for storing recipes and data with extensions for [PGVector](https://github.com/pgvector/pgvector) (for vector search) and [Postgis](https://postgis.net/) (for supporting the storage of Geospatial Shape files)
 - A recipes management environment for people approving/improving/creating recipes using the favorite IDE (eg VS Code + GitHub Copilot)
-- (Azure) Open AI Assistant creation tools to create assistants 
+- (Azure) Open AI Assistant creation tools to create assistants that are aware of the data sources available in the data recipes ai environment 
 
 # One-time Setup
 
