@@ -10,6 +10,8 @@ By building a library, certain risks of using LLMs are reduced because data reci
 
 # Design Concepts
 
+Data recipes have two types: (i) Exact memories, eg 'What is the population of Mali?' which can be served directly to the user when they ask this question; (ii) Generic skills which can be run when requested for a scenario not in memory, eg a skill for 'What is the population of country X?' which can be called when the user asks something like 'What is the population of Nigeria?'. In both cases the match to the user's intent is made using sematic search with LLM-reranking.
+
 Given the rapidly changing landscape of LLMs, we have tried as much as possible to implement data recipes in such as way that it can be intergrated with various semantic architectures and frameworks. By implementing recipes using a recipes server (powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme)), it can be called from [Open AI assistant](https://platform.openai.com/docs/assistants/overview) actions and [Copilot Studio](https://www.microsoft.com/en-us/microsoft-copilot/microsoft-copilot-studio) as well from any custom code. Also included in this repo is an example of using recipes via OpenAI format plugins, as supported by frameworks such as [semantic kernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/?tabs=Csharp). 
 
 Data recipes supports datasources accessed via API, but in some cases it is preferable to ingest data in order to leverage LLM SQL capabilities. We include an initial set of data sources specific to Humanitarian Response in the ingestion module, which can be extended to include additional sources as required.
@@ -23,6 +25,7 @@ This repo contains a docker-compose environment that will run the following comp
 - A [LibreChat](https://docs.librechat.ai/) platform with configured examples of using data recipes in plugins or assistants 
 - A Data Recipes AI server powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme) and a basic code execution environment run running recipes
 - Data ingestion pipeline 
+- Databases for storing recipes 
 - A recipes management environment for people approving/improving/creating recipes using the favorite IDE (eg VS Code + GitHub Copilot)
 - (Azure) Open AI Assistant creation tools to create assistants 
 
@@ -45,7 +48,7 @@ Then configure the chat platform ...
    - Humanitarian Data Recipes
    - Code Sherpa, when asked enter URL http://code-interpretor:3333
 
-   
+
 3. Populate system prompts, see `./assistant/recipes_assistant/prompts`, build presets
 2. Log in
 3. `docker exec -it haa-ingestion /bin/bash`
