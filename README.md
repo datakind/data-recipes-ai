@@ -37,7 +37,7 @@ This repo contains a docker-compose environment that will run the following comp
 
 First, start the environment ...
 
-1. Copy `.env.example` to `.env` and set variables
+1. Copy `.env.example` to `.env` and set variables according to instructions in the file
 2. `docker compose down`
 3. `docker compose pull`
 4. `docker compose up`
@@ -45,24 +45,28 @@ First, start the environment ...
 Then configure the chat platform ...
 
 1. Got to  [chat app](http://localhost:3080/) and register a user on the login page
-2. Select "Plugins' endpoint at top, then in the plugin box go to store and activate 
+2. Select "Plugins" endpoint at top, then in the plugin box go to store and activate 
    - Humanitariuan Data Assistant
    - Humanitarian Data Recipes
    - Code Sherpa, when asked enter URL http://code-interpretor:3333
+3. Import the presets ...
+   - In the top row of the chat window, there is a small icon with two squares, click it
+   - Navigate to the preset files in './assistants/plugin_assistants' 
+   - Import each file
+4. Next ingest data ...
+   - `docker exec -it haa-ingestion /bin/bash`
+   - `python3 ingest.py`
 
+Note: If you reset your docker environment you will need to run the above steps again.
 
-3. Populate system prompts, see `./assistant/recipes_assistant/prompts`, build presets
-2. Log in
-3. `docker exec -it haa-ingestion /bin/bash`
-4. `python3 ingest.py`
-5. Select Assistants, choose HDeXpert SQL
-6. Under actions, create a new action and use the function definition from [here](http://localhost:4001/openapi.json). You'll need to remove the comments at the top and change the host to be 'url' in 'servers' to be "http://actions:8080"
-7. Save the action
-8. Update the agent
+The above will provide basic data recipes via the plugins architecture. If you want to also explore using Azure or Open AI assistants ...
 
->>>>>> GOT TO HAPI TO GET KEY
-
-Note: You can reset Libre chat by removing contents of `ui/recipes-chat/data-node/`. This is sometimes neccesary due to a bug in specifying actions.
+5. Review the settings in `.env` that start with 'ASSISTANTS'
+6. In directory `assistants/openai_assistants` run `create_update_assistant.py`, this will upload data files and create an assistant. See also prompts in sub-directory `templates`.
+7. Under the 'Assistants' dialogue in http://localhost:3080/, choose your new assistantL
+8. Under actions, create a new action and use the function definition from [here](http://localhost:4001/openapi.json). You'll need to remove the comments at the top and change the host to be 'url' in 'servers' to be "http://actions:8080"
+9. Save the action
+10. Update the agent
 
 # To start the environment
 
@@ -78,17 +82,6 @@ Once running, you can access
 - Chat platform: [http://localhost:3080/](http://localhost:3080/)
 - Recipes server (Robocorp AI Actions): [http://localhost:4001/](http://localhost:4001/)
 - Robocorp AI Actions API: [http://localhost:3001/](http://localhost:3001/)
-
-
-
-
-
-
-## managing Assistants
-
-You can create new Azure OpenAI or OpenAI assistants as follows:
-
-<TO DO Add instructions on create_update_assistant.py and importing >
 
 ## Reseting your environment
 
@@ -109,6 +102,7 @@ If running locally, you can reset your environment - removing any data for your 
 With a defined set of functionalities, [plugins](https://docs.librechat.ai/features/plugins/introduction.html) act as tools for the LLM application to use and extend their capabilities.
 
 To create an additional plugin, perform the following steps:
+
 1. Create a new robocorp action in a new folder under [actions_plugins](./actions/actions_plugins/). You can reference the [recipe-server](./actions/actions_plugins/recipe-server/) action to see the relevant files, etc. 
 2. Create OpenAPI specification to describe your enpoint. The openapi.json file of the robocorps actions (available on localhost:3001 when the containers are up and running) should contain all necessary information of the endpoint and can be easily converted into a openapi.yaml file. For local development, the open api spec file has to be added to the [openapi directory](./ui/recipes-chat/tools/.well-known/openapi/) and can then be referenced as the url in the manifest. You can use the [haa_datarecipes.yaml](./ui/recipes-chat/tools/.well-known/openapi/haa_datarecipes.yaml) as a template. Please note that robocorp expects inputs to the actions in the body of the API call. For the docker setup, the url can be set to http://actions:8080 as all containers are running in the same network, but this has to be adjusted for the production environment. 
 3. Create plugin manigest to describe the plugin for the LLM to determine when and how to use it. You can use [haa_datarecipes.json](./ui/recipes-chat/tools/haa_datarecipes.json) as a template 
@@ -117,20 +111,13 @@ As the robocorp actions might differ slightly, this can lead to differing requir
 
 ## Deploying to Azure
 
-The environment has been configured to run on a [ai-assistant-prototypes](https://portal.azure.com/#@DataKindO365.onmicrosoft.com/resource/subscriptions/21fe0672-504b-4b05-b7e1-a154142c9fd4/resourceGroups/DK-DS-Prototypes/providers/Microsoft.Web/sites/ai-assistants-prototypes/appServices) multicontainer web app in Azure. This actually isn't a very robust solution, as we shall see below, and should be migrated onto something more formal for launch.
+A deployment script './deployment/deploy_azure.py' is provided to deploy to an Azure Multicontainer web app you have set up with [these instructions](https://learn.microsoft.com/en-us/azure/app-service/tutorial-multi-container-app). Note: This is for demo purposes only, as Multicontainer web app are still in Public Preview. 
 
-### Not on a Mac
-
-Run ...
+To run the deployment ...
 
 `python3 ./deployment/deploy_azure.py`
 
 One thing to mention on an Azure deploy, it that doesn't get pushed to the web app sometimes, until a user tries to access the web app's published URL. No idea why, but if your release is 'stuck', try this.
-
-### On a Mac
-
-Make sure docker has 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon' set in settings if using a MAC silicon chip. The deploy script can then build images that wwok on Azure then 
-revert to images that work on your Mac.
 
 Note: 
 
@@ -138,7 +125,7 @@ Note:
 `./deployment/./deployment/docker-compose-deploy.yml` is the configutation used when building the deployment
 `docker-compose.yml` is used for building locally
 
-TODO: The azure versions will be refactored in future to leverage the main `docker-compose.yml` and even retird for the production infratsructure.
+:warning: *This is very much a work in progress, deployment will be automated with fewer compose files soon*
 
 ## Databases
 
