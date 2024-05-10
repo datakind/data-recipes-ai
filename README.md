@@ -77,7 +77,7 @@ We are in a phase of research to identify and improve recipes, but for now the s
 
 The first time you run a recipe it will be slow as it spins up a process, but should be a bit faster thereafter. We are working on making this even faster in the coming months.
 
-## Additional features
+## Additional Features 
 
 ### Analysis on Ingested Data 
 
