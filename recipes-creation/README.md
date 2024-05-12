@@ -1,6 +1,6 @@
 # Autogen Studio and autogen agent teams for creating data recipes
 
-![alt text](../assets/autogen-studio-recipes.png.png)
+![alt text](../assets/autogen-studio-recipes.png)
 
 :warning: This README is temporary, info will be migrated to the main README later.
 
