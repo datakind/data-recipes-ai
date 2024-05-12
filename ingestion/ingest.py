@@ -46,12 +46,28 @@ def get_api_def(api):
     return api
 
 
-def get_api_data(endpoint, params):
+def get_api_data(endpoint, params, data_node=None):
+    """
+    Retrieves data from an API endpoint.
 
+    Args:
+        endpoint (str): The URL of the API endpoint.
+        params (dict): The parameters to be sent with the API request.
+        data_node (str, optional): The key of the data node to extract from the API response. Defaults to None.
+
+    Returns:
+        list: A list of data items retrieved from the API endpoint.
+
+    Raises:
+        None
+
+    """
     print("URL", endpoint + "/?" + urlencode(params))
     response = requests.get(endpoint, params=params)
     if response.status_code == 200:
         data = response.json()
+        if data_node and data_node != "":
+            data = data[data_node]
         if isinstance(data, list):
             return data
         else:
@@ -63,7 +79,7 @@ def get_api_data(endpoint, params):
 
 
 def download_openapi_data(
-    api_host, openapi_def, excluded_endpoints, save_path, query_extra=""
+    api_host, openapi_def, excluded_endpoints, data_node, save_path, query_extra=""
 ):
     """
     Downloads data based on the functions specified in the openapi.json definition file.
@@ -76,6 +92,7 @@ def download_openapi_data(
         openapi_def (str): The path to the openapi JSON file.
         save_path (str): Where to save the data
         excluded_endpoints (list): List of endpoints to exclude
+        data_node (str): The node in the openapi JSON file where the data is stored
         query_extra (str): Extra query parameters to add to the request
 
     """
@@ -108,7 +125,7 @@ def download_openapi_data(
             query = {"limit": limit, "offset": offset}
             if query_extra:
                 query.update(query_extra)
-            output = get_api_data(url, query)
+            output = get_api_data(url, query, data_node)
             if "No data" in output:
                 break
             print(output)
@@ -397,6 +414,7 @@ def main():
         save_path = f"./api/{api_name}/"
         api_host = api["openapi_def"].split("/")[2]
         excluded_endpoints = api["excluded_endpoints"]
+        data_node = api["data_node"]
 
         if "authentication" in api:
             query_extra = ""
@@ -417,7 +435,7 @@ def main():
 
         # Extract data from remote APIs which are defined in apis.config
         download_openapi_data(
-            api_host, openapi_def, excluded_endpoints, save_path, query_extra
+            api_host, openapi_def, excluded_endpoints, data_node, save_path, query_extra
         )
 
         # Standardize column names
