@@ -1,0 +1,7 @@
+pgvector==0.2.4
+psycopg2_binary==2.9.9
+python-dotenv==1.0.0
+sqlalchemy==1.4.31
+pandas==2.2.2
+black==22.1.0
+autogenstudio==0.0.56
