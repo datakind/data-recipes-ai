@@ -14,4 +14,5 @@ To activate:
 5. Click 'Skills' on left, top right click '...' and import the skill in `./assets`
 6. Click 'Agents' on left, top right click '...' and import the skill in `./assets`
 7. Click 'Workflows' on left, top right click '...' and import the skill in `./assets`
-8. Go to playground and start a new session, ask 'What is the total population of Mali'
+8. Go to playground and start a new session, select the 'Recipes data Analysis' workflow
+9. Ask 'What is the total population of Mali?'
