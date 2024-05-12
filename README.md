@@ -18,7 +18,7 @@ Given the rapidly changing landscape of LLMs, we have tried as much as possible 
 
 Data recipes supports datasources accessed via API, but in some cases it is preferable to ingest data in order to leverage LLM SQL capabilities. We include an initial set of data sources specific to Humanitarian Response in the ingestion module, which can be extended to include additional sources as required.
 
-Finally, for reviewing/updating/creating new recipes, though we provide some experimental assistants that can generate and run code, in talking with developers and datascientists, most would prefer to use their existing environment for development, such as VS Code + GitHub Copilot. For this reason we provide a sync process that will allow recipe managers to check out and work on recipes locally, then publish them back into the recipes database for wider consumption.
+Finally, for reviewing/updating/creating new recipes, though we provide some experimental assistants that can generate and run recipes to semi-automate the process, in talking with developers and datascientists, most would prefer to use their existing environment for development, such as VS Code + GitHub Copilot. For this reason we are not developing a dedicated user interface for this, and intead provide a sync process that will allow recipe managers to check out and work on recipes locally, then publish them back into the recipes database for wider consumption. We do include however a autogen studio setup to be able to use agent teams to create recipes.
 
 Some more discussion on design decisions can also be found [here](https://www.loom.com/share/500e960fd91c44c282076be4b0126461?sid=83af2d6c-622c-4bda-b21b-8f528d6eafba).
 
@@ -34,6 +34,7 @@ This repo contains a docker-compose environment that will run the following comp
 - Postgres Databases for storing recipes and data with extensions for [PGVector](https://github.com/pgvector/pgvector) (for vector search) and [Postgis](https://postgis.net/) (for supporting the storage of Geospatial Shape files)
 - A recipes management environment for people approving/improving/creating recipes using the favorite IDE (eg VS Code + GitHub Copilot)
 - (Azure) Open AI Assistant creation tools to create assistants that are aware of the data sources available in the data recipes ai environment 
+- Autogen studio agent team for helping creating recipes [ In progress ]
 
 # Quick start
 
