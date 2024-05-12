@@ -16,7 +16,7 @@ jobs:
   check-for-secrets-in-code:
     runs-on: 'ubuntu-latest'
     steps:
-    - uses: GitGuardian/ggshield-action@v1.27.0
+      - uses: maddygoround/secretduty@v1.6
             
   code-quality-checks:
     runs-on: ubuntu-latest
