@@ -1,4 +1,8 @@
-This README is temporary, info will be migrated to the main README later.
+# Autogen Studio and autogen agent teams for creating data recipes
+
+![alt text](../assets/data-recipes-concept.png)
+
+:warning: This README is temporary, info will be migrated to the main README later.
 
 This folder contains an autogenstudio instance for the Docker build, as well as sample skill, agent and workflows to use a team of autogen agents for creating data recipes.
 
