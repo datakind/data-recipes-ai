@@ -165,6 +165,8 @@ Note:
 
 :warning: *This is very much a work in progress, deployment will be automated with fewer compose files soon*
 
+You will need to set key environment variables, see your local `.env` for examples. The exceptions are the tokens needed for authetication, do not use the defaults for these. You can generate them on [this page](https://www.librechat.ai/toolkit/creds_generator).
+
 ## Databases
 
 When running in Azure it is useful to use remote databases, at least for the mongodb instance so that user logins are retained with each release. For example, a databse can be configured by following [these instructions](https://docs.librechat.ai/install/configuration/mongodb.html). If doing this, then docker-compose-azure.yml in Azure can have the mongo DB section removed, and any instance of the Mongo URL used by other containers updated with the cloud connection string accordingly.
