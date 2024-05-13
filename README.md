@@ -149,7 +149,7 @@ We will add more details here soon, for now, here are some notes on Azure ...
 
 ## Deploying to Azure
 
-A deployment script './deployment/deploy_azure.py' is provided to deploy to an Azure Multicontainer web app you have set up with [these instructions](https://learn.microsoft.com/en-us/azure/app-service/tutorial-multi-container-app). Note: This is for demo purposes only, as Multicontainer web app are still in Public Preview. 
+A deployment script './deployment/deploy_azure.py' is provided to deploy to an Azure Multicontainer web app you have set up with [these instructions](https://learn.microsoft.com/en-us/azure/app-service/tutorial-multi-container-app). The script is run from the top directory. Note: This is for demo purposes only, as Multicontainer web app are still in Public Preview. 
 
 To run the deployment ...
 
