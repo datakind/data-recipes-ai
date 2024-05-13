@@ -1,6 +1,6 @@
 #FROM ghcr.io/danny-avila/librechat
-#FROM ghcr.io/danny-avila/librechat-dev:latest
-FROM ghcr.io/danny-avila/librechat:v0.7.0
+FROM ghcr.io/danny-avila/librechat-dev:latest
+#FROM ghcr.io/danny-avila/librechat:v0.7.0
 RUN echo "Hi! "
 COPY .env /app/.env
 COPY ./ui/recipes-chat/librechat.yaml /app/librechat.yaml 
