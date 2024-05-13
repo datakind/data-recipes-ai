@@ -20,7 +20,7 @@ container_registry = os.getenv("AZURE_CONTAINER_REGISTRY")
 repo = os.getenv("AZURE_CONTAINER_REGISTRY_REPO")
 
 # Script is run from top directory
-docker_compose_file = "./deployment/docker-compose-deploy.yml"
+docker_compose_file = "docker-compose-deploy.yml"
 azure_platform = "linux/amd64"
 
 if sys.platform == "darwin":
@@ -66,19 +66,19 @@ def deploy():
     should be defined before calling this function.
     """
     tags = {
-        "humanitarian_ai_assistant-api": [f"{container_registry}/{repo}", "api"],
+        "data-recipes-ai-api": [f"{container_registry}/{repo}", "api"],
         "getmeili/meilisearch:v1.7.3": [f"{container_registry}/{repo}", "meilisearch"],
         "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest": [
             f"{container_registry}/{repo}",
             "rag_api",
         ],
         "ankane/pgvector:latest": [f"{container_registry}/{repo}", "docsdb"],
-        "humanitarian_ai_assistant-actions": [
+        "data-recipes-ai-actions": [
             f"{container_registry}/{repo}",
             "actions",
         ],
         "busybox": [f"{container_registry}/{repo}", "init"],
-        "humanitarian_ai_assistant-code-interpreter": [
+        "data-recipes-ai-code-interpreter": [
             f"{container_registry}/{repo}",
             "code-interpreter",
         ],

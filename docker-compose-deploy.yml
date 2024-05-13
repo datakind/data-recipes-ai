@@ -1,0 +1,196 @@
+version: "3.4"
+
+
+services:
+  api:
+    platform: linux/amd64
+    container_name: haa-libre-chat
+    # Have to build a dockerfile as Azure multicontainer apps don't support bind mounts
+    #image: ghcr.io/danny-avila/librechat:v0.7.0
+    #image: ghcr.io/danny-avila/librechat-dev:latest
+    build:
+      context: .
+      dockerfile: ./ui/recipes-chat/Dockerfile
+    ports:
+      #- "${PORT}:${PORT}"
+      - 8080:8080
+      # DK Added
+      - 3080:3080
+    depends_on:
+      #- mongodb 
+      - rag-api
+    restart: always
+    user: "${UID}:${GID}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      HOST: 0.0.0.0
+      MONGO_URI: mongodb://mongodb:27017/LibreChat
+      MEILI_HOST: http://meilisearch:7700
+      RAG_PORT: ${RAG_PORT:-8000}
+      RAG_API_URL: http://rag-api:${RAG_PORT:-8000}
+    volumes:
+      - shared-data:/app/client/public/images
+      #- type: bind
+      #  source: ./.env
+      #  target: /app/.env
+      #- ./ui/recipes-chat/images:/app/client/public/images
+      #- ./ui/recipes-chat/logs:/app/api/logs
+      #- ./ui/recipes-chat/tools:/app/api/app/clients/tools
+      #- type: bind
+      #  source: ./ui/recipes-chat/librechat.yaml
+      #  target: /app/librechat.yaml
+  #mongodb:
+  #  platform: linux/amd64
+  #  container_name: haa-libre-chat-mongodb
+  #  image: mongo:4.4.6
+  #  restart: always
+  #  user: "${UID}:${GID}"
+  #  #volumes:
+  #  #  - ./ui/recipes-chat/data-node:/data/db
+  #  command: mongod --noauth
+  meilisearch:
+    platform: linux/amd64
+    container_name: haa-libre-chat-meilisearch
+    image: getmeili/meilisearch:v1.7.3
+    restart: always
+    user: "${UID}:${GID}"
+    environment:
+      MEILI_HOST: http://meilisearch:7700
+      MEILI_NO_ANALYTICS: true
+    #volumes:
+    #  - ./ui/recipes-chat/meili_data_v1.7:/meili_data
+  rag-api:
+    platform: linux/amd64
+    image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
+    container_name: haa-libre-chat-rag-api
+    environment:
+      DB_HOST: docsdb
+      POSTGRES_DB: docs
+      POSTGRES_USER: ${POSTGRES_DATA_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
+      RAG_PORT: 8000
+      RAG_AZURE_OPENAI_API_KEY: ${AZURE_API_KEY_ENV}
+      EMBEDDINGS_PROVIDER: azure
+      EMBEDDINGS_MODEL: text-embedding-ada-002
+      AZURE_OPENAI_ENDPOINT: https://dkopenai2.openai.azure.com/
+      DEBUG_RAG_API: "True"
+    restart: always
+    depends_on:
+      - docsdb
+    env_file:
+      - .env
+  # Using a persistent postgres DB so we can access it  
+  #datadb:
+  #  platform: linux/amd64
+  #  image: postgis/postgis:12-3.4
+  #  container_name: haa-datadb
+  #  environment:
+  #    POSTGRES_DB: ${POSTGRES_DATA_DB}
+  #    POSTGRES_USER: ${POSTGRES_DATA_USER}
+  #    POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
+  #  restart: always
+  #  ports:
+  #    - 5433:5432
+  #  #volumes:
+  #  #  - ./ui/recipes-chat/datadb:/var/lib/postgresql/data
+  #  env_file:
+  #    - .env
+  docsdb:
+    platform: linux/amd64
+    image: ankane/pgvector:latest
+    container_name: haa-docsdb
+    environment:
+      POSTGRES_DB: docs
+      POSTGRES_USER: ${POSTGRES_DATA_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
+    restart: always
+    #ports:
+    #  - 5434:5432
+  #  #volumes:
+  #  #  - ./ui/recipes-chat/docsdb:/var/lib/postgresql/data
+    env_file:
+      - .env
+  #recipedb:
+  #  platform: linux/amd64
+  #  image: ankane/pgvector:latest
+  #  container_name: haa-datarecipesdb
+  #  environment:
+  #    POSTGRES_DB: ${POSTGRES_RECIPE_DB}
+  #    POSTGRES_USER: ${POSTGRES_RECIPE_USER}
+  #    POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
+  #  restart: always
+  #  ports:
+  #    - 5435:5432
+  #  #volumes:
+  #  #  - ./actions/actions_plugins/recipe-server/db/:/docker-entrypoint-initdb.d
+  #  #  - ./ui/recipes-chat/recipesdb:/var/lib/postgresql/data
+  #  env_file:
+  #    - .env
+  actions:
+    platform: linux/amd64
+    container_name: haa-robo-actions
+    user: "1000:1000"
+    build:
+      context: .
+      dockerfile: ./actions/Dockerfile
+      args:
+        # Assuming Azure deployment uses hosted postgres rather than Docker.
+        DATA_DB_CONN_STRING: ${REMOTE_DB_CONN_STRING}
+    ports:
+      # API
+      - 3001:8080
+      # Action server portal
+      - 4001:8087
+    environment:
+      OPENAI_API_TYPE: azure
+      OPENAI_API_ENDPOINT: https://dkopenai2.openai.azure.com/
+      OPENAI_API_VERSION_MEMORY: 2024-02-15-preview
+      BASE_URL_MEMORY: https://dkopenai2.openai.azure.com/
+      MODEL_MEMORY: gpt-4-turbo
+      OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME: text-embedding-ada-002
+    env_file:
+      - .env
+    volumes:
+      - shared-data:/action-server/actions/actions_plugins/recipe-server/images
+  # Init container 
+  init:
+    image: busybox
+    platform: linux/amd64
+    container_name: haa-init
+    volumes:
+      - shared-data:/data
+    command: "sh -c 'chown -R 1000:1000 /data && chmod -R 775 /data'"
+    user: "root"
+    depends_on:
+      - actions
+  #ingestion:
+  #  platform: linux/amd64
+  #  container_name: haa-ingestion
+  #  build:
+  #    context: .
+  #    dockerfile: ./ingestion/Dockerfile
+  #  #depends_on:
+  #  #  - datadb
+  #  restart: always
+  #  env_file:
+  #    - .env
+  #  volumes:
+  #    - type: bind
+  #      source: ./ingestion
+  #      target: /app
+  code-interpreter:
+    #image: ghcr.io/iamgreggarcia/codesphera:latest
+    platform: linux/amd64
+    container_name: haa-code-interpreter
+    build:
+      context: .
+      dockerfile: ./code-interpreter/Dockerfile
+    ports:
+      - "3333:3333"
+    #volumes:
+    #  - ./code-interpreter/static:/app/static
+
+volumes:
+  pgdata2:
+  shared-data:
