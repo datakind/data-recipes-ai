@@ -9,13 +9,27 @@
 #
 
 import os
+import sys
 
 import docker
+from dotenv import load_dotenv
 
-client = docker.from_env()
+load_dotenv()
 
 container_registry = os.getenv("AZURE_CONTAINER_REGISTRY")
 repo = os.getenv("AZURE_CONTAINER_REGISTRY_REPO")
+
+# Script is run from top directory
+docker_compose_file = "./deployment/docker-compose-deploy.yml"
+azure_platform = "linux/amd64"
+
+if sys.platform == "darwin":
+    print("Running on Mac")
+    client = docker.DockerClient(
+        base_url="unix:///Users/matthewharris/.docker/run/docker.sock "
+    )
+else:
+    client = docker.from_env()
 
 
 def run_cmd(cmd):
@@ -69,8 +83,6 @@ def deploy():
             "code-interpreter",
         ],
     }
-    docker_compose_file = "docker-compose-deploy.yml"
-    azure_platform = "linux/amd64"
 
     run_cmd("az login")
     run_cmd(f"az acr login --name {container_registry}")

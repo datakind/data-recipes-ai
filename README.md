@@ -149,7 +149,7 @@ We will add more details here soon, for now, here are some notes on Azure ...
 
 ## Deploying to Azure
 
-A deployment script './deployment/deploy_azure.py' is provided to deploy to an Azure Multicontainer web app you have set up with [these instructions](https://learn.microsoft.com/en-us/azure/app-service/tutorial-multi-container-app). Note: This is for demo purposes only, as Multicontainer web app are still in Public Preview. 
+A deployment script './deployment/deploy_azure.py' is provided to deploy to an Azure Multicontainer web app you have set up with [these instructions](https://learn.microsoft.com/en-us/azure/app-service/tutorial-multi-container-app). The script is run from the top directory. Note: This is for demo purposes only, as Multicontainer web app are still in Public Preview. 
 
 To run the deployment ...
 
@@ -164,6 +164,8 @@ Note:
 - `docker-compose.yml` is used for building locally
 
 :warning: *This is very much a work in progress, deployment will be automated with fewer compose files soon*
+
+You will need to set key environment variables, see your local `.env` for examples. The exceptions are the tokens needed for authetication, do not use the defaults for these. You can generate them on [this page](https://www.librechat.ai/toolkit/creds_generator).
 
 ## Databases
 
