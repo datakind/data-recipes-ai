@@ -7,7 +7,7 @@ Coding tips ...
 
 The shapefile in the database will need to be converted to a geoseries for plotting, here is an example:
 
-` ``
+```
 # Convert the data into a DataFrame
 df = pd.DataFrame(rows, columns=["adm1_code", "population", "geometry"])
 
