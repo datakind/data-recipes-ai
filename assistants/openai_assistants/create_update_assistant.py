@@ -32,7 +32,7 @@ SYSTEM_PROMPT = "instructions.txt"
 
 if api_type == "openai":
     print("Using OpenAI API")
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=api_key, default_headers={"OpenAI-Beta": "assistants=v2"})
 elif api_type == "azure":
     print("Using Azure API")
     print(f"Endpoint: {api_endpoint}")
@@ -204,11 +204,11 @@ def create_update_assistant():
     files_prompt, file_ids = upload_files_to_openai(standard_names)
 
     # Load code examples
-    template = environment.get_template("sample_code.jinja")
+    template = environment.get_template("sample_code.jinja2")
     sample_code = template.render(admin1_code_name=standard_names["country_code_field"])
 
     # Populate system prompt
-    template = environment.get_template("assistant_instructions.jinja")
+    template = environment.get_template("assistant_instructions.jinja2")
     instructions = template.render(
         admin0_code_field=standard_names["admin0_code_field"],
         admin1_code_field=standard_names["admin1_code_field"],
@@ -244,7 +244,7 @@ def create_update_assistant():
             instructions=instructions,
             tools=tools,
             model=model,
-            file_ids=file_ids,
+            tool_resources={"code_interpreter": {"file_ids": file_ids}},
         )
         print("Assistant created!! Here is the assistant ID:")
         print(assistant.id)
