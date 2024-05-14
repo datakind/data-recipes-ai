@@ -246,10 +246,17 @@ def process_openapi_data(api_name, files_dir, field_map, standard_names):
             filename = f"{files_dir}/{f}"
             df = pd.read_csv(filename)
             df = map_field_names(df, field_map)
-            # TODO: This is a temporary workaround to account for HAPI having
-            # aggregate and disaggregated data in the same tables, where the hierarchy differs by country
-            if api_name == "hapi":
-                df = filter_hdx_df(df, standard_names["admin0_code_field"])
+
+            # Import API-specific processing functions
+            import_str = f"from api.{api_name}_utils import post_process_data"
+            print(f"Processing {filename} with {import_str}")
+            exec(import_str)
+            post_process_str = "post_process_data(df, standard_names)"
+            print("Post processing with", post_process_str)
+            print("      Before shape", df.shape)
+            df = eval(post_process_str)
+            print("      After shape", df.shape)
+
             df.to_csv(filename, index=False)
 
 
@@ -364,42 +371,6 @@ def map_field_names(df, field_map):
     for c in field_map:
         if c in df.columns:
             df.rename(columns={c: field_map[c]}, inplace=True)
-
-    return df
-
-
-def filter_hdx_df(df, admin0_code_field):
-    """
-    Filter a pandas DataFrame by removing columns where all values are null and removing rows where any value is null.
-    Hack to get around the fact HDX mixes total values in with disaggregated values in the API
-
-    Args:
-        df (pandas.DataFrame): The DataFrame to be filtered.
-        admin0_code_field (str): The name of the column containing the admin0 code.
-
-    Returns:
-        pandas.DataFrame: The filtered DataFrame.
-    """
-    df_orig = df.copy()
-
-    if df.shape[0] == 0:
-        return df_orig
-
-    dfs = []
-    if admin0_code_field in df.columns:
-        for country in df[admin0_code_field].unique():
-            df2 = df.copy()
-            df2 = df2[df2[admin0_code_field] == country]
-
-            # Remove any columns where all null
-            df2 = df2.dropna(axis=1, how="all")
-
-            # Remove any rows where one of the values is null
-            df2 = df2.dropna(axis=0, how="any")
-
-            dfs.append(df.iloc[df2.index])
-
-        df = pd.concat(dfs)
 
     return df
 
