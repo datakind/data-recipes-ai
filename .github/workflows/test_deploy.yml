@@ -1,10 +1,6 @@
 name: Run checks on recipes ai repo
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+on: [push, pull_request]
 
 jobs:
   build:

@@ -1,0 +1,137 @@
+Using the database table list below, and the columns provided in each table, generate 
+Python that summarizes the following:
+
+"Count of Organizations which are active on the ground in Mali, by sector"
+
+Coding tips ...
+
+The shapefile in the database will need to be converted to a geoseries for plotting, here is an example:
+
+` ``
+# Convert the data into a DataFrame
+df = pd.DataFrame(rows, columns=["adm1_code", "population", "geometry"])
+
+# Convert the 'geometry' column into a GeoSeries
+df['geometry'] = df['geometry'].apply(lambda x: wkb.loads(x, hex=True))
+
+# Convert the DataFrame into a GeoDataFrame
+gdf = gpd.GeoDataFrame(df, geometry='geometry')
+```
+Also, please always save any images to a .png file.
+
+Always specify a clear title on any graphs or maps. 
+Always add annotations, labels and units on any graphs/maps
+You can use any kind of visualization
+
+IMPORTANT: Generate reusable code, by putting it in a function with arguments, and provide an example of how to call it.
+
+Always print any SQL statements and the size of the results returned
+
+Database connection details are in the following environment variables (saved in the .env file) ...
+
+POSTGRES_DATA_HOST
+POSTGRES_DATA_PORT
+POSTGRES_DATA_DB
+POSTGRES_DATA_USER
+POSTGRES_DATA_PASSWORD
+
+Using python .env module to load these environment varaibles.
+
+In SQL queries with more than one table, always use table aliases to avoid ambiguous columns
+
+Make note of column types, if you are asked to plot the count of something, SUM will not work
+
+Always use country codes instead of names where possible
+
+Tables and their columns ...
+
+{
+"select table_name, summary, columns from table_metadata\n": [
+	{
+		"table_name" : "hapi_admin1",
+		"summary" : "['Locations and Administrative Divisions']",
+		"columns" : "code (text); name (text); adm0_code (text); location_name (text); "
+	},
+	{
+		"table_name" : "hapi_admin2",
+		"summary" : "['Locations and Administrative Divisions']",
+		"columns" : "code (text); name (text); adm1_code (text); adm1_name (text); adm0_code (text); location_name (text); "
+	},
+	{
+		"table_name" : "hapi_age_range",
+		"summary" : "['Age and Gender Disaggregations']",
+		"columns" : "age_min (bigint); age_max (double precision); code (text); "
+	},
+	{
+		"table_name" : "hapi_dataset",
+		"summary" : "['HDX Metadata']",
+		"columns" : "hdx_id (text); hdx_stub (text); title (text); hdx_provider_stub (text); hdx_provider_name (text); hdx_link (text); hdx_api_link (text); "
+	},
+	{
+		"table_name" : "hapi_3w",
+		"summary" : "['3W Operational Presence']",
+		"columns" : "reference_period_end (double precision); dataset_hdx_stub (text); resource_hdx_id (text); org_acronym (text); org_name (text); sector_name (text); adm0_code (text); location_name (text); reference_period_start (text); adm1_code (text); adm1_name (text); adm2_code (text); sector_code (text); adm2_name (text); "
+	},
+	{
+		"table_name" : "hapi_gender",
+		"summary" : "['Age and Gender Disaggregations']",
+		"columns" : "code (text); description (text); "
+	},
+	{
+		"table_name" : "hapi_location",
+		"summary" : "['Locations and Administrative Divisions']",
+		"columns" : "code (text); name (text); "
+	},
+	{
+		"table_name" : "hapi_org",
+		"summary" : "['Humanitarian Organizations and Sectors']",
+		"columns" : "org_type_code (double precision); acronym (text); name (text); org_type_description (text); "
+	},
+	{
+		"table_name" : "hapi_org_type",
+		"summary" : "['Humanitarian Organizations and Sectors']",
+		"columns" : "code (bigint); description (text); "
+	},
+	{
+		"table_name" : "hapi_population_group",
+		"summary" : "['Population Groups and Statuses']",
+		"columns" : "code (text); description (text); "
+	},
+	{
+		"table_name" : "hapi_population_status",
+		"summary" : "['Population Groups and Statuses']",
+		"columns" : "code (text); description (text); "
+	},
+	{
+		"table_name" : "hapi_resource",
+		"summary" : "['HDX Metadata']",
+		"columns" : "is_hxl (boolean); name (text); format (text); update_date (text); download_url (text); dataset_hdx_id (text); dataset_hdx_stub (text); dataset_title (text); dataset_hdx_provider_stub (text); dataset_hdx_provider_name (text); hdx_link (text); hdx_api_link (text); dataset_hdx_link (text); hdx_id (text); dataset_hdx_api_link (text); "
+	},
+	{
+		"table_name" : "hapi_food_security",
+		"summary" : "['Food Security']",
+		"columns" : "population_in_phase (bigint); population_fraction_in_phase (double precision); ipc_phase_code (text); ipc_phase_name (text); ipc_type_code (text); reference_period_start (text); reference_period_end (text); dataset_hdx_stub (text); dataset_hdx_provider_stub (text); resource_hdx_id (text); adm0_code (text); location_name (text); adm1_code (text); adm1_name (text); adm2_code (text); adm2_name (text); "
+	},
+	{
+		"table_name" : "hapi_humanitarian_needs",
+		"summary" : "['Humanitarian Needs']",
+		"columns" : "population (bigint); age_range_code (text); disabled_marker (text); sector_code (text); sector_name (text); population_status_code (text); population_group_code (text); reference_period_start (text); reference_period_end (text); dataset_hdx_stub (text); dataset_hdx_provider_stub (text); resource_hdx_id (text); adm0_code (text); location_name (text); adm1_code (text); adm1_name (text); adm2_code (text); gender_code (text); adm2_name (text); "
+	},
+	{
+		"table_name" : "hapi_national_risk",
+		"summary" : "['National Risk']",
+		"columns" : "risk_class (bigint); global_rank (bigint); overall_risk (double precision); hazard_exposure_risk (double precision); vulnerability_risk (double precision); coping_capacity_risk (double precision); meta_missing_indicators_pct (double precision); meta_avg_recentness_years (double precision); reference_period_start (text); reference_period_end (text); dataset_hdx_stub (text); dataset_hdx_provider_stub (text); resource_hdx_id (text); adm0_code (text); location_name (text); "
+	},
+	{
+		"table_name" : "hapi_population",
+		"summary" : "['Baseline Population']",
+		"columns" : "population (bigint); age_range_code (text); reference_period_start (text); reference_period_end (text); dataset_hdx_stub (text); resource_hdx_id (text); adm0_code (text); location_name (text); adm1_code (text); adm1_name (text); adm2_code (text); gender_code (text); adm2_name (text); "
+	},
+	{
+		"table_name" : "hdx_shape_files",
+		"summary" : "HDX Shape Files",
+		"columns" : "geometry (USER-DEFINED); OBJECTID (double precision); AREA_SQKM (double precision); Shape_Area (double precision); Shape_Leng (double precision); ADM1ALT2FR (text); ADM0_FR (text); adm0_code (text); date (text); validOn (text); validTo (text); ADM2_FR (text); adm2_code (text); ADM2_REF (text); ADM2ALT1FR (text); ADM2ALT2FR (text); ADM1_EN (text); ADM1ALT1EN (text); ADM1ALT2EN (text); ADM0_EN (text); ADM2_EN (text); ADM2ALT1EN (text); ADM2ALT2EN (text); ADM1_ES (text); ADM1ALT1ES (text); ADM1ALT2ES (text); ADM0_ES (text); ADM2_ES (text); ADM2ALT1ES (text); ADM2ALT2ES (text); ValidTo (text); ADM1_HT (text); ADM1ALT1HT (text); ADM1ALT2HT (text); ADM0_HT (text); ADM2_HT (text); ADM2ALT1HT (text); ADM2ALT2HT (text); ADM1_MY (text); ADM1_ALTPC (text); ADM0_MY (text); ADM2_MY (text); ADM1_PT (text); ADM1ALT1PT (text); ADM1ALT2PT (text); ADM0_PT (text); ADM2_PT (text); ADM2ALT1PT (text); ADM2ALT2PT (text); SD_EN (text); SD_PCODE (text); ADM1_AR (text); ADM1ALT1AR (text); ADM1ALT2AR (text); ADM0_AR (text); ADM2_AR (text); ADM2ALT1AR (text); ADM2ALT2AR (text); admin1Name (text); admin1RefN (text); admin1Na_1 (text); admin1AltN (text); admin1Al_1 (text); admin0Name (text); admin2Name (text); admin2RefN (text); admin2Na_1 (text); admin2AltN (text); admin2Al_1 (text); ADM1_UA (text); ADM1_RU (text); ADM0_UA (text); ADM0_RU (text); ADM2_UA (text); ADM2_RU (text); ADM1_FR (text); adm1_code (text); ADM1_REF (text); ADM1ALT1FR (text); "
+	}
+]}
+
+
