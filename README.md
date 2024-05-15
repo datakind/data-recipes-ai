@@ -49,6 +49,22 @@ You can find a video of the quick start [here](https://www.loom.com/share/9e63bc
 First, start the environment ...
 
 1. Copy `.env.example` to `.env` and set variables according to instructions in the file
+
+The majority of variables in the `.env.example` can be left as they are. The key variables to set in order to get started quickly are:
+
+HAPI_API_TOKEN - The new HDX API token, see .env.example for instructions
+OPENAI_API_KEY - if you are using OpenAI
+AZURE_API_KEY_ENV - If you are using Azure
+
+Then the following ...
+
+RECIPES_OPENAI_API_TYPE - one of 'azure' or 'openai' depending on which you are using
+RECIPES_OPENAI_API_KEY  - The API key
+RECIPES_OPENAI_API_ENDPOINT - If using Azure you will need to set this endpoint see .env.example for instructions
+
+Later, you can configure keys for other models and assistant creation, but the above should get you started.
+
+
 2. `docker compose up -d --build`
 
 Then configure the chat platform ...
