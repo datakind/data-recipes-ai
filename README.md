@@ -14,7 +14,7 @@ For more information see [here](https://towardsdatascience.com/reframing-llm-cha
 
 Data recipes have two types: (i) Exact memories, eg '*What is the population of Mali?*' which can be served directly to the user when they ask this question; (ii) Generic skills which can be run when requested for a scenario not in memory, eg a skill for 'What is the population of country X?' which can be called when the user asks something like '*What is the population of Nigeria?*'. In both cases the match to the user's intent is made using semantic search with LLM-reranking.
 
-Given the rapidly changing landscape of LLMs, we have tried as much as possible to implement data recipes in such a way that it can be intergrated with various semantic architectures and frameworks. By implementing recipes using a recipes server (powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme)), it can be called from [Open AI assistant](https://platform.openai.com/docs/assistants/overview) actions and [Copilot Studio](https://www.microsoft.com/en-us/microsoft-copilot/microsoft-copilot-studio) as well from any custom code. Also included in this repo is an example of using recipes via OpenAI format plugins, as supported by frameworks such as [semantic kernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/?tabs=Csharp). 
+Given the rapidly changing landscape of LLMs, we have tried as much as possible to implement data recipes in such a way that it can be integrated with various semantic architectures and frameworks. By implementing recipes using a recipes server (powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme)), it can be called from [Open AI assistant](https://platform.openai.com/docs/assistants/overview) actions and [Copilot Studio](https://www.microsoft.com/en-us/microsoft-copilot/microsoft-copilot-studio) as well from any custom code. Also included in this repo is an example of using recipes via OpenAI format plugins, as supported by frameworks such as [semantic kernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/?tabs=Csharp). 
 
 Data recipes supports datasources accessed via API, but in some cases it is preferable to ingest data in order to leverage LLM SQL capabilities. We include an initial set of data sources specific to Humanitarian Response in the ingestion module, which can be extended to include additional sources as required.
 
@@ -38,7 +38,7 @@ This repo contains a docker-compose environment that will run the following comp
 
 # Quick start
 
-The following sets you up with data recipes, as provided using the OpenAI plugin architecture. The plugin calls the recipe server, which extracts recipes and memories of data analysis tasks, and presents back to the user. A
+The following sets you up with data recipes, as provided using the OpenAI plugin architecture. The plugin calls the recipe server, which extracts recipes and memories of data analysis tasks, and presents them back to the user.
 
 ## One-time Setup 
 
@@ -71,7 +71,7 @@ Then configure the chat platform ...
 
 1. Go to  [chat app](http://localhost:3080/) and register a user on the login page
 2. Select "Plugins" endpoint at top, then in the plugin box go to store and activate 
-   - Humanitariuan Data Assistant
+   - Humanitarian Data Assistant
    - Humanitarian Data Recipes
    - Code Sherpa, when asked enter URL http://code-interpreter:3333
 3. Import the presets ...
@@ -85,7 +85,7 @@ Note: If you reset your docker environment you will need to run the above steps 
 
 ## Using Recipes
 
-We are in a phase of research to identify and improve recipes, but for now the systems comes with some basic examples to illustrate. To see these try asking one of the following questions ...
+We are in a phase of research to identify and improve recipes, but for now the system comes with some basic examples to illustrate. To see these, try asking one of the following questions ...
 
 - "*What is the hazard exposure risk for Mali?*"
 - "*Retrieve full details for Tombouctou region*"
@@ -135,7 +135,7 @@ You can also access the recipe server monitoring endpoint (Robocorp actions serv
 - Recipes server (Robocorp AI Actions): [http://localhost:4001/](http://localhost:4001/)
 - Robocorp AI Actions API: [http://localhost:3001/](http://localhost:3001/)
 
-## Reseting your environment
+## Resetting your environment
 
 If running locally, you can reset your environment - removing any data for your databases, which means re-registration - by running `./cleanup.sh`.
 
@@ -154,7 +154,7 @@ With a defined set of functionalities, [plugins](https://docs.librechat.ai/featu
 To create an additional plugin, perform the following steps:
 
 1. Create a new robocorp action in a new folder under [actions_plugins](./actions/actions_plugins/). You can reference the [recipe-server](./actions/actions_plugins/recipe-server/) action to see the relevant files, etc. 
-2. Create OpenAPI specification to describe your enpoint. The openapi.json file of the robocorps actions (available on localhost:3001 when the containers are up and running) should contain all necessary information of the endpoint and can be easily converted into a openapi.yaml file. For local development, the open api spec file has to be added to the [openapi directory](./ui/recipes-chat/tools/.well-known/openapi/) and can then be referenced as the url in the manifest. You can use the [haa_datarecipes.yaml](./ui/recipes-chat/tools/.well-known/openapi/haa_datarecipes.yaml) as a template. Please note that robocorp expects inputs to the actions in the body of the API call. For the docker setup, the url can be set to http://actions:8080 as all containers are running in the same network, but this has to be adjusted for the production environment. 
+2. Create OpenAPI specification to describe your endpoint. The openapi.json file of the robocorps actions (available on localhost:3001 when the containers are up and running) should contain all necessary information of the endpoint and can be easily converted into a openapi.yaml file. For local development, the open api spec file has to be added to the [openapi directory](./ui/recipes-chat/tools/.well-known/openapi/) and can then be referenced as the url in the manifest. You can use the [haa_datarecipes.yaml](./ui/recipes-chat/tools/.well-known/openapi/haa_datarecipes.yaml) as a template. Please note that robocorp expects inputs to the actions in the body of the API call. For the docker setup, the url can be set to http://actions:8080 as all containers are running in the same network, but this has to be adjusted for the production environment. 
 3. Create plugin manigest to describe the plugin for the LLM to determine when and how to use it. You can use [haa_datarecipes.json](./ui/recipes-chat/tools/haa_datarecipes.json) as a template 
 
 As the robocorp actions might differ slightly, this can lead to differing requirements in the openapi spec, and manifest files. The [LibraChat documentation](https://docs.librechat.ai/features/plugins/chatgpt_plugins_openapi.html) provides tips and examples to form the files correctly. 
@@ -171,18 +171,18 @@ To run the deployment ...
 
 `python3 ./deployment/deploy_azure.py`
 
-One thing to mention on an Azure deploy, it that doesn't get pushed to the web app sometimes, until a user tries to access the web app's published URL. No idea why, but if your release is 'stuck', try this.
+One thing to mention on an Azure deploy, it doesn't get pushed to the web app sometimes, until a user tries to access the web app's published URL. No idea why, but if your release is 'stuck', try this.
 
 Note: 
 
-- `./deployment/./deployment/docker-compose-azure.yml` is the configutation used in the deployment center screen on the web app
-- `./deployment/./deployment/docker-compose-deploy.yml` is the configutation used when building the deployment
+- `./deployment/./deployment/docker-compose-azure.yml` is the configuration used in the deployment center screen on the web app
+- `./deployment/./deployment/docker-compose-deploy.yml` is the configuration used when building the deployment
 - `docker-compose.yml` is used for building locally
 
 :warning: *This is very much a work in progress, deployment will be automated with fewer compose files soon*
 
-You will need to set key environment variables, see your local `.env` for examples. The exceptions are the tokens needed for authetication, do not use the defaults for these. You can generate them on [this page](https://www.librechat.ai/toolkit/creds_generator).
+You will need to set key environment variables, see your local `.env` for examples. The exceptions are the tokens needed for authentication, do not use the defaults for these. You can generate them on [this page](https://www.librechat.ai/toolkit/creds_generator).
 
 ## Databases
 
-When running in Azure it is useful to use remote databases, at least for the mongodb instance so that user logins are retained with each release. For example, a databse can be configured by following [these instructions](https://docs.librechat.ai/install/configuration/mongodb.html). If doing this, then docker-compose-azure.yml in Azure can have the mongo DB section removed, and any instance of the Mongo URL used by other containers updated with the cloud connection string accordingly.
+When running in Azure it is useful to use remote databases, at least for the mongodb instance so that user logins are retained with each release. For example, a database can be configured by following [these instructions](https://docs.librechat.ai/install/configuration/mongodb.html). If doing this, then docker-compose-azure.yml in Azure can have the mongo DB section removed, and any instance of the Mongo URL used by other containers updated with the cloud connection string accordingly.
