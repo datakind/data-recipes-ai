@@ -129,7 +129,7 @@ def save_data(df):
                 with open(recipe_code_path, "w", encoding="utf-8") as file:
                     file.write(recipe_code)
 
-            except:
+            except KeyError:
                 logging.info(f"Record '{folder_name}' doesn't contain any code!")
 
             # Create a dictionary with the variables
@@ -215,7 +215,7 @@ def lock_records(df, locker_name):
                     ),  # Convert list to tuple for SQL IN clause
                 },
             )
-    except:
+    except Exception as e:
         print(f"Error occurred: {e}")
 
 
@@ -381,7 +381,7 @@ def add_updated_files(directory):
         # Update the new metadata file with the extracted code sections
         update_metadata_file(new_metadata_path, code_sections)
 
-    except (FileNotFoundError, IOError, ValueError, json.JSONDecodeError) as e:
+    except (FileNotFoundError, IOError, ValueError, json.JSONDecodeError):
         logging.info(f"Record '{directory}' doesn't contain any code!")
 
     # Merge the updated metadata into the new record file
