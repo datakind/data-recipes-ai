@@ -129,7 +129,7 @@ def save_data(df):
                 with open(recipe_code_path, "w", encoding="utf-8") as file:
                     file.write(recipe_code)
 
-            except KeyError as ke:
+            except:
                 logging.info(f"Record '{folder_name}' doesn't contain any code!")
 
             # Create a dictionary with the variables
@@ -168,7 +168,7 @@ def format_code_with_black():
     command = ["black", ".", "--force-exclude", ""]
 
     # Run the command
-    result = subprocess.run(
+    subprocess.run(
         command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True
     )
 
@@ -204,7 +204,7 @@ def lock_records(df, locker_name):
     )
     # Execute the query within a transaction context
     try:
-        with conn.begin() as transaction:
+        with conn.begin():
             conn.execute(
                 query,
                 {
@@ -215,7 +215,7 @@ def lock_records(df, locker_name):
                     ),  # Convert list to tuple for SQL IN clause
                 },
             )
-    except Exception as e:
+    except:
         print(f"Error occurred: {e}")
 
 
