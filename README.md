@@ -8,6 +8,8 @@ Data recipes AI is a Large Language Model-powered platform for creating a librar
 
 By building a library, certain risks of using LLMs are reduced because data recipes will give exactly the same result every time and can be reviewed to ensure the answer is right. It's a way of using the awesome power of LLMs in a safer and more cost effective way. Based on [Large Language Models as Tool makers (LATM)](https://arxiv.org/abs/2305.17126), data recipes ai extends this to include memory management as well as human-in-the-loop review. 
 
+For more information see [here](https://towardsdatascience.com/reframing-llm-chat-with-data-introducing-llm-assisted-data-recipes-f4096ac8c44b?source=friends_link&sk=eff68c95c51719977122a9baa6398752).
+
 # Design Concepts
 
 Data recipes have two types: (i) Exact memories, eg '*What is the population of Mali?*' which can be served directly to the user when they ask this question; (ii) Generic skills which can be run when requested for a scenario not in memory, eg a skill for 'What is the population of country X?' which can be called when the user asks something like '*What is the population of Nigeria?*'. In both cases the match to the user's intent is made using semantic search with LLM-reranking.
@@ -16,7 +18,9 @@ Given the rapidly changing landscape of LLMs, we have tried as much as possible 
 
 Data recipes supports datasources accessed via API, but in some cases it is preferable to ingest data in order to leverage LLM SQL capabilities. We include an initial set of data sources specific to Humanitarian Response in the ingestion module, which can be extended to include additional sources as required.
 
-Finally, for reviewing/updating/creating new recipes, though we provide some experimental assistants that can generate and run code, in talking with developers and datascientists, most would prefer to use their existing environment for development, such as VS Code + GitHub Copilot. For this reason we provide a sync process that will allow recipe managers to check out and work on recipes locally, then publish them back into the recipes database for wider consumption.
+Finally, for reviewing/updating/creating new recipes, though we provide some experimental assistants that can generate and run recipes to semi-automate the process, in talking with developers and datascientists, most would prefer to use their existing environment for development, such as VS Code + GitHub Copilot. For this reason we are not developing a dedicated user interface for this, and intead provide a sync process that will allow recipe managers to check out and work on recipes locally, then publish them back into the recipes database for wider consumption. We do include however a autogen studio setup to be able to use agent teams to create recipes.
+
+Some more discussion on design decisions can also be found [here](https://www.loom.com/share/500e960fd91c44c282076be4b0126461?sid=83af2d6c-622c-4bda-b21b-8f528d6eafba).
 
 # What's in this repo?
 
@@ -30,6 +34,7 @@ This repo contains a docker-compose environment that will run the following comp
 - Postgres Databases for storing recipes and data with extensions for [PGVector](https://github.com/pgvector/pgvector) (for vector search) and [Postgis](https://postgis.net/) (for supporting the storage of Geospatial Shape files)
 - A recipes management environment for people approving/improving/creating recipes using the favorite IDE (eg VS Code + GitHub Copilot)
 - (Azure) Open AI Assistant creation tools to create assistants that are aware of the data sources available in the data recipes ai environment 
+- Autogen studio agent team for helping creating recipes [ In progress ]
 
 # Quick start
 
@@ -39,9 +44,27 @@ The following sets you up with data recipes, as provided using the OpenAI plugin
 
 :warning: *This is very much a work in progress, much of the following will be automated*
 
+You can find a video of the quick start [here](https://www.loom.com/share/9e63bc1efe244dc6ad52b29a698bc3af?sid=0204a95b-aae6-40b7-9ea1-46fbffbb09d5), running through the steps below.
+
 First, start the environment ...
 
 1. Copy `.env.example` to `.env` and set variables according to instructions in the file
+
+The majority of variables in the `.env.example` can be left as they are. The key variables to set in order to get started quickly are:
+
+HAPI_API_TOKEN - The new HDX API token, see .env.example for instructions
+OPENAI_API_KEY - if you are using OpenAI
+AZURE_API_KEY_ENV - If you are using Azure
+
+Then the following ...
+
+RECIPES_OPENAI_API_TYPE - one of 'azure' or 'openai' depending on which you are using
+RECIPES_OPENAI_API_KEY  - The API key
+RECIPES_OPENAI_API_ENDPOINT - If using Azure you will need to set this endpoint see .env.example for instructions
+
+Later, you can configure keys for other models and assistant creation, but the above should get you started.
+
+
 2. `docker compose up -d --build`
 
 Then configure the chat platform ...
@@ -142,7 +165,7 @@ We will add more details here soon, for now, here are some notes on Azure ...
 
 ## Deploying to Azure
 
-A deployment script './deployment/deploy_azure.py' is provided to deploy to an Azure Multicontainer web app you have set up with [these instructions](https://learn.microsoft.com/en-us/azure/app-service/tutorial-multi-container-app). Note: This is for demo purposes only, as Multicontainer web app are still in Public Preview. 
+A deployment script './deployment/deploy_azure.py' is provided to deploy to an Azure Multicontainer web app you have set up with [these instructions](https://learn.microsoft.com/en-us/azure/app-service/tutorial-multi-container-app). The script is run from the top directory. Note: This is for demo purposes only, as Multicontainer web app are still in Public Preview. 
 
 To run the deployment ...
 
@@ -157,6 +180,8 @@ Note:
 - `docker-compose.yml` is used for building locally
 
 :warning: *This is very much a work in progress, deployment will be automated with fewer compose files soon*
+
+You will need to set key environment variables, see your local `.env` for examples. The exceptions are the tokens needed for authetication, do not use the defaults for these. You can generate them on [this page](https://www.librechat.ai/toolkit/creds_generator).
 
 ## Databases
 

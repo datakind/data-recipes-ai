@@ -1,13 +1,6 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions.
+name: Run checks on recipes ai repo
 
-name: Build and deploy container app to Azure Web App - ai-assistants-prototypes
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+on: [push, pull_request]
 
 jobs:
   build:
@@ -15,7 +8,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-
+            
   code-quality-checks:
     runs-on: ubuntu-latest
     steps:

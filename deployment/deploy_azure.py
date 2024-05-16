@@ -9,13 +9,27 @@
 #
 
 import os
+import sys
 
 import docker
+from dotenv import load_dotenv
 
-client = docker.from_env()
+load_dotenv()
 
 container_registry = os.getenv("AZURE_CONTAINER_REGISTRY")
 repo = os.getenv("AZURE_CONTAINER_REGISTRY_REPO")
+
+# Script is run from top directory
+docker_compose_file = "docker-compose-deploy.yml"
+azure_platform = "linux/amd64"
+
+if sys.platform == "darwin":
+    print("Running on Mac")
+    client = docker.DockerClient(
+        base_url="unix:///Users/matthewharris/.docker/run/docker.sock "
+    )
+else:
+    client = docker.from_env()
 
 
 def run_cmd(cmd):
@@ -52,25 +66,23 @@ def deploy():
     should be defined before calling this function.
     """
     tags = {
-        "humanitarian_ai_assistant-api": [f"{container_registry}/{repo}", "api"],
+        "data-recipes-ai-api": [f"{container_registry}/{repo}", "api"],
         "getmeili/meilisearch:v1.7.3": [f"{container_registry}/{repo}", "meilisearch"],
         "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest": [
             f"{container_registry}/{repo}",
             "rag_api",
         ],
         "ankane/pgvector:latest": [f"{container_registry}/{repo}", "docsdb"],
-        "humanitarian_ai_assistant-actions": [
+        "data-recipes-ai-actions": [
             f"{container_registry}/{repo}",
             "actions",
         ],
         "busybox": [f"{container_registry}/{repo}", "init"],
-        "humanitarian_ai_assistant-code-interpreter": [
+        "data-recipes-ai-code-interpreter": [
             f"{container_registry}/{repo}",
             "code-interpreter",
         ],
     }
-    docker_compose_file = "docker-compose-deploy.yml"
-    azure_platform = "linux/amd64"
 
     run_cmd("az login")
     run_cmd(f"az acr login --name {container_registry}")

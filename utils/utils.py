@@ -39,6 +39,7 @@ def read_integration_config(integration_config_file):
         apis (dict): A dictionary containing the API configurations.
         field_map (dict): A dictionary containing the field mappings.
         standard_names (dict): A dictionary containing the standard names.
+        data_node (str): The data node to use for the integration.
     """
     with open(integration_config_file) as f:
         print(f"Reading {integration_config_file}")
