@@ -174,7 +174,7 @@ To check out recipes:
    Select the recipe-manager container. This opens a new VSCode window - use it for the next steps.
 4. Open a new terminal in VSCode (attached to the remote container), and run 
 
-   `python recipe_sync.py --check_in --<Your Name>`
+   `python recipe_sync.py --check_out --<Your Name>`
 5. The checked_out folder in the recipes-management directory now shows all the recipes that were checked out from the database including the recipe code as a .py file. Note that after this step, the recipes in the database are marked as locked with your name and the timestamp you checked them out. If someone else tries to check them out, they are notified accordingly and cannot proceed until you've unlocked the records (more on that below).
 This step checks out three files:
    -  Recipe.py - Contains the recipe code (re-assembled from the corresponding sections in the metadata json file)
@@ -186,7 +186,7 @@ This step checks out three files:
 6. Run the scripts and edit them as you deem fit. Please note: Do not delete the #Functions Code and #Calling Code comments as they're mandatory to reassemble the metadata json for the check in process.
 7. Once you've checked and edited the recipes, run 
 
-   `python recipe_sync.py --check_out --<Your Name>`
+   `python recipe_sync.py --check_in --<Your Name>`
 
    in the VSCode terminal to check the records back into the database and unlock them (see step 5). All recipes that you've checked in in this fashion are automatically set to status 'approved' with your name as the approver and the timestamp of when you checked them back in.
 
