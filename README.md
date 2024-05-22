@@ -188,7 +188,7 @@ This step checks out three files:
 6. Run the scripts and edit them as you deem fit. Please note: Do not delete the #Functions Code and #Calling Code comments as they're mandatory to reassemble the metadata json for the check in process.
 7. Once you've checked and edited the recipes, run 
 
-   `python recipe_sync.py --check_out --<Your Name>`
+   `python recipe_sync.py --check_in --<Your Name>`
 
    in the VSCode terminal to check the records back into the database and unlock them (see step 5). All recipes that you've checked in in this fashion are automatically set to status 'approved' with your name as the approver and the timestamp of when you checked them back in.
 
