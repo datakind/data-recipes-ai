@@ -167,15 +167,17 @@ To check out recipes:
 
 1. Install the DevContainers VSCode extension 
 2. Build and start your containers as described in the [Quick Start section](#quick-start)
-3. Open the command palette in VSCode and select 
+3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
    
    `Dev Containers: Attach to remote container`. 
    
    Select the recipe-manager container. This opens a new VSCode window - use it for the next steps.
-4. Open a new terminal in VSCode (attached to the remote container), and run 
+4. Open folde, specity `/app`
+5. Open a new terminal in VSCode (attached to the remote container), and run 
 
-   `python recipe_sync.py --check_in --<Your Name>`
-5. The checked_out folder in the recipes-management directory now shows all the recipes that were checked out from the database including the recipe code as a .py file. Note that after this step, the recipes in the database are marked as locked with your name and the timestamp you checked them out. If someone else tries to check them out, they are notified accordingly and cannot proceed until you've unlocked the records (more on that below).
+   `python recipe_sync.py --check_out <Your Name>`
+
+6. The checked_out folder in the recipes-management directory now shows all the recipes that were checked out from the database including the recipe code as a .py file. Note that after this step, the recipes in the database are marked as locked with your name and the timestamp you checked them out. If someone else tries to check them out, they are notified accordingly and cannot proceed until you've unlocked the records (more on that below).
 This step checks out three files:
    -  Recipe.py - Contains the recipe code (re-assembled from the corresponding sections in the metadata json file)
    -  metadata.json - Contains the content of the cmetadata column in the recipe database.
