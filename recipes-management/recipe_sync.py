@@ -15,6 +15,9 @@ logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
+#read the imports.txt file into a variable incl. linebreaks
+with open("imports.txt", "r") as file:
+    imports = file.read()
 
 # ToDo: This function is taken from ingest.py. perhaps it should be moved to something like a utils.py file
 def connect_to_db():
@@ -43,7 +46,7 @@ def connect_to_db():
         print("--------------- Error while connecting to PostgreSQL", error)
 
 
-def get_memories(scope="all"):
+def get_memories(force_checkout=False):
     """
     Retrieves memories from the database.
 
@@ -51,13 +54,13 @@ def get_memories(scope="all"):
         pandas.DataFrame: A DataFrame containing the retrieved memories.
     """
     conn = connect_to_db()
-    if scope == "all":
+    if force_checkout == False:
         query = text(
             "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding WHERE locked_by ='' AND locked_at =''"
         )
-    elif scope == "pending":
+    elif force_checkout == True:
         query = text(
-            "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding WHERE approval_status = 'pending' AND locked_by ='' AND locked_at =''"
+            "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding"
         )
     result = conn.execute(query)
     result = result.fetchall()
@@ -65,7 +68,7 @@ def get_memories(scope="all"):
     # If the dataset is empty, stop everything and return error
     if memories.empty:
         logging.error(
-            "No memories found in the database - this might be due to the fact that all memories are locked (because another recipe checker has them checked out)!"
+            "No memories found in the database - this might be due to the fact that all memories are locked (because another recipe checker has them checked out)! You can overwrite this by using the --force_checkout flag, but this is not recommended."
         )
         sys.exit(1)
     return memories
@@ -88,7 +91,7 @@ def save_data(df):
 
     # Iterate through each row in the DataFrame
     for index, row in df.iterrows():
-        folder_name = row["document"].replace(" ", "_").lower()[:30]
+        folder_name = row["document"].replace(" ", "_").lower()[:100]
         # Folder path for this row
         folder_path = os.path.join(base_path, folder_name)
 
@@ -116,18 +119,21 @@ def save_data(df):
             try:
                 calling_code = metadata["calling_code"]
                 functions_code = metadata["functions_code"]
+                #if import it not already in the functions_code, add it with a linebreak
+                if imports not in functions_code:
+                    functions_code = imports + "\n" + functions_code
                 # Concatenate functions_code and calling_code into recipe code
                 recipe_code = (
-                    f"# Functions code:\n{functions_code}\n\n"
+                    f"{functions_code}\n\n"
                     f"# Calling code:\n{calling_code}\n\n"
                 )
-                # if no if_name_main in the recipe code, add it
-                if "if __name__ == '__main__':" not in recipe_code:
-                    recipe_code += "\nif __name__ == '__main__':\n    main()"
 
                 # Save the recipe code
                 with open(recipe_code_path, "w", encoding="utf-8") as file:
                     file.write(recipe_code)
+
+                #copy skills.py to the folder
+                shutil.copy("skills.py", folder_path)
 
             except KeyError:
                 logging.info(f"Record '{folder_name}' doesn't contain any code!")
@@ -265,7 +271,7 @@ def extract_code_sections(recipe_path):
             content = file.read()
 
         functions_code_match = re.search(
-            r"# Functions code:\s*(.*?)(?=# Calling code:)", content, re.DOTALL
+            r"^(.*?)(?=# Calling code:)", content, re.DOTALL
         )
         calling_code_match = re.search(r"# Calling code:\s*(.*)", content, re.DOTALL)
 
@@ -278,7 +284,6 @@ def extract_code_sections(recipe_path):
         }
     except IOError as e:
         raise IOError(f"Error reading recipe file: {e}")
-
 
 def update_metadata_file(metadata_path, code_sections):
     """
@@ -463,12 +468,12 @@ def update_database(df: pd.DataFrame, approver: str):
         print(f"Error updating records: {e}")
 
 
-def check_out(recipe_checker="Mysterious Recipe Checker", scope="all"):
+def check_out(recipe_checker="Mysterious Recipe Checker", force_checkout=False):
     """
     This is the check out function that executes the check out process.
     It retrieves memories, saves data, and formats the code using black.
     """
-    memories = get_memories(scope=scope)
+    memories = get_memories(force_checkout=force_checkout)
     lock_records(df=memories, locker_name=recipe_checker)
     save_data(memories)
     format_code_with_black()
@@ -479,6 +484,11 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
     Check in function to process each subdirectory in the checked_out directory.
     """
     base_directory = "checked_out"
+
+    #delete pycache if it exists
+    pycache_path = os.path.join(base_directory, "__pycache__")
+    if os.path.exists(pycache_path):
+        shutil.rmtree(pycache_path)
 
     if not os.path.exists(base_directory):
         print(f"Base directory {base_directory} does not exist.")
@@ -529,10 +539,15 @@ def main():
     # Add recipe_checker argument
     parser.add_argument("recipe_checker", type=str, help="Name of the recipe checker")
 
+    # Add force_checkout argument
+    parser.add_argument(
+        "--force_checkout", action="store_true", help="Force check out operation"
+    )
+
     args = parser.parse_args()
 
     if args.check_out:
-        check_out(args.recipe_checker)
+        check_out(args.recipe_checker, force_checkout=args.force_checkout)
     elif args.check_in:
         check_in(args.recipe_checker)
 
