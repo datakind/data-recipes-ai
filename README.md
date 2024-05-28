@@ -212,9 +212,7 @@ You can also configure VS COde to connect to the recipe-manage container for run
 
 ![alt text](../assets/autogen-studio-recipes.png)
 
-:warning: This README is temporary, info will be migrated to the main README later.
-
-This folder contains an autogenstudio instance for the Docker build, as well as sample skill, agent and workflows to use a team of autogen agents for creating data recipes.
+Data recipes AI contains an autogenstudio instance for the Docker build, as well as sample skill, agent and workflows to use a team of autogen agents for creating data recipes.
 
 You can information on Autogen studio [here](https://github.com/microsoft/autogen/tree/main/samples/apps/autogen-studio). This folder includes a skill to query the data recipes data DB, an agent to use that, with some prompts to help it, and a workflow that uses the agent.
 
