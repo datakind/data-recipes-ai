@@ -163,7 +163,32 @@ As the robocorp actions might differ slightly, this can lead to differing requir
 
 The management of recipes is part of the human in the loop approach of this repo. New recipes are created in status pending and only get marked as approved, once they have been verified by a recipe manager. Recipe managers can 'check out' recipes from the database into their local development environment such as VS Code to run, debug, and edit the recipes, before checking them back in. To make this process platform independent, recipes are checked out into a docker container, which can be used as the runtime environment to run the recipes via VSCode. 
 
-To check out recipes:
+1. To check out recipes:
+
+`docker exec haa-recipe-manager python recipe_sync.py --check_out <YOUR NAME>`
+
+Note: This will lock the recipes in the database so others cannot edit them.
+
+2. The checked_out folder in the recipes-management directory now shows all the recipes that were checked out from the database including the recipe code as a .py file. Note that after this step, the recipes in the database are marked as locked with your name and the timestamp you checked them out. If someone else tries to check them out, they are notified accordingly and cannot proceed until you've unlocked the records (more on that below).
+
+This step checks out three files:
+
+   -  Recipe.py - Contains the recipe code (re-assembled from the corresponding sections in the metadata json file)
+   -  metadata.json - Contains the content of the cmetadata column in the recipe database.
+   -  record_info.json - Contains additional information about the record such as its custom_id, and output.
+
+   You can edit all files according to your needs. Please makes sure to not change the custom_id anywehere because it's needed for the check in process.
+
+3. Run the scripts and edit them as you deem fit. Please note: Do not delete the #Functions Code and #Calling Code comments as they're mandatory to reassemble the metadata json for the check in process.
+4. Once you've checked and edited the recipes, run 
+
+   `docker exec haa-recipe-manager python recipe_sync.py --check_in <YOUR NAME>`
+
+   To check the records back into the database and unlock them. All recipes that you've checked in in this fashion are automatically set to status 'approved' with your name as the approver and the timestamp of when you checked them back in.
+
+## Managing recipes with VS Code in a container
+
+You can also start up VS Code in a container for runniing recipes if you want:
 
 1. Install the DevContainers VSCode extension 
 2. Build and start your containers as described in the [Quick Start section](#quick-start)
@@ -172,25 +197,10 @@ To check out recipes:
    `Dev Containers: Attach to remote container`. 
    
    Select the recipe-manager container. This opens a new VSCode window - use it for the next steps.
-4. Open folde, specity `/app`
+4. Open folder `/app`
 5. Open a new terminal in VSCode (attached to the remote container), and run 
 
-   `python recipe_sync.py --check_out <Your Name>`
-
-6. The checked_out folder in the recipes-management directory now shows all the recipes that were checked out from the database including the recipe code as a .py file. Note that after this step, the recipes in the database are marked as locked with your name and the timestamp you checked them out. If someone else tries to check them out, they are notified accordingly and cannot proceed until you've unlocked the records (more on that below).
-This step checks out three files:
-   -  Recipe.py - Contains the recipe code (re-assembled from the corresponding sections in the metadata json file)
-   -  metadata.json - Contains the content of the cmetadata column in the recipe database.
-   -  record_info.json - Contains additional information about the record such as its custom_id, and output.
-
-   You can edit all files according to your needs. Please makes sure to not change the custom_id anywehere because it's needed for the check in process.
-
-6. Run the scripts and edit them as you deem fit. Please note: Do not delete the #Functions Code and #Calling Code comments as they're mandatory to reassemble the metadata json for the check in process.
-7. Once you've checked and edited the recipes, run 
-
-   `python recipe_sync.py --check_in --<Your Name>`
-
-   in the VSCode terminal to check the records back into the database and unlock them (see step 5). All recipes that you've checked in in this fashion are automatically set to status 'approved' with your name as the approver and the timestamp of when you checked them back in.
+   `python recipe_sync.py --check_out <YOUR NAME>`
 
 # Deployment
 
