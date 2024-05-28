@@ -79,7 +79,7 @@ def get_api_data(endpoint, params, data_node=None):
 
 
 def download_openapi_data(
-    api_host, openapi_def, excluded_endpoints, data_node, save_path, query_extra=""
+    api_host, openapi_def, excluded_endpoints, data_node, save_path, query_extra="", skip_downloaded=False
 ):
     """
     Downloads data based on the functions specified in the openapi.json definition file.
@@ -94,6 +94,7 @@ def download_openapi_data(
         excluded_endpoints (list): List of endpoints to exclude
         data_node (str): The node in the openapi JSON file where the data is stored
         query_extra (str): Extra query parameters to add to the request
+        skip_downloaded (bool): If True, skip downloading data that already exists
 
     """
 
@@ -101,10 +102,11 @@ def download_openapi_data(
     offset = 0
 
     files = os.listdir(save_path)
-    for f in files:
-        if "openapi.json" not in f:
-            filename = f"{save_path}/{f}"
-            os.remove(filename)
+    if skip_downloaded==False:
+        for f in files:
+            if "openapi.json" not in f:
+                filename = f"{save_path}/{f}"
+                os.remove(filename)
 
     for endpoint in openapi_def["paths"]:
         if endpoint in excluded_endpoints:
@@ -117,6 +119,15 @@ def download_openapi_data(
         url = f"https://{api_host}/{endpoint}"
 
         print(url)
+
+        endpoint_clean = endpoint.replace("/", "_")
+        if endpoint_clean[0] == "_":
+            endpoint_clean = endpoint_clean[1:]
+        file_name = f"{save_path}/{endpoint_clean}.csv"
+
+        if skip_downloaded and os.path.exists(file_name):
+            print(f"Skipping {endpoint} as {file_name} already exists")
+            continue
 
         data = []
         offset = 0
@@ -135,14 +146,9 @@ def download_openapi_data(
             time.sleep(1)
 
         if len(data) > 0:
-            endpoint_clean = endpoint.replace("/", "_")
-            if endpoint_clean[0] == "_":
-                endpoint_clean = endpoint_clean[1:]
-
             print(len(data), "Before DF")
             df = pd.DataFrame(data)
             print(df.shape[0], "After DF")
-            file_name = f"{save_path}/{endpoint_clean}.csv"
             df.to_csv(file_name, index=False)
             with open(f"{save_path}/{endpoint_clean}_meta.json", "w") as f:
                 full_meta = openapi_def["paths"][endpoint]
@@ -375,9 +381,16 @@ def map_field_names(df, field_map):
     return df
 
 
-def main():
+def main(skip_downloaded=False):
+    """
+    Main function for data ingestion.
+
+    Args:
+        skip_downloaded (bool, optional): Flag to skip downloaded data. Defaults to False.
+    """
     apis, field_map, standard_names = read_integration_config(INTEGRATION_CONFIG)
     conn = connect_to_db()
+
     for api in apis:
 
         openapi_def = get_api_def(api)
@@ -406,7 +419,7 @@ def main():
 
         # Extract data from remote APIs which are defined in apis.config
         download_openapi_data(
-            api_host, openapi_def, excluded_endpoints, data_node, save_path, query_extra
+            api_host, openapi_def, excluded_endpoints, data_node, save_path, query_extra, skip_downloaded
         )
 
         # Standardize column names
@@ -429,4 +442,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(skip_downloaded=True)
