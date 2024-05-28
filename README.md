@@ -198,7 +198,7 @@ You can test checked-out recipes as follows ...
 You can also configure VS COde to connect to the recipe-manage container for running recipes ...
 
 1. Install the DevContainers VSCode extension 
-2. Build and start your containers as described in the [Quick Start section](#quick-start)
+2. Build data recipes using the `docker compose` command mentioned above
 3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
 
    `Dev Containers: Attach to remote container`. 
