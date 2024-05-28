@@ -193,6 +193,20 @@ You can test checked-out recipes as follows ...
 
 1. `docker exec -it haa-recipe-manager /bin/bash`
 2. `cd ./checked_out`, then `cd <RECIPE_DIR>`
+3. `python recipe.py`
+
+You can also configure VS COde to connect to the recipe-manage container for running recipes ...
+
+1. Install the DevContainers VSCode extension 
+2. Build and start your containers as described in the [Quick Start section](#quick-start)
+3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
+
+   `Dev Containers: Attach to remote container`. 
+
+   Select the recipe-manager container. This opens a new VSCode window - use it for the next steps.
+4. Open folder `/app`
+5. Navigate to your recipe in sub-folder `checked_out`
+6. Run the `recipe.py` in a terminal or set up the docker interpretor
 
 # Autogen Studio and autogen agent teams for creating data recipes
 
