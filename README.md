@@ -165,6 +165,7 @@ The management of recipes is part of the human in the loop approach of this repo
 
 1. To check out recipes:
 
+`cd recipes-management`
 `docker exec haa-recipe-manager python recipe_sync.py --check_out <YOUR NAME>`
 
 Note: This will lock the recipes in the database so others cannot edit them.
@@ -186,21 +187,32 @@ This step checks out three files:
 
    To check the records back into the database and unlock them. All recipes that you've checked in in this fashion are automatically set to status 'approved' with your name as the approver and the timestamp of when you checked them back in.
 
-## Managing recipes with VS Code in a container
+## Testing a Recipe
 
-You can also start up VS Code in a container for runniing recipes if you want:
+You can test checked-out recipes as follows ...
 
-1. Install the DevContainers VSCode extension 
-2. Build and start your containers as described in the [Quick Start section](#quick-start)
-3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
-   
-   `Dev Containers: Attach to remote container`. 
-   
-   Select the recipe-manager container. This opens a new VSCode window - use it for the next steps.
-4. Open folder `/app`
-5. Open a new terminal in VSCode (attached to the remote container), and run 
+1. `docker exec -it haa-recipe-manager /bin/bash`
+2. `cd ./checked_out`, then `cd <RECIPE_DIR>`
 
-   `python recipe_sync.py --check_out <YOUR NAME>`
+# Autogen Studio and autogen agent teams for creating data recipes
+
+![alt text](../assets/autogen-studio-recipes.png)
+
+:warning: This README is temporary, info will be migrated to the main README later.
+
+This folder contains an autogenstudio instance for the Docker build, as well as sample skill, agent and workflows to use a team of autogen agents for creating data recipes.
+
+You can information on Autogen studio [here](https://github.com/microsoft/autogen/tree/main/samples/apps/autogen-studio). This folder includes a skill to query the data recipes data DB, an agent to use that, with some prompts to help it, and a workflow that uses the agent.
+
+To activate:
+
+1. Go to [http://localhost:8091/](http://localhost:8091/)
+2. Click on 'Build'
+3. Click 'Skills' on left, top right click '...' and import the skill in `./assets`
+4. Click 'Agents' on left, top right click '...' and import the skill in `./assets`
+5. Click 'Workflows' on left, top right click '...' and import the skill in `./assets`
+6. Go to playground and start a new session, select the 'Recipes data Analysis' workflow
+7. Ask 'What is the total population of Mali?'
 
 # Deployment
 

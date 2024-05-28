@@ -6,3 +6,6 @@ pandas==2.2.2
 black==22.1.0
 click==8.1.7
 datetime==4.3
+autogenstudio==0.0.56
+langchain_openai==0.1.7
+
