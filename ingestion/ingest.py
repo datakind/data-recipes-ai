@@ -254,6 +254,8 @@ def process_openapi_data(api_name, files_dir, field_map, standard_names):
     """
     datafiles = os.listdir(files_dir)
     processed_dir = f"{files_dir}/processed"
+    if not os.path.exists(processed_dir):
+        os.makedirs(processed_dir)
     for f in datafiles:
         if f.endswith(".csv"):
             filename = f"{files_dir}/{f}"
