@@ -1,4 +1,4 @@
 import sys
 import os
 import requests
-from skills import execute_query, get_connection
+from ...skills import *

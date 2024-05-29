@@ -1,23 +1,25 @@
+import argparse
 import json
 import logging
 import os
+import re
+import shutil
 import subprocess
+import sys
 from datetime import datetime
+
 import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
-import shutil
-import argparse
-import re
-import sys
 
 logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
-#read the imports.txt file into a variable incl. linebreaks
+# read the imports.txt file into a variable incl. linebreaks
 with open("imports.txt", "r") as file:
     imports = file.read()
+
 
 # ToDo: This function is taken from ingest.py. perhaps it should be moved to something like a utils.py file
 def connect_to_db():
@@ -54,11 +56,11 @@ def get_memories(force_checkout=False):
         pandas.DataFrame: A DataFrame containing the retrieved memories.
     """
     conn = connect_to_db()
-    if force_checkout == False:
+    if force_checkout is False:
         query = text(
             "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding WHERE locked_by ='' AND locked_at =''"
         )
-    elif force_checkout == True:
+    elif force_checkout is True:
         query = text(
             "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding"
         )
@@ -119,21 +121,17 @@ def save_data(df):
             try:
                 calling_code = metadata["calling_code"]
                 functions_code = metadata["functions_code"]
-                #if import it not already in the functions_code, add it with a linebreak
+                # if import it not already in the functions_code, add it with a linebreak
                 if imports not in functions_code:
                     functions_code = imports + "\n" + functions_code
                 # Concatenate functions_code and calling_code into recipe code
                 recipe_code = (
-                    f"{functions_code}\n\n"
-                    f"# Calling code:\n{calling_code}\n\n"
+                    f"{functions_code}\n\n" f"# Calling code:\n{calling_code}\n\n"
                 )
 
                 # Save the recipe code
                 with open(recipe_code_path, "w", encoding="utf-8") as file:
                     file.write(recipe_code)
-
-                #copy skills.py to the folder
-                shutil.copy("skills.py", folder_path)
 
             except KeyError:
                 logging.info(f"Record '{folder_name}' doesn't contain any code!")
@@ -284,6 +282,7 @@ def extract_code_sections(recipe_path):
         }
     except IOError as e:
         raise IOError(f"Error reading recipe file: {e}")
+
 
 def update_metadata_file(metadata_path, code_sections):
     """
@@ -485,7 +484,7 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
     """
     base_directory = "checked_out"
 
-    #delete pycache if it exists
+    # delete pycache if it exists
     pycache_path = os.path.join(base_directory, "__pycache__")
     if os.path.exists(pycache_path):
         shutil.rmtree(pycache_path)
