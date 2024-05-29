@@ -247,6 +247,7 @@ def process_openapi_data(api_name, files_dir, field_map, standard_names):
         None
     """
     datafiles = os.listdir(files_dir)
+    processed_dir = f"{files_dir}/processed"
     for f in datafiles:
         if f.endswith(".csv"):
             filename = f"{files_dir}/{f}"
@@ -263,7 +264,8 @@ def process_openapi_data(api_name, files_dir, field_map, standard_names):
             df = eval(post_process_str)
             print("      After shape", df.shape)
 
-            df.to_csv(filename, index=False)
+            processed_filename = f"{processed_dir}/{f}"
+            df.to_csv(processed_filename, index=False)
 
 
 def save_openapi_data(files_dir, conn, api_name):
@@ -426,7 +428,7 @@ def main(skip_downloaded=False):
         process_openapi_data(api_name, save_path, field_map, standard_names)
 
         # Upload CSV files to the database, with supporting metadata
-        save_openapi_data(save_path, conn, api_name)
+        save_openapi_data(f"{save_path}/processed", conn, api_name)
 
     # Download shapefiles from HDX. Note, this also standardizes column names
     download_hdx_boundaries(
@@ -438,7 +440,7 @@ def main(skip_downloaded=False):
     )
 
     # Upload shapefiles to the database
-    upload_hdx_shape_files("./api/hdx", conn)
+    upload_hdx_shape_files("./api/hdx/processed", conn)
 
 
 if __name__ == "__main__":

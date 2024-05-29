@@ -110,7 +110,7 @@ def normalize_hdx_boundaries(
         None
     """
 
-    output_dir = "./tmp/normalized/"
+    output_dir = "./tmp/processed/"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
