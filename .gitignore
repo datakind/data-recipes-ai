@@ -21,6 +21,6 @@ dataset_details.json
 recipes-management/checked_out/*
 !recipes-management/checked_out/.gitkeep
 !recipes-management/checked_out/skills.py
-recipes-creation/files/
+recipes-management/files/
 database.sqlite
 

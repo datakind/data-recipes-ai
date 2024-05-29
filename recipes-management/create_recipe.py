@@ -37,6 +37,21 @@ chat = AzureChatOpenAI(
 
 
 def create_recipe_folder(recipe_name):
+    """
+    Create a new recipe folder with necessary metadata and template files.
+
+    Parameters:
+    - recipe_name (str): The name of the recipe.
+
+    This function performs the following steps:
+    1. Defines the folder name and path for the new recipe.
+    2. Creates the folder if it does not already exist.
+    3. Defines the metadata structure with placeholder values.
+    4. Writes the metadata to a `metadata.json` file in the recipe folder.
+    5. Reads an `imports.txt` file if it exists, or uses a default import template.
+    6. Writes a `recipe.py` file in the recipe folder with the imports and a template for the recipe code.
+    """
+
     # Define the folder name
     folder_name = "new_recipe_staging"
     recipe_folder = os.path.join(folder_name, recipe_name)
@@ -74,11 +89,25 @@ def create_recipe_folder(recipe_name):
             imports
             + "\n\n"
             + "# Add your functions code here\n\n\n"
-            + "# Calling code:\n#Add your calling code here\n"
+            + "# Calling code:\n\n#Add your calling code here\n\n"
         )
 
 
 def create_metadata_upload_file(folder_path, metadata_path, recipe_path):
+    """
+    Create and update a metadata upload file for a recipe.
+
+    Parameters:
+    - folder_path (str): The path to the folder where the metadata upload file will be created.
+    - metadata_path (str): The path to the original metadata.json file.
+    - recipe_path (str): The path to the recipe.py file containing the code sections.
+
+    This function performs the following steps:
+    1. Creates a new file path for the metadata upload file (`metadata_upload.json`) in the specified folder.
+    2. Copies the original `metadata.json` file to the new file path.
+    3. Updates the copied metadata file by adding code sections extracted from the `recipe.py` file.
+    """
+
     # add metadata.json to the filepath, then create copy of it
     metadata_path_new = os.path.join(folder_path, "metadata_upload.json")
     shutil.copy(metadata_path, metadata_path_new)
@@ -112,6 +141,22 @@ def initialize_db():
 
 
 def main():
+    """
+    Main function to handle command line arguments and execute corresponding actions.
+
+    This function supports the following commands:
+    1. `--create_recipe_template <recipe_name>`: Creates a new recipe folder with the specified recipe name.
+    2. `--prepare_push_recipe_to_db`: Prepares all recipe folders in 'new_recipe_staging' by creating metadata upload files.
+    3. `--push_recipe_to_db`: Pushes all prepared recipes in 'new_recipe_staging' to the database.
+
+    Usage:
+    - python create_recipe.py --create_recipe_template <recipe_name>
+    - python create_recipe.py --prepare_push_recipe_to_db
+    - python create_recipe.py --push_recipe_to_db
+
+    The function will print usage instructions and exit if incorrect or insufficient arguments are provided.
+    """
+
     if len(sys.argv) < 2:
         print(
             "Usage: python create_recipe.py --create_recipe_template <recipe_name> | --prepare_push_recipe_to_db | --push_recipe_to_db"
