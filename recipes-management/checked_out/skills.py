@@ -1,5 +1,3 @@
-##### Begin of generate_images #####
-
 import json
 import os
 import uuid
@@ -77,20 +75,6 @@ def generate_and_save_images(query: str, image_size: str = "1024x1024") -> List[
 
     # Return the list of saved files
     return saved_files
-
-
-# Example usage of the function:
-# generate_and_save_images("A cute baby sea otter")
-
-
-#### End of generate_images ####
-
-
-##### Begin of query_data_db #####
-
-
-## This is a skill to execute database queires in the data databse,
-## For answering questions about humanitarian response.
 
 
 def get_connection():

@@ -56,24 +56,25 @@ def get_memories(force_checkout=False):
         pandas.DataFrame: A DataFrame containing the retrieved memories.
     """
     conn = connect_to_db()
-    if force_checkout is False:
-        query = text(
-            "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding WHERE locked_by ='' AND locked_at =''"
-        )
-    elif force_checkout is True:
-        query = text(
-            "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding"
-        )
-    result = conn.execute(query)
-    result = result.fetchall()
-    memories = pd.DataFrame(result)
-    # If the dataset is empty, stop everything and return error
-    if memories.empty:
-        logging.error(
-            "No memories found in the database - this might be due to the fact that all memories are locked (because another recipe checker has them checked out)! You can overwrite this by using the --force_checkout flag, but this is not recommended."
-        )
-        sys.exit(1)
-    return memories
+    with conn.connect() as connection:
+        if force_checkout is False:
+            query = text(
+                "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding WHERE locked_by ='' AND locked_at =''"
+            )
+        else:
+            query = text(
+                "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding"
+            )
+        result = connection.execute(query)
+        result = result.fetchall()
+        memories = pd.DataFrame(result)
+        # If the dataset is empty, stop everything and return error
+        if memories.empty:
+            logging.error(
+                "No memories found in the database - this might be due to the fact that all memories are locked (because another recipe checker has them checked out)! You can overwrite this by using the --force_checkout flag, but this is not recommended."
+            )
+            sys.exit(1)
+        return memories
 
 
 def save_data(df):
@@ -123,10 +124,10 @@ def save_data(df):
                 functions_code = metadata["functions_code"]
                 # if import it not already in the functions_code, add it with a linebreak
                 if imports not in functions_code:
-                    functions_code = imports + "\n" + functions_code
+                    functions_code = imports + "\n\n\n" + functions_code
                 # Concatenate functions_code and calling_code into recipe code
                 recipe_code = (
-                    f"{functions_code}\n\n" f"# Calling code:\n{calling_code}\n\n"
+                    f"\n\n{functions_code}\n\n" f"# Calling code:\n{calling_code}\n\n"
                 )
 
                 # Save the recipe code
@@ -208,17 +209,18 @@ def lock_records(df, locker_name):
     )
     # Execute the query within a transaction context
     try:
-        with conn.begin():
-            conn.execute(
-                query,
-                {
-                    "locker_name": locker_name,
-                    "current_time": current_time,
-                    "custom_ids": tuple(
-                        custom_ids
-                    ),  # Convert list to tuple for SQL IN clause
-                },
-            )
+        with conn.connect() as connection:
+            with connection.begin():
+                connection.execute(
+                    query,
+                    {
+                        "locker_name": locker_name,
+                        "current_time": current_time,
+                        "custom_ids": tuple(
+                            custom_ids
+                        ),  # Convert list to tuple for SQL IN clause
+                    },
+                )
     except Exception as e:
         print(f"Error occurred: {e}")
 
