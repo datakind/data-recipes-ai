@@ -299,7 +299,7 @@ def save_openapi_data(files_dir, conn, api_name):
             df.to_sql(table, conn, if_exists="replace", index=False)
 
             # Collate metadata
-            meta_file = f"{files_dir}/{f.replace('.csv', '_meta.json')}"
+            meta_file = f"{files_dir.replace('/processed', '')}/{f.replace('.csv', '_meta.json')}"
             if os.path.exists(meta_file):
                 with open(meta_file) as mf:
                     meta = json.load(mf)
@@ -313,10 +313,15 @@ def save_openapi_data(files_dir, conn, api_name):
                         r["api_description"] += f' : {meta["get"]["description"]}'
                     r["api_definition"] = str(meta)
                     r["file_name"] = f
+                    if 'location_name' in df.columns:
+                        r['countries'] = sorted(df['location_name'].unique())
+
                     table_metadata.append(r)
 
     # We could also use Postgres comments, but this is simpler for LLM agents for now
+    print("Saving metadata")
     table_metadata = pd.DataFrame(table_metadata)
+    print(table_metadata.shape)
     table_metadata.to_sql("table_metadata", conn, if_exists="replace", index=False)
 
 
@@ -350,6 +355,12 @@ def upload_hdx_shape_files(files_dir, conn):
     """
 
     shape_files_table = "hdx_shape_files"
+
+    with conn.connect() as connection:
+        print(f"Creating metadata for {shape_files_table}")
+        statement = text("CREATE EXTENSION IF NOT EXISTS postgis;")
+        connection.execute(statement)
+        connection.commit()
 
     df_list = []
     for f in os.listdir(files_dir):
@@ -454,7 +465,7 @@ def main(skip_downloaded=False):
     )
 
     # Upload shapefiles to the database
-    upload_hdx_shape_files("./api/hdx/processed", conn)
+    upload_hdx_shape_files("./api/hdx/", conn)
 
 
 if __name__ == "__main__":
