@@ -446,7 +446,7 @@ def main(skip_downloaded=False):
 
     # Download shapefiles from HDX. Note, this also standardizes column names
     download_hdx_boundaries(
-        datafile="./api/hapi/api_v1_population-social_population.csv",
+        datafile="./api/hapi/processed/api_v1_population-social_population.csv",
         datafile_country_col=standard_names["country_code_field"],
         target_dir="./api/hdx/",
         field_map=field_map,

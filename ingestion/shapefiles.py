@@ -175,6 +175,9 @@ def download_hdx_boundaries(
     get_hdx_config()
 
     df = pd.read_csv(datafile)
+
+    print(df.columns)
+
     countries = df[datafile_country_col].unique()
     countries = [c.lower() for c in countries]
 
