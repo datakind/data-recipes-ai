@@ -146,7 +146,7 @@ def normalize_hdx_boundaries(
 
 
 def download_hdx_boundaries(
-    datafile="./api/hapi/hapi_population.csv",
+    datafile="./api/hapi/api_v1_population-social_population.csv",
     datafile_country_col="location_code",
     target_dir="./api/hdx/",
     field_map={},
