@@ -1,19 +1,16 @@
-import os
 import json
-import sys
+import os
 import shutil
-from recipe_sync import extract_code_sections, update_metadata_file, extract_code_sections
-from skills import add_memory
-from langchain_community.vectorstores.pgvector import PGVector
-from langchain_community.embeddings import AzureOpenAIEmbeddings
+import sys
+
 from langchain_community.chat_models import AzureChatOpenAI
+from langchain_community.embeddings import AzureOpenAIEmbeddings
+from langchain_community.vectorstores.pgvector import PGVector
+from recipe_sync import extract_code_sections, update_metadata_file
+from skills import add_memory
 
 # Lower numbers are more similar
-similarity_cutoff = {
-    "memory": 0.2,
-    "recipe": 0.3,
-    "helper_function": 0.1
-}
+similarity_cutoff = {"memory": 0.2, "recipe": 0.3, "helper_function": 0.1}
 
 CONNECTION_STRING = PGVector.connection_string_from_db_params(
     driver=os.environ.get("POSTGRES_DRIVER", "psycopg2"),
@@ -24,14 +21,20 @@ CONNECTION_STRING = PGVector.connection_string_from_db_params(
     password=os.environ.get("POSTGRES_RECIPE_PASSWORD", "postgres"),
 )
 
-embedding_model = AzureOpenAIEmbeddings(deployment=os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME"), 
-                                        azure_endpoint=os.getenv("RECIPES_BASE_URL"), 
-                                        chunk_size=16)
+embedding_model = AzureOpenAIEmbeddings(
+    deployment=os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME"),
+    azure_endpoint=os.getenv("RECIPES_BASE_URL"),
+    chunk_size=16,
+)
 
-chat = AzureChatOpenAI(model_name="gpt-35-turbo", 
-                       azure_endpoint=os.getenv("RECIPES_BASE_URL"),
-                       api_version= os.getenv("RECIPES_OPENAI_API_VERSION"),  
-                       temperature=1, max_tokens=1000)
+chat = AzureChatOpenAI(
+    model_name="gpt-35-turbo",
+    azure_endpoint=os.getenv("RECIPES_BASE_URL"),
+    api_version=os.getenv("RECIPES_OPENAI_API_VERSION"),
+    temperature=1,
+    max_tokens=1000,
+)
+
 
 def create_recipe_folder(recipe_name):
     # Define the folder name
@@ -48,7 +51,7 @@ def create_recipe_folder(recipe_name):
         "python_packages": ["Please enter the python packages"],
         "parameters": "Please enter the arguments the recipe expects",
         "response_text": "Please enter your response text",
-        "mem_type": "recipe"
+        "mem_type": "recipe",
     }
 
     # Write metadata.json file
@@ -67,18 +70,25 @@ def create_recipe_folder(recipe_name):
     # Write recipe.py file
     recipe_path = os.path.join(recipe_folder, "recipe.py")
     with open(recipe_path, "w", encoding="utf-8") as recipe_file:
-        recipe_file.write(imports + "\n\n" + "# Add your functions code here\n\n\n" + "# Calling code:\n#Add your calling code here\n")
+        recipe_file.write(
+            imports
+            + "\n\n"
+            + "# Add your functions code here\n\n\n"
+            + "# Calling code:\n#Add your calling code here\n"
+        )
 
-    #copy skills.py to the folder
-    shutil.copy("skills.py", recipe_folder)
 
 def create_metadata_upload_file(folder_path, metadata_path, recipe_path):
-    #add metadata.json to the filepath, then create copy of it
-    metadata_path_new = os.path.join(folder_path, "metadata_upload.json")    
+    # add metadata.json to the filepath, then create copy of it
+    metadata_path_new = os.path.join(folder_path, "metadata_upload.json")
     shutil.copy(metadata_path, metadata_path_new)
-    update_metadata_file(metadata_path=metadata_path_new, code_sections=extract_code_sections(recipe_path))
+    update_metadata_file(
+        metadata_path=metadata_path_new,
+        code_sections=extract_code_sections(recipe_path),
+    )
 
-#TODO: THIS SHOULD BE IMPORTED FROM SKILLS
+
+# TODO: THIS SHOULD BE IMPORTED FROM SKILLS
 # Stored in langchain_pg_collection and langchain_pg_embedding as this
 def initialize_db():
     """
@@ -100,39 +110,58 @@ def initialize_db():
         )
     return db
 
+
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python create_recipe.py --create_recipe_template <recipe_name> | --prepare_push_recipe_to_db | --push_recipe_to_db")
+        print(
+            "Usage: python create_recipe.py --create_recipe_template <recipe_name> | --prepare_push_recipe_to_db | --push_recipe_to_db"
+        )
         sys.exit(1)
-    
+
     if sys.argv[1] == "--create_recipe_template":
         if len(sys.argv) != 3:
-            print("Usage: python create_recipe.py --create_recipe_template <recipe_name>")
+            print(
+                "Usage: python create_recipe.py --create_recipe_template <recipe_name>"
+            )
             sys.exit(1)
         recipe_name = sys.argv[2]
         create_recipe_folder(recipe_name)
-        print(f"Recipe folder '{recipe_name}' created successfully in 'new_recipe_staging'.")
+        print(
+            f"Recipe folder '{recipe_name}' created successfully in 'new_recipe_staging'."
+        )
     elif sys.argv[1] == "--prepare_push_recipe_to_db":
-        #for each recipe folder in new_recipe_staging, create a metadata_upload.json file
+        # for each recipe folder in new_recipe_staging, create a metadata_upload.json file
         for recipe_folder in os.listdir("new_recipe_staging"):
-            if recipe_folder.startswith('.'):
+            if recipe_folder.startswith("."):
                 continue
             full_path = os.path.join("new_recipe_staging", recipe_folder)
             metadata_path = os.path.join(full_path, "metadata.json")
             recipe_path = os.path.join(full_path, "recipe.py")
-            create_metadata_upload_file(folder_path= full_path, metadata_path=metadata_path, recipe_path=recipe_path)
+            create_metadata_upload_file(
+                folder_path=full_path,
+                metadata_path=metadata_path,
+                recipe_path=recipe_path,
+            )
     elif sys.argv[1] == "--push_recipe_to_db":
         db = initialize_db()
         for recipe_folder in os.listdir("new_recipe_staging"):
-            if recipe_folder.startswith('.'):
+            if recipe_folder.startswith("."):
                 continue
             full_path = os.path.join("new_recipe_staging", recipe_folder)
             metadata_path = os.path.join(full_path, "metadata_upload.json")
             metadata = json.load(open(metadata_path))
-            add_memory(intent=metadata["intent"], metadata=metadata, db=db, mem_type=metadata["mem_type"])
+            add_memory(
+                intent=metadata["intent"],
+                metadata=metadata,
+                db=db,
+                mem_type=metadata["mem_type"],
+            )
     else:
-        print("Invalid option. Usage: python create_recipe.py --create_recipe_template <recipe_name> | --push_recipe_to_db")
+        print(
+            "Invalid option. Usage: python create_recipe.py --create_recipe_template <recipe_name> | --push_recipe_to_db"
+        )
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

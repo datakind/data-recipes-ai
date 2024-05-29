@@ -1,17 +1,41 @@
 ##### Begin of generate_images #####
 
-from typing import List
-import uuid
-import requests  
-from pathlib import Path
-import os
-import psycopg2
-from langchain.docstore.document import Document
-from langchain_community.vectorstores.pgvector import PGVector
-from langchain_community.embeddings import AzureOpenAIEmbeddings
-from langchain.chat_models import AzureChatOpenAI
 import json
+import os
+import uuid
+from pathlib import Path
+from typing import List
+
+import matplotlib.pyplot as plt
+import numpy as np
+import psycopg2
+import requests
+from dotenv import load_dotenv
+from langchain.chat_models import AzureChatOpenAI
+from langchain.docstore.document import Document
+from langchain_community.embeddings import AzureOpenAIEmbeddings
+from langchain_community.vectorstores.pgvector import PGVector
 from openai import OpenAI
+
+load_dotenv()
+
+# Lower numbers are more similar
+similarity_cutoff = {"memory": 0.2, "recipe": 0.3, "helper_function": 0.1}
+
+CONNECTION_STRING = PGVector.connection_string_from_db_params(
+    driver=os.environ.get("POSTGRES_DRIVER", "psycopg2"),
+    host=os.environ.get("POSTGRES_RECIPE_HOST", "localhost"),
+    port=int(os.environ.get("POSTGRES_RECIPE_PORT", "5432")),
+    database=os.environ.get("POSTGRES_RECIPE_DB", "postgres"),
+    user=os.environ.get("POSTGRES_RECIPE_USER", "postgres"),
+    password=os.environ.get("POSTGRES_RECIPE_PASSWORD", "postgres"),
+)
+
+embedding_model = AzureOpenAIEmbeddings(
+    deployment=os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME"),
+    azure_endpoint=os.getenv("RECIPES_BASE_URL"),
+    chunk_size=16,
+)
 
 
 def generate_and_save_images(query: str, image_size: str = "1024x1024") -> List[str]:
@@ -24,7 +48,9 @@ def generate_and_save_images(query: str, image_size: str = "1024x1024") -> List[
     """
 
     client = OpenAI()  # Initialize the OpenAI client
-    response = client.images.generate(model="dall-e-3", prompt=query, n=1, size=image_size)  # Generate images
+    response = client.images.generate(
+        model="dall-e-3", prompt=query, n=1, size=image_size
+    )  # Generate images
 
     # List to store the file names of saved images
     saved_files = []
@@ -59,22 +85,13 @@ def generate_and_save_images(query: str, image_size: str = "1024x1024") -> List[
 
 #### End of generate_images ####
 
-        
 
 ##### Begin of query_data_db #####
 
 
-  ## This is a skill to execute database queires in the data databse,
-  ## For answering questions about humanitarian response.
+## This is a skill to execute database queires in the data databse,
+## For answering questions about humanitarian response.
 
-
-import numpy as np
-import matplotlib.pyplot as plt
-import psycopg2
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 def get_connection():
     """
@@ -87,19 +104,16 @@ def get_connection():
     password = os.getenv("POSTGRES_DATA_PASSWORD")
 
     conn = psycopg2.connect(
-        dbname=database,
-        user=user,
-        password=password,
-        host=host,
-        port=port
+        dbname=database, user=user, password=password, host=host, port=port
     )
     return conn
+
 
 def execute_query(query):
     """
     This skill executes a query in the data database.
 
-    To find out what tables and columns are available, you can run "select table_name, api_name, summary, columns from table_metadata" 
+    To find out what tables and columns are available, you can run "select table_name, api_name, summary, columns from table_metadata"
 
     """
     conn = get_connection()
@@ -118,9 +132,7 @@ def execute_query(query):
     return rows
 
 
-#### End of query_data_db ####
-
-def add_memory(intent, metadata, db, mem_type='recipe', force=False):
+def add_memory(intent, metadata, db, mem_type="recipe", force=False):
     """
     Add a data recipe to the data recipe db.
 
@@ -136,22 +148,17 @@ def add_memory(intent, metadata, db, mem_type='recipe', force=False):
     """
     print(f"Adding new document to {mem_type} store ...")
     data = {}
-    data['page_content'] = intent
+    data["page_content"] = intent
 
     uuid_str = str(uuid.uuid4())
-    metadata['custom_id'] = uuid_str
+    metadata["custom_id"] = uuid_str
 
-    metadata['mem_type'] = mem_type
+    metadata["mem_type"] = mem_type
 
-    new_doc =  Document(
-        page_content=intent,
-        metadata=metadata
-    )
-    id = db[mem_type].add_documents(
-        [new_doc],
-        ids=[uuid_str]
-    )
+    new_doc = Document(page_content=intent, metadata=metadata)
+    id = db[mem_type].add_documents([new_doc], ids=[uuid_str])
     return id
+
 
 # Stored in langchain_pg_collection and langchain_pg_embedding as this
 def initialize_db():
@@ -173,3 +180,9 @@ def initialize_db():
             embedding_function=embedding_model,
         )
     return db
+
+
+if __name__ == "__main__":
+    # Example usage of the function:
+    # generate_and_save_images("A cute baby sea otter")
+    pass

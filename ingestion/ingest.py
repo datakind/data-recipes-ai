@@ -79,7 +79,13 @@ def get_api_data(endpoint, params, data_node=None):
 
 
 def download_openapi_data(
-    api_host, openapi_def, excluded_endpoints, data_node, save_path, query_extra="", skip_downloaded=False
+    api_host,
+    openapi_def,
+    excluded_endpoints,
+    data_node,
+    save_path,
+    query_extra="",
+    skip_downloaded=False,
 ):
     """
     Downloads data based on the functions specified in the openapi.json definition file.
@@ -102,7 +108,7 @@ def download_openapi_data(
     offset = 0
 
     files = os.listdir(save_path)
-    if skip_downloaded==False:
+    if skip_downloaded is False:
         for f in files:
             if "openapi.json" not in f:
                 filename = f"{save_path}/{f}"
@@ -419,7 +425,13 @@ def main(skip_downloaded=False):
 
         # Extract data from remote APIs which are defined in apis.config
         download_openapi_data(
-            api_host, openapi_def, excluded_endpoints, data_node, save_path, query_extra, skip_downloaded
+            api_host,
+            openapi_def,
+            excluded_endpoints,
+            data_node,
+            save_path,
+            query_extra,
+            skip_downloaded,
         )
 
         # Standardize column names
