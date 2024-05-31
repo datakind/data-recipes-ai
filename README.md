@@ -189,13 +189,17 @@ This step checks out three files:
 
 ## Testing a Recipe
 
-You can test checked-out recipes as follows ...
+You can run a specific recipe like this ...
+
+`docker exec haa-recipe-manager python checked_out/retrieve_the_total_population_of_a_specified_country/recipe.py`
+
+You can also exec into the container to do it ...
 
 1. `docker exec -it haa-recipe-manager /bin/bash`
 2. `cd ./checked_out`, then `cd <RECIPE_DIR>`
 3. `python recipe.py`
 
-You can also configure VS COde to connect to the recipe-manage container for running recipes ...
+You can also configure VS Code to connect to the recipe-manage container for running recipes ...
 
 1. Install the DevContainers VSCode extension 
 2. Build data recipes using the `docker compose` command mentioned above
