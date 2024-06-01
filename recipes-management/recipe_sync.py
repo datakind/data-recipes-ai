@@ -16,6 +16,9 @@ logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
+# Where recipes will be checked out to
+base_path = "./checked_out"
+
 # read the imports.txt file into a variable incl. linebreaks
 with open("imports.txt", "r") as file:
     imports = file.read()
@@ -48,8 +51,14 @@ def get_recipes(force_checkout=False):
     """
     Retrieves recipes from the database.
 
+    Args:
+        force_checkout (bool, optional): If True, includes locked recipes in the result. Defaults to False.
+
     Returns:
         pandas.DataFrame: A DataFrame containing the retrieved recipes.
+
+    Raises:
+        SystemExit: If no recipes are found in the database and force_checkout is False.
     """
     conn = connect_to_db()
     with conn.connect() as connection:
@@ -83,18 +92,14 @@ def get_recipes(force_checkout=False):
 
 def save_data(df):
     """
-    Save data from a DataFrame to the file system.
+    Save data from a DataFrame to files.
 
     Args:
         df (pandas.DataFrame): The DataFrame containing the data to be saved.
 
-    Raises:
-        Exception: If there is an error while saving the data.
-
     Returns:
         None
     """
-    base_path = "./checked_out"
 
     # Iterate through each row in the DataFrame
     for index, row in df.iterrows():
@@ -152,14 +157,14 @@ def format_code_with_black():
     """
     Formats the code in the current directory using the Black code formatter.
 
-    This function runs the Black command-line tool on the current directory to automatically format the code.
-    It uses the `subprocess` module to execute the Black command and captures the output.
+    This function runs the Black command-line tool on the current directory
+    with the `--force-exclude` option set to an empty string. The `--force-exclude`
+    option is used to exclude any files or directories from being formatted by Black.
 
-    Returns:
-        None
+    Note: Make sure you have Black installed before running this function.
 
-    Raises:
-        None
+    Example usage:
+        format_code_with_black()
     """
     # Define the command to run black on the current directory with --force-exclude ''
     command = ["black", ".", "--force-exclude", ""]
@@ -172,12 +177,11 @@ def format_code_with_black():
 
 def lock_records(df, locker_name):
     """
-    Locks records in the database by setting the 'locked_by' and 'locked_at' fields
-    within the 'cmetadata' JSON column for all 'uuid' values in the DataFrame.
+    Locks the records in the 'public.langchain_pg_embedding' table by updating the 'cmetadata' column.
 
     Args:
-        df (pandas.DataFrame): DataFrame containing the 'uuid' values to lock.
-        locker_name (str): Name of the user locking the records.
+        df (DataFrame): The DataFrame containing the records to be locked.
+        locker_name (str): The name of the locker.
 
     Returns:
         None
@@ -211,15 +215,15 @@ def lock_records(df, locker_name):
 
 def clone_file(source_path, dest_path):
     """
-    Clones a JSON file from source_path to dest_path.
+    Clones a file from the source path to the destination path.
 
     Args:
-        source_path (str): Path to the source JSON file.
-        dest_path (str): Path to the destination JSON file.
+        source_path (str): The path of the source file to be cloned.
+        dest_path (str): The path where the cloned file will be saved.
 
     Raises:
         FileNotFoundError: If the source file does not exist.
-        IOError: If the file cannot be read or written.
+
     """
     if not os.path.exists(source_path):
         raise FileNotFoundError(f"Source file {source_path} does not exist.")
@@ -231,13 +235,15 @@ def clone_file(source_path, dest_path):
 
 def extract_code_sections(recipe_path):
     """
-    Extracts the code sections from the recipe.py file.
+    Extracts the function code and calling code sections from a recipe file.
 
     Args:
-        recipe_path (str): Path to the recipe.py file.
+        recipe_path (str): The path to the recipe file.
 
     Returns:
-        dict: A dictionary with 'function_code' and 'calling_code' as keys.
+        dict: A dictionary containing the extracted function code and calling code sections.
+            The function code section is stored under the key "function_code",
+            and the calling code section is stored under the key "calling_code".
 
     Raises:
         FileNotFoundError: If the recipe file does not exist.
@@ -264,16 +270,17 @@ def extract_code_sections(recipe_path):
 
 def update_metadata_file(metadata_path, code_sections):
     """
-    Updates the function_code and calling_code fields in the metadata file.
+    Update the metadata file with the provided code sections.
 
     Args:
-        metadata_path (str): Path to the metadata file.
-        code_sections (dict): A dictionary with 'function_code' and 'calling_code' as keys.
+        metadata_path (str): The path to the metadata file.
+        code_sections (dict): A dictionary containing the code sections to update.
 
     Raises:
         FileNotFoundError: If the metadata file does not exist.
-        IOError: If the file cannot be read or written.
-        json.JSONDecodeError: If the metadata file is not a valid JSON.
+
+    Returns:
+        None
     """
     if not os.path.exists(metadata_path):
         raise FileNotFoundError(f"Metadata file {metadata_path} does not exist.")
@@ -296,16 +303,15 @@ def update_metadata_file(metadata_path, code_sections):
 
 def merge_metadata_with_record(new_metadata_path, new_record_path):
     """
-    Merges the metadata content into the record content as a 'metadata' key.
+    Merges the content of a metadata file with a record file.
 
     Args:
-        new_metadata_path (str): Path to the new metadata file.
-        new_record_path (str): Path to the new record file.
+        new_metadata_path (str): The path to the new metadata file.
+        new_record_path (str): The path to the new record file.
 
     Raises:
-        FileNotFoundError: If the new metadata file or new record file does not exist.
-        IOError: If the file cannot be read or written.
-        json.JSONDecodeError: If the metadata or record file is not a valid JSON.
+        FileNotFoundError: If the new metadata file or the new record file does not exist.
+
     """
     if not os.path.exists(new_metadata_path):
         raise FileNotFoundError(
@@ -328,10 +334,13 @@ def merge_metadata_with_record(new_metadata_path, new_record_path):
 
 def add_updated_files(directory):
     """
-    Process a single directory to clone and update the metadata file.
+    Adds updated files to the specified directory.
 
-    Args:
-        directory (str): Path to the directory to process.
+    Parameters:
+    - directory (str): The directory where the files will be added.
+
+    Returns:
+    - None
     """
     source_metadata_path = os.path.join(directory, "metadata.json")
     new_metadata_path = os.path.join(directory, "metadata_new.json")
@@ -357,11 +366,11 @@ def add_updated_files(directory):
 
 def update_database(df: pd.DataFrame, approver: str):
     """
-    Updates the database with the values from the DataFrame and sets additional columns.
+    Updates the recipe records in the database with the provided DataFrame.
 
     Args:
-        df (pandas.DataFrame): DataFrame containing the values to update.
-        approver (str): Name of the approver.
+        df (pd.DataFrame): The DataFrame containing the recipe data to update.
+        approver (str): The name of the user who is approving the update.
 
     Returns:
         None
@@ -419,8 +428,14 @@ def update_database(df: pd.DataFrame, approver: str):
 
 def check_out(recipe_checker="Mysterious Recipe Checker", force_checkout=False):
     """
-    This is the check out function that executes the check out process.
-    It retrieves recipes, saves data, and formats the code using black.
+    Checks out recipes for editing.
+
+    Args:
+        recipe_checker (str): The name of the recipe checker.
+        force_checkout (bool): Whether to force checkout the recipes.
+
+    Returns:
+        None
     """
     recipes = get_recipes(force_checkout=force_checkout)
     lock_records(df=recipes, locker_name=recipe_checker)
@@ -468,6 +483,22 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
 def main():
     """
     Main function to parse command-line arguments and call the appropriate function.
+
+    This function parses the command-line arguments using the `argparse` module and calls the appropriate function based on the provided arguments. It supports two operations: check out and check in.
+
+    Usage:
+        python recipe_sync.py --check_out <recipe_checker> [--force_checkout]
+        python recipe_sync.py --check_in <recipe_checker>
+
+    Arguments:
+        --check_out: Perform check out operation.
+        --check_in: Perform check in operation.
+        <recipe_checker>: Name of the recipe checker.
+        --force_checkout: Force check out operation.
+
+    Example:
+        python recipe_sync.py --check_out my_recipe_checker --force_checkout
+
     """
     parser = argparse.ArgumentParser(
         description="Process check in and check out operations (i.e. extracting recipes and recipes from the database for quality checks and edits)."
