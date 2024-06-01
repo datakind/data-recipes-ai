@@ -313,9 +313,9 @@ def save_openapi_data(files_dir, conn, api_name):
                         r["api_description"] += f' : {meta["get"]["description"]}'
                     r["api_definition"] = str(meta)
                     r["file_name"] = f
-                    for field in ['location_name', 'origin_location_name']:
+                    for field in ["location_name", "origin_location_name"]:
                         if field in df.columns:
-                            r['countries'] = sorted(df[field].unique())
+                            r["countries"] = sorted(df[field].unique())
 
                     table_metadata.append(r)
 
