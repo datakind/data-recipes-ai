@@ -1,0 +1,8 @@
+{
+    "title": "encode_image_to_base64",
+    "content": "\n  ## This is a skill to encode an image file to base64 format.\n\nimport base64\n\n\ndef encode_image_to_base64(image_path):\n    \"\"\"\n    Reads an image file, base64 encodes it, and returns the encoded string.\n    \n    Parameters:\n        image_path (str): The path to the image file to be encoded.\n        \n    Returns:\n        str: The base64 encoded string of the image.\n    \"\"\"\n    # Open the image file in binary mode\n    with open(image_path, \"rb\") as image_file:\n        # Read the binary data\n        image_data = image_file.read()\n        # Base64 encode the binary data\n        encoded_string = base64.b64encode(image_data).decode('utf-8')\n        \n    return encoded_string\n",
+    "file_name": null,
+    "description": null,
+    "timestamp": "2024-05-21T14:21:38.809485",
+    "user_id": "default"
+}

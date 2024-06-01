@@ -1,13 +1,21 @@
 FROM python:3.11.4
 
+# Copy application files and install dependencies
+COPY ./recipes-management/ /app
+RUN pip install --upgrade pip
 WORKDIR /app
+RUN pip install -r requirements.txt && pip install autogenstudio
 
-COPY ./recipes-management/requirements.txt ./
+# Set the path
+ENV PATH="/home/app/.local/bin:${PATH}"
 
-RUN pip install --no-cache-dir -r requirements.txt
+# set python path
+ENV PYTHONPATH="/home/app/.local/bin:/app:${PYTHONPATH}"
 
-# CMD ["python", "./your-script.py"]
+RUN autogenstudio version
 
-#COPY ./assistant/recipes_management .
+EXPOSE 8081
 
-CMD ["tail", "-f", "/dev/null"]
+ENTRYPOINT [ "autogenstudio", "ui", "--host", "0.0.0.0", "--port", "8081", "--appdir", "/app" ]
+
+

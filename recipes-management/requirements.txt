@@ -1,6 +1,14 @@
 pgvector==0.2.4
 psycopg2_binary==2.9.9
 python-dotenv==1.0.0
-sqlalchemy==1.4.31
+sqlalchemy==2.0.30
 pandas==2.2.2
 black==22.1.0
+click==8.1.7
+datetime==4.3
+autogenstudio==0.0.56
+langchain_openai==0.1.7
+langchain==0.2.1
+langchain-community==0.2.1
+matplotlib==3.9.0
+

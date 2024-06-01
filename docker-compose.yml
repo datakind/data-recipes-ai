@@ -179,36 +179,23 @@ services:
       dockerfile: ./recipes-management/Dockerfile
     depends_on:
       - recipedb
+      - datadb
     restart: always
+    ports:
+      - 8091:8081
     environment:
       POSTGRES_DB: ${POSTGRES_RECIPE_DB}
       POSTGRES_USER: ${POSTGRES_RECIPE_USER}
       POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
+      POSTGRES_DATA_HOST: ${POSTGRES_DATA_HOST}
+      POSTGRES_DATA_DB: ${POSTGRES_DATA_DB}
+      POSTGRES_DATA_USER: ${POSTGRES_DATA_USER}
+      POSTGRES_DATA_PASSWORD: ${POSTGRES_DATA_PASSWORD}
+      AZURE_OPENAI_API_KEY: ${AZURE_API_KEY_ENV}
     env_file:
       - .env
     volumes:
       - ./recipes-management:/app
-  # recipe-creator:
-  #   container_name: haa-recipe-creator
-  #   build:
-  #     context: .
-  #     dockerfile: ./recipes-creation/Dockerfile
-  #   depends_on:
-  #     - datadb
-  #   restart: always
-  #   environment:
-  #     POSTGRES_DATA_HOST: ${POSTGRES_DATA_HOST}
-  #     POSTGRES_DATA_DB: ${POSTGRES_DATA_DB}
-  #     POSTGRES_DATA_USER: ${POSTGRES_DATA_USER}
-  #     POSTGRES_DATA_PASSWORD: ${POSTGRES_DATA_PASSWORD}
-  #     AZURE_OPENAI_API_KEY: ${AZURE_API_KEY_ENV}
-  #   ports:
-  #     - 8091:8081
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./recipes-creation:/app
-
 
 volumes:
   pgdata2:

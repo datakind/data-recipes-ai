@@ -79,7 +79,13 @@ def get_api_data(endpoint, params, data_node=None):
 
 
 def download_openapi_data(
-    api_host, openapi_def, excluded_endpoints, data_node, save_path, query_extra=""
+    api_host,
+    openapi_def,
+    excluded_endpoints,
+    data_node,
+    save_path,
+    query_extra="",
+    skip_downloaded=False,
 ):
     """
     Downloads data based on the functions specified in the openapi.json definition file.
@@ -94,6 +100,7 @@ def download_openapi_data(
         excluded_endpoints (list): List of endpoints to exclude
         data_node (str): The node in the openapi JSON file where the data is stored
         query_extra (str): Extra query parameters to add to the request
+        skip_downloaded (bool): If True, skip downloading data that already exists
 
     """
 
@@ -101,10 +108,11 @@ def download_openapi_data(
     offset = 0
 
     files = os.listdir(save_path)
-    for f in files:
-        if "openapi.json" not in f:
-            filename = f"{save_path}/{f}"
-            os.remove(filename)
+    if skip_downloaded is False:
+        for f in files:
+            if "openapi.json" not in f:
+                filename = f"{save_path}/{f}"
+                os.remove(filename)
 
     for endpoint in openapi_def["paths"]:
         if endpoint in excluded_endpoints:
@@ -117,6 +125,15 @@ def download_openapi_data(
         url = f"https://{api_host}/{endpoint}"
 
         print(url)
+
+        endpoint_clean = endpoint.replace("/", "_")
+        if endpoint_clean[0] == "_":
+            endpoint_clean = endpoint_clean[1:]
+        file_name = f"{save_path}/{endpoint_clean}.csv"
+
+        if skip_downloaded and os.path.exists(file_name):
+            print(f"Skipping {endpoint} as {file_name} already exists")
+            continue
 
         data = []
         offset = 0
@@ -135,14 +152,9 @@ def download_openapi_data(
             time.sleep(1)
 
         if len(data) > 0:
-            endpoint_clean = endpoint.replace("/", "_")
-            if endpoint_clean[0] == "_":
-                endpoint_clean = endpoint_clean[1:]
-
             print(len(data), "Before DF")
             df = pd.DataFrame(data)
             print(df.shape[0], "After DF")
-            file_name = f"{save_path}/{endpoint_clean}.csv"
             df.to_csv(file_name, index=False)
             with open(f"{save_path}/{endpoint_clean}_meta.json", "w") as f:
                 full_meta = openapi_def["paths"][endpoint]
@@ -241,6 +253,9 @@ def process_openapi_data(api_name, files_dir, field_map, standard_names):
         None
     """
     datafiles = os.listdir(files_dir)
+    processed_dir = f"{files_dir}/processed"
+    if not os.path.exists(processed_dir):
+        os.makedirs(processed_dir)
     for f in datafiles:
         if f.endswith(".csv"):
             filename = f"{files_dir}/{f}"
@@ -257,7 +272,8 @@ def process_openapi_data(api_name, files_dir, field_map, standard_names):
             df = eval(post_process_str)
             print("      After shape", df.shape)
 
-            df.to_csv(filename, index=False)
+            processed_filename = f"{processed_dir}/{f}"
+            df.to_csv(processed_filename, index=False)
 
 
 def save_openapi_data(files_dir, conn, api_name):
@@ -283,7 +299,7 @@ def save_openapi_data(files_dir, conn, api_name):
             df.to_sql(table, conn, if_exists="replace", index=False)
 
             # Collate metadata
-            meta_file = f"{files_dir}/{f.replace('.csv', '_meta.json')}"
+            meta_file = f"{files_dir.replace('/processed', '')}/{f.replace('.csv', '_meta.json')}"
             if os.path.exists(meta_file):
                 with open(meta_file) as mf:
                     meta = json.load(mf)
@@ -297,10 +313,16 @@ def save_openapi_data(files_dir, conn, api_name):
                         r["api_description"] += f' : {meta["get"]["description"]}'
                     r["api_definition"] = str(meta)
                     r["file_name"] = f
+                    for field in ["location_name", "origin_location_name"]:
+                        if field in df.columns:
+                            r["countries"] = sorted(df[field].unique())
+
                     table_metadata.append(r)
 
     # We could also use Postgres comments, but this is simpler for LLM agents for now
+    print("Saving metadata")
     table_metadata = pd.DataFrame(table_metadata)
+    print(table_metadata.shape)
     table_metadata.to_sql("table_metadata", conn, if_exists="replace", index=False)
 
 
@@ -334,6 +356,12 @@ def upload_hdx_shape_files(files_dir, conn):
     """
 
     shape_files_table = "hdx_shape_files"
+
+    with conn.connect() as connection:
+        print(f"Creating metadata for {shape_files_table}")
+        statement = text("CREATE EXTENSION IF NOT EXISTS postgis;")
+        connection.execute(statement)
+        connection.commit()
 
     df_list = []
     for f in os.listdir(files_dir):
@@ -375,9 +403,16 @@ def map_field_names(df, field_map):
     return df
 
 
-def main():
+def main(skip_downloaded=False):
+    """
+    Main function for data ingestion.
+
+    Args:
+        skip_downloaded (bool, optional): Flag to skip downloaded data. Defaults to False.
+    """
     apis, field_map, standard_names = read_integration_config(INTEGRATION_CONFIG)
     conn = connect_to_db()
+
     for api in apis:
 
         openapi_def = get_api_def(api)
@@ -406,18 +441,24 @@ def main():
 
         # Extract data from remote APIs which are defined in apis.config
         download_openapi_data(
-            api_host, openapi_def, excluded_endpoints, data_node, save_path, query_extra
+            api_host,
+            openapi_def,
+            excluded_endpoints,
+            data_node,
+            save_path,
+            query_extra,
+            skip_downloaded,
         )
 
         # Standardize column names
         process_openapi_data(api_name, save_path, field_map, standard_names)
 
         # Upload CSV files to the database, with supporting metadata
-        save_openapi_data(save_path, conn, api_name)
+        save_openapi_data(f"{save_path}/processed", conn, api_name)
 
     # Download shapefiles from HDX. Note, this also standardizes column names
     download_hdx_boundaries(
-        datafile="./api/hapi/api_v1_themes_population.csv",
+        datafile="./api/hapi/processed/api_v1_population-social_population.csv",
         datafile_country_col=standard_names["country_code_field"],
         target_dir="./api/hdx/",
         field_map=field_map,
@@ -425,8 +466,8 @@ def main():
     )
 
     # Upload shapefiles to the database
-    upload_hdx_shape_files("./api/hdx", conn)
+    upload_hdx_shape_files("./api/hdx/", conn)
 
 
 if __name__ == "__main__":
-    main()
+    main(skip_downloaded=True)
