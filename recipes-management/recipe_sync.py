@@ -48,33 +48,41 @@ def connect_to_db():
         print("--------------- Error while connecting to PostgreSQL", error)
 
 
-def get_memories(force_checkout=False):
+def get_recipes(force_checkout=False):
     """
-    Retrieves memories from the database.
+    Retrieves recipes from the database.
 
     Returns:
-        pandas.DataFrame: A DataFrame containing the retrieved memories.
+        pandas.DataFrame: A DataFrame containing the retrieved recipes.
     """
     conn = connect_to_db()
     with conn.connect() as connection:
+        query = """
+            SELECT 
+                lc.uuid, 
+                lc.document,
+                row_to_json(lr.*) as cmetadata
+            FROM
+                public.langchain_pg_embedding lc,
+                public.recipe lr
+            WHERE 
+                lc.uuid=lr.uuid
+        """
+
         if force_checkout is False:
-            query = text(
-                "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding WHERE cmetadata->>'locked_at' = ''"
-            )
-        else:
-            query = text(
-                "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding"
-            )
+            query += "AND cmetadata->>'locked_at' = ''"
+
+        query = text(query)
         result = connection.execute(query)
         result = result.fetchall()
-        memories = pd.DataFrame(result)
+        recipes = pd.DataFrame(result)
         # If the dataset is empty, stop everything and return error
-        if memories.empty:
+        if recipes.empty:
             logging.error(
-                "No memories found in the database - this might be due to the fact that all memories are locked (because another recipe checker has them checked out)! You can overwrite this by using the --force_checkout flag, but this is not recommended."
+                "No recipes found in the database - this might be due to the fact that all recipes are locked (because another recipe checker has them checked out)! You can overwrite this by using the --force_checkout flag, but this is not recommended."
             )
             sys.exit(1)
-        return memories
+        return recipes
 
 
 def save_data(df):
@@ -107,53 +115,41 @@ def save_data(df):
         metadata_path = os.path.join(folder_path, "metadata.json")
         recipe_code_path = os.path.join(folder_path, "recipe.py")
 
-        try:
-            # read relevant keys from metadata
-            metadata = row["cmetadata"]
-            if isinstance(metadata, str):
-                metadata = json.loads(metadata)
-            custom_id = row["custom_id"]
-            document = row["document"]
-            # if the metadata contains a response_text, save it as output
-            if "response_text" in metadata:
-                output = metadata["response_text"]
-            elif "response_image" in metadata:
-                output = metadata["response_image"]
-            try:
-                calling_code = metadata["calling_code"]
-                functions_code = metadata["functions_code"]
-                # if import it not already in the functions_code, add it with a linebreak
-                if imports not in functions_code:
-                    functions_code = imports + "\n\n" + functions_code
-                # Concatenate functions_code and calling_code into recipe code
-                recipe_code = (
-                    f"{functions_code}\n\n" f"# Calling code:\n{calling_code}\n\n"
-                )
+        # read relevant keys from metadata
+        metadata = row["cmetadata"]
+        if isinstance(metadata, str):
+            metadata = json.loads(metadata)
+        uuid= row["uuid"]
+        document = row["document"]
+        output = metadata["sample_result"]
+        calling_code = metadata["sample_call"]
+        function_code = metadata["function_code"]
+        # if import it not already in the function_code, add it with a linebreak
+        if imports not in function_code:
+            function_code = imports + "\n\n" + function_code
+        # Concatenate function_code and calling_code into recipe code
+        recipe_code = (
+            f"{function_code}\n\n" f"# Calling code:\n{calling_code}\n\n"
+        )
 
-                # Save the recipe code
-                with open(recipe_code_path, "w", encoding="utf-8") as file:
-                    file.write(recipe_code)
+        # Save the recipe code
+        with open(recipe_code_path, "w", encoding="utf-8") as file:
+            file.write(recipe_code)
 
-            except KeyError:
-                logging.info(f"Record '{folder_name}' doesn't contain any code!")
+        # Create a dictionary with the variables
+        record = {"uuid": str(uuid), "document": document, "output": output}
 
-            # Create a dictionary with the variables
-            record = {"custom_id": custom_id, "document": document, "output": output}
+        # Convert the dictionary to a JSON string
+        json_record = json.dumps(record, indent=4)
 
-            # Convert the dictionary to a JSON string
-            json_record = json.dumps(record, indent=4)
+        # Save files
+        with open(record_info_path, "w", encoding="utf-8") as file:
+            file.write(json_record)
 
-            # Save files
-            with open(record_info_path, "w", encoding="utf-8") as file:
-                file.write(json_record)
-
-            # Save the metadata; assuming it's a JSON string, we write it directly
-            with open(metadata_path, "w", encoding="utf-8") as file:
-                json_data = json.dumps(metadata, indent=4)
-                file.write(json_data)
-
-        except Exception as e:
-            logging.error(f"Error while saving data for row {index}: {e}")
+        # Save the metadata; assuming it's a JSON string, we write it directly
+        with open(metadata_path, "w", encoding="utf-8") as file:
+            json_data = json.dumps(metadata, indent=4)
+            file.write(json_data)
 
 
 def format_code_with_black():
@@ -181,10 +177,10 @@ def format_code_with_black():
 def lock_records(df, locker_name):
     """
     Locks records in the database by setting the 'locked_by' and 'locked_at' fields
-    within the 'cmetadata' JSON column for all 'custom_id' values in the DataFrame.
+    within the 'cmetadata' JSON column for all 'uuid' values in the DataFrame.
 
     Args:
-        df (pandas.DataFrame): DataFrame containing the 'custom_id' values to lock.
+        df (pandas.DataFrame): DataFrame containing the 'uuid' values to lock.
         locker_name (str): Name of the user locking the records.
 
     Returns:
@@ -254,7 +250,7 @@ def extract_code_sections(recipe_path):
         recipe_path (str): Path to the recipe.py file.
 
     Returns:
-        dict: A dictionary with 'functions_code' and 'calling_code' as keys.
+        dict: A dictionary with 'function_code' and 'calling_code' as keys.
 
     Raises:
         FileNotFoundError: If the recipe file does not exist.
@@ -267,16 +263,16 @@ def extract_code_sections(recipe_path):
         with open(recipe_path, "r", encoding="utf-8") as file:
             content = file.read()
 
-        functions_code_match = re.search(
+        function_code_match = re.search(
             r"^(.*?)(?=# Calling code:)", content, re.DOTALL
         )
         calling_code_match = re.search(r"# Calling code:\s*(.*)", content, re.DOTALL)
 
-        if not functions_code_match or not calling_code_match:
+        if not function_code_match or not calling_code_match:
             raise ValueError("Required sections not found in the recipe file.")
 
         return {
-            "functions_code": functions_code_match.group(1).strip(),
+            "function_code": function_code_match.group(1).strip(),
             "calling_code": calling_code_match.group(1).strip(),
         }
     except IOError as e:
@@ -285,11 +281,11 @@ def extract_code_sections(recipe_path):
 
 def update_metadata_file(metadata_path, code_sections):
     """
-    Updates the functions_code and calling_code fields in the metadata file.
+    Updates the function_code and calling_code fields in the metadata file.
 
     Args:
         metadata_path (str): Path to the metadata file.
-        code_sections (dict): A dictionary with 'functions_code' and 'calling_code' as keys.
+        code_sections (dict): A dictionary with 'function_code' and 'calling_code' as keys.
 
     Raises:
         FileNotFoundError: If the metadata file does not exist.
@@ -300,7 +296,7 @@ def update_metadata_file(metadata_path, code_sections):
         raise FileNotFoundError(f"Metadata file {metadata_path} does not exist.")
 
     # if code sections are empty, do not update the metadata file
-    if not code_sections["functions_code"] and not code_sections["calling_code"]:
+    if not code_sections["function_code"] and not code_sections["calling_code"]:
         logging.info(
             f"No code sections found in the recipe file. Skipping metadata update for record {metadata_path}."
         )
@@ -309,7 +305,7 @@ def update_metadata_file(metadata_path, code_sections):
         with open(metadata_path, "r", encoding="utf-8") as file:
             metadata = json.load(file)
 
-        metadata["functions_code"] = code_sections["functions_code"]
+        metadata["function_code"] = code_sections["function_code"]
         metadata["calling_code"] = code_sections["calling_code"]
 
         with open(metadata_path, "w", encoding="utf-8") as file:
@@ -409,7 +405,7 @@ def update_database(df: pd.DataFrame, approver: str):
         UPDATE langchain_pg_embedding
         SET document = :document,
             cmetadata = :metadata
-        WHERE custom_id = :custom_id
+        WHERE uuid = :uuid
         """
     )
     try:
@@ -427,7 +423,7 @@ def update_database(df: pd.DataFrame, approver: str):
                     params = {
                         "document": row["document"],
                         "metadata": metadata_json,
-                        "custom_id": row["custom_id"],
+                        "uuid": row["uuid"],
                     }
 
                     conn.execute(query_template, params)
@@ -445,11 +441,11 @@ def update_database(df: pd.DataFrame, approver: str):
 def check_out(recipe_checker="Mysterious Recipe Checker", force_checkout=False):
     """
     This is the check out function that executes the check out process.
-    It retrieves memories, saves data, and formats the code using black.
+    It retrieves recipes, saves data, and formats the code using black.
     """
-    memories = get_memories(force_checkout=force_checkout)
-    lock_records(df=memories, locker_name=recipe_checker)
-    save_data(memories)
+    recipes = get_recipes(force_checkout=force_checkout)
+    lock_records(df=recipes, locker_name=recipe_checker)
+    save_data(recipes)
     format_code_with_black()
 
 
@@ -497,7 +493,7 @@ def main():
     Main function to parse command-line arguments and call the appropriate function.
     """
     parser = argparse.ArgumentParser(
-        description="Process check in and check out operations (i.e. extracting recipes and memories from the database for quality checks and edits)."
+        description="Process check in and check out operations (i.e. extracting recipes and recipes from the database for quality checks and edits)."
     )
 
     # Add mutually exclusive group for checkout and checkin

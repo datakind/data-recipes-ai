@@ -109,4 +109,6 @@ where
 	le.collection_id = lc.uuid and
 	le.cmetadata->>'calling_code' is not null and
 	lc."name" = 'recipe_embedding';
+
+delete from public.langchain_pg_embedding where uuid not in (select uuid from recipe);
 */
