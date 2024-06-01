@@ -392,7 +392,6 @@ def update_database(df: pd.DataFrame, approver: str):
     with engine.connect() as conn:
         trans = conn.begin()
         for index, row in df.iterrows():
-            print(row)
             metadata = row["metadata"]
 
             params = {
