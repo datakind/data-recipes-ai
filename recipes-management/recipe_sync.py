@@ -41,12 +41,8 @@ def connect_to_db():
     user = os.getenv("POSTGRES_RECIPE_USER")
     password = os.getenv("POSTGRES_RECIPE_PASSWORD")
     conn_str = f"postgresql://{user}:{password}@{host}:{port}/{database}"
-    try:
-        conn = create_engine(conn_str)
-        return conn
-    except Exception as error:
-        print("--------------- Error while connecting to PostgreSQL", error)
-
+    conn = create_engine(conn_str)
+    return conn
 
 def get_recipes(force_checkout=False):
     """
@@ -209,14 +205,9 @@ def lock_records(df, locker_name):
     """
 
     query = text(query)
-    # Execute the query within a transaction context
-    try:
-        with conn.connect() as connection:
-            with connection.begin():
-                connection.execute(query)
-    except Exception as e:
-        print(f"Error occurred: {e}")
-
+    with conn.connect() as connection:
+        with connection.begin():
+            connection.execute(query)
 
 def clone_file(source_path, dest_path):
     """
@@ -233,14 +224,10 @@ def clone_file(source_path, dest_path):
     if not os.path.exists(source_path):
         raise FileNotFoundError(f"Source file {source_path} does not exist.")
 
-    try:
-        with open(source_path, "r", encoding="utf-8") as src_file:
-            data = src_file.read()
-        with open(dest_path, "w", encoding="utf-8") as dest_file:
-            dest_file.write(data)
-    except IOError as e:
-        raise IOError(f"Error copying file: {e}")
-
+    with open(source_path, "r", encoding="utf-8") as src_file:
+        data = src_file.read()
+    with open(dest_path, "w", encoding="utf-8") as dest_file:
+        dest_file.write(data)
 
 def extract_code_sections(recipe_path):
     """
@@ -259,25 +246,21 @@ def extract_code_sections(recipe_path):
     if not os.path.exists(recipe_path):
         raise FileNotFoundError(f"Recipe file {recipe_path} does not exist.")
 
-    try:
-        with open(recipe_path, "r", encoding="utf-8") as file:
-            content = file.read()
+    with open(recipe_path, "r", encoding="utf-8") as file:
+        content = file.read()
 
-        function_code_match = re.search(
-            r"^(.*?)(?=# Calling code:)", content, re.DOTALL
-        )
-        calling_code_match = re.search(r"# Calling code:\s*(.*)", content, re.DOTALL)
+    function_code_match = re.search(
+        r"^(.*?)(?=# Calling code:)", content, re.DOTALL
+    )
+    calling_code_match = re.search(r"# Calling code:\s*(.*)", content, re.DOTALL)
 
-        if not function_code_match or not calling_code_match:
-            raise ValueError("Required sections not found in the recipe file.")
+    if not function_code_match or not calling_code_match:
+        raise ValueError("Required sections not found in the recipe file.")
 
-        return {
-            "function_code": function_code_match.group(1).strip(),
-            "calling_code": calling_code_match.group(1).strip(),
-        }
-    except IOError as e:
-        raise IOError(f"Error reading recipe file: {e}")
-
+    return {
+        "function_code": function_code_match.group(1).strip(),
+        "calling_code": calling_code_match.group(1).strip(),
+    }
 
 def update_metadata_file(metadata_path, code_sections):
     """
@@ -301,19 +284,14 @@ def update_metadata_file(metadata_path, code_sections):
             f"No code sections found in the recipe file. Skipping metadata update for record {metadata_path}."
         )
         return
-    try:
-        with open(metadata_path, "r", encoding="utf-8") as file:
-            metadata = json.load(file)
+    with open(metadata_path, "r", encoding="utf-8") as file:
+        metadata = json.load(file)
 
-        metadata["function_code"] = code_sections["function_code"]
-        metadata["calling_code"] = code_sections["calling_code"]
+    metadata["function_code"] = code_sections["function_code"]
+    metadata["calling_code"] = code_sections["calling_code"]
 
-        with open(metadata_path, "w", encoding="utf-8") as file:
-            json.dump(metadata, file, indent=4)
-    except IOError as e:
-        raise IOError(f"Error reading or writing metadata file: {e}")
-    except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(f"Invalid JSON in metadata file: {e}")
+    with open(metadata_path, "w", encoding="utf-8") as file:
+        json.dump(metadata, file, indent=4)
 
 
 def merge_metadata_with_record(new_metadata_path, new_record_path):
@@ -336,23 +314,17 @@ def merge_metadata_with_record(new_metadata_path, new_record_path):
     if not os.path.exists(new_record_path):
         raise FileNotFoundError(f"New record file {new_record_path} does not exist.")
 
-    try:
-        with open(new_metadata_path, "r", encoding="utf-8") as metadata_file:
-            metadata = json.load(metadata_file)
+    with open(new_metadata_path, "r", encoding="utf-8") as metadata_file:
+        metadata = json.load(metadata_file)
 
-        with open(new_record_path, "r", encoding="utf-8") as record_file:
-            record = json.load(record_file)
+    with open(new_record_path, "r", encoding="utf-8") as record_file:
+        record = json.load(record_file)
 
-        # Include the entire metadata content as a 'metadata' key in the record
-        record["metadata"] = metadata
+    # Include the entire metadata content as a 'metadata' key in the record
+    record["metadata"] = metadata
 
-        with open(new_record_path, "w", encoding="utf-8") as record_file:
-            json.dump(record, record_file, indent=4)
-    except IOError as e:
-        raise IOError(f"Error reading or writing file: {e}")
-    except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(f"Invalid JSON in file: {e}")
-
+    with open(new_record_path, "w", encoding="utf-8") as record_file:
+        json.dump(record, record_file, indent=4)
 
 def add_updated_files(directory):
     """
@@ -373,15 +345,11 @@ def add_updated_files(directory):
     # Clone the record file
     clone_file(source_record_path, new_record_path)
 
-    try:
-        # Extract code sections from recipe.py
-        code_sections = extract_code_sections(recipe_path)
+    # Extract code sections from recipe.py
+    code_sections = extract_code_sections(recipe_path)
 
-        # Update the new metadata file with the extracted code sections
-        update_metadata_file(new_metadata_path, code_sections)
-
-    except (FileNotFoundError, IOError, ValueError, json.JSONDecodeError):
-        logging.info(f"Record '{directory}' doesn't contain any code!")
+    # Update the new metadata file with the extracted code sections
+    update_metadata_file(new_metadata_path, code_sections)
 
     # Merge the updated metadata into the new record file
     merge_metadata_with_record(new_metadata_path, new_record_path)
@@ -402,40 +370,52 @@ def update_database(df: pd.DataFrame, approver: str):
 
     query_template = text(
         """
-        UPDATE langchain_pg_embedding
-        SET document = :document,
-            cmetadata = :metadata
-        WHERE uuid = :uuid
+        UPDATE 
+            recipe
+        SET
+            function_code = :function_code,
+            description = :description,
+            openapi_json = :openapi_json,
+            datasets = :datasets,
+            python_packages = :python_packages,
+            used_recipes_list = :used_recipes_list,
+            sample_call = :sample_call,
+            sample_result = :sample_result,
+            sample_result_type = :sample_result_type,
+            source = :source,
+            updated_by = :updated_by,
+            last_updated = NOW()
+        WHERE
+            uuid = :uuid
         """
     )
-    try:
-        with engine.connect() as conn:
-            trans = conn.begin()
-            for index, row in df.iterrows():
-                try:
-                    print(row)
-                    metadata_json = (
-                        json.dumps(row["metadata"])
-                        if isinstance(row["metadata"], dict)
-                        else row["metadata"]
-                    )
+    with engine.connect() as conn:
+        trans = conn.begin()
+        for index, row in df.iterrows():
+            print(row)
+            metadata = row["metadata"]
 
-                    params = {
-                        "document": row["document"],
-                        "metadata": metadata_json,
-                        "uuid": row["uuid"],
-                    }
+            params = {
+                "function_code": metadata["function_code"],
+                "description": metadata["description"],
+                "openapi_json": str(metadata["openapi_json"]),
+                "datasets": metadata["datasets"],
+                "python_packages": metadata["python_packages"],
+                "used_recipes_list": metadata["used_recipes_list"],
+                "sample_call": metadata["sample_call"],
+                "sample_result": metadata["sample_result"],
+                "sample_result_type": metadata["sample_result_type"],
+                "source": metadata["source"],
+                "updated_by": approver,
+                "uuid": row["uuid"],
+            }
+            print(params)
 
-                    conn.execute(query_template, params)
-                except KeyError as ke:
-                    logging.error(
-                        f"Skipping record at index {index} due to missing field: {ke}"
-                    )
-                except Exception as e:
-                    logging.error(f"Error updating record at index {index}: {e}")
-            trans.commit()
-    except Exception as e:
-        logging.error(f"Error updating records: {e}")
+            # TO DO Might need to update document on embedding table too if intent changed
+
+            conn.execute(query_template, params)
+        print("Committing changes to the database")
+        trans.commit()
 
 
 def check_out(recipe_checker="Mysterious Recipe Checker", force_checkout=False):
@@ -473,17 +453,15 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
             new_record_path = os.path.join(subdir_path, "record_info_new.json")
 
             if os.path.exists(new_record_path):
-                try:
-                    with open(new_record_path, "r", encoding="utf-8") as file:
-                        record = json.load(file)
-                        records.append(record)
-                    # delete the subdirectory and all its contents
-                    shutil.rmtree(subdir_path)
-                except (IOError, json.JSONDecodeError) as e:
-                    print(f"Error reading {new_record_path}: {e}")
+                with open(new_record_path, "r", encoding="utf-8") as file:
+                    record = json.load(file)
+                    records.append(record)
+                # delete the subdirectory and all its contents
+                shutil.rmtree(subdir_path)
 
     # Create a DataFrame from the list of records
     records_to_check_in = pd.DataFrame(records)
+
     # Update database
     update_database(df=records_to_check_in, approver=recipe_checker)
 
