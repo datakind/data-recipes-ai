@@ -11,6 +11,13 @@ from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
+from langchain.schema import HumanMessage, SystemMessage
+from langchain_openai import (
+    AzureChatOpenAI,
+    AzureOpenAIEmbeddings,
+    ChatOpenAI,
+    OpenAIEmbeddings,
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -442,6 +449,120 @@ def check_out(recipe_checker="Mysterious Recipe Checker", force_checkout=False):
     save_data(recipes)
     format_code_with_black()
 
+def generate_openapi_from_function_code(function_code):
+    """
+    Generate OpenAPI JSON from function code.
+
+    Args:
+        function_code (str): The function code.
+
+    Returns:
+        dict: The OpenAPI JSON generated from the function code.
+    """
+ 
+    prompt = f"""
+        Generate OpenAPI JSON from the given function code below.
+
+        ```{function_code}```
+    """
+
+    _, chat = get_models()
+    openapi_json = call_llm("", prompt, chat)
+    openapi_json = json.dumps(openapi_json, indent=4)
+    return openapi_json
+
+# TODO this is same code as used in recipe manager action, need to refactor so there is only one instance
+def get_models():
+    api_key = os.getenv("RECIPES_OPENAI_API_KEY")
+    base_url = os.getenv("RECIPES_BASE_URL")
+    api_version = os.getenv("RECIPES_OPENAI_API_VERSION")
+    api_type = os.getenv("RECIPES_OPENAI_API_TYPE")
+    completion_model = os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME")
+
+    if api_type == "openai":
+        print("Using OpenAI API in memory.py")
+        embedding_model = OpenAIEmbeddings(
+            api_key=api_key,
+            # model=completion_model
+        )
+        chat = ChatOpenAI(
+            # model_name="gpt-3.5-turbo",
+            model_name="gpt-3.5-turbo-16k",
+            api_key=api_key,
+            temperature=1,
+            max_tokens=1000,
+        )
+    elif api_type == "azure":
+        print("Using Azure OpenAI API in memory.py")
+        embedding_model = AzureOpenAIEmbeddings(
+            api_key=api_key,
+            deployment=completion_model,
+            azure_endpoint=base_url,
+            chunk_size=16,
+        )
+        chat = AzureChatOpenAI(
+            api_key=api_key,
+            api_version=api_version,
+            azure_endpoint=base_url,
+            model_name="gpt-35-turbo",
+            # model_name="gpt-4-turbo",
+            # model="gpt-3-turbo-1106", # Model = should match the deployment name you chose for your 1106-preview model deployment
+            # response_format={ "type": "json_object" },
+            temperature=1,
+            max_tokens=1000,
+        )
+    else:
+        print("OPENAI API type not supported")
+        sys.exit(1)
+    return embedding_model, chat
+
+
+def call_llm(instructions, prompt, chat):
+    """
+    Call the LLM (Language Learning Model) API with the given instructions and prompt.
+
+    Args:
+        instructions (str): The instructions to provide to the LLM API.
+        prompt (str): The prompt to provide to the LLM API.
+        chat (Langchain Open AI model): Chat model used for AI judging
+
+    Returns:
+        dict or None: The response from the LLM API as a dictionary, or None if an error occurred.
+    """
+
+    try:
+        messages = [
+            SystemMessage(content=instructions),
+            HumanMessage(content=prompt),
+        ]
+        response = chat(messages)
+        print(response)
+        try:
+            response = json.loads(response.content)
+        except Exception as e:
+            print(f"Error creating json from response {e}")
+            # Until gpt 3.5 has json output, we'll return just the string for now when prompting fails to create json
+            response = response.content
+        return response
+    except Exception as e:
+        print(f"Error calling LLM {e}")
+
+
+def generate_openapi_json(df):
+    """
+    Generate OpenAPI JSON from function_code.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the recipe data.
+
+    Returns:
+        pd.DataFrame: The DataFrame with the OpenAPI JSON added.
+    """
+    for index, row in df.iterrows():
+        function_code = row["metadata"]["function_code"]
+        openapi_json = generate_openapi_from_function_code(function_code)
+        df.at[index, "metadata"]["openapi_json"] = openapi_json
+    return df
 
 def check_in(recipe_checker="Mysterious Recipe Checker"):
     """
@@ -475,6 +596,9 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
 
     # Create a DataFrame from the list of records
     records_to_check_in = pd.DataFrame(records)
+
+    # Generate openapi_json from function_code
+    records_to_check_in = generate_openapi_json(records_to_check_in)
 
     # Update database
     update_database(df=records_to_check_in, approver=recipe_checker)
