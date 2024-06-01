@@ -66,7 +66,10 @@ def create_recipe_folder(recipe_name):
         "python_packages": ["Please enter the python packages"],
         "parameters": "Please enter the arguments the recipe expects",
         "response_text": "Please enter your response text",
+        "data_attribution": "Please enter the ist of table names that the recipe code queries to determine the answer",
         "mem_type": "recipe",
+        "locked_at": "",
+        "locked_by": "",
     }
 
     # Write metadata.json file
