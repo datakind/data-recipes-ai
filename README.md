@@ -18,7 +18,7 @@ Given the rapidly changing landscape of LLMs, we have tried as much as possible 
 
 Data recipes supports datasources accessed via API, but in some cases it is preferable to ingest data in order to leverage LLM SQL capabilities. We include an initial set of data sources specific to Humanitarian Response in the ingestion module, which can be extended to include additional sources as required.
 
-Finally, for reviewing/updating/creating new recipes, though we provide some experimental assistants that can generate and run recipes to semi-automate the process, in talking with developers and datascientists, most would prefer to use their existing environment for development, such as VS Code + GitHub Copilot. For this reason we are not developing a dedicated user interface for this, and intead provide a sync process that will allow recipe managers to check out and work on recipes locally, then publish them back into the recipes database for wider consumption. We do include however a autogen studio setup to be able to use agent teams to create recipes.
+Finally, for reviewing/updating/creating new recipes, though we provide some experimental assistants that can generate and run recipes to semi-automate the process, in talking with developers and datascientists, most would prefer to use their existing environment for development, such as VS Code + GitHub Copilot. For this reason we are not developing a dedicated user interface for this, and instead provide a [sync process that will allow recipe managers to check out and work on recipes locally](#managing-recipes), then publish them back into the recipes database for wider consumption. We do include however a autogen studio setup to be able to use agent teams to create recipes.
 
 Some more discussion on design decisions can also be found [here](https://www.loom.com/share/500e960fd91c44c282076be4b0126461?sid=83af2d6c-622c-4bda-b21b-8f528d6eafba).
 
@@ -158,6 +158,77 @@ To create an additional plugin, perform the following steps:
 3. Create plugin manigest to describe the plugin for the LLM to determine when and how to use it. You can use [haa_datarecipes.json](./ui/recipes-chat/tools/haa_datarecipes.json) as a template 
 
 As the robocorp actions might differ slightly, this can lead to differing requirements in the openapi spec, and manifest files. The [LibraChat documentation](https://docs.librechat.ai/features/plugins/chatgpt_plugins_openapi.html) provides tips and examples to form the files correctly. 
+
+## Managing recipes
+
+The management of recipes is part of the human in the loop approach of this repo. New recipes are created in status pending and only get marked as approved, once they have been verified by a recipe manager. Recipe managers can 'check out' recipes from the database into their local development environment such as VS Code to run, debug, and edit the recipes, before checking them back in. To make this process platform independent, recipes are checked out into a docker container, which can be used as the runtime environment to run the recipes via VSCode. 
+
+1. To check out recipes:
+
+`cd recipes-management`
+`docker exec haa-recipe-manager python recipe_sync.py --check_out <YOUR NAME>`
+
+Note: This will lock the recipes in the database so others cannot edit them.
+
+2. The checked_out folder in the recipes-management directory now shows all the recipes that were checked out from the database including the recipe code as a .py file. Note that after this step, the recipes in the database are marked as locked with your name and the timestamp you checked them out. If someone else tries to check them out, they are notified accordingly and cannot proceed until you've unlocked the records (more on that below).
+
+This step checks out three files:
+
+   -  Recipe.py - Contains the recipe code (re-assembled from the corresponding sections in the metadata json file)
+   -  metadata.json - Contains the content of the cmetadata column in the recipe database.
+   -  record_info.json - Contains additional information about the record such as its custom_id, and output.
+
+   You can edit all files according to your needs. Please makes sure to not change the custom_id anywehere because it's needed for the check in process.
+
+3. Run the scripts and edit them as you deem fit. Please note: Do not delete the #Functions Code and #Calling Code comments as they're mandatory to reassemble the metadata json for the check in process.
+4. Once you've checked and edited the recipes, run 
+
+   `docker exec haa-recipe-manager python recipe_sync.py --check_in <YOUR NAME>`
+
+   To check the records back into the database and unlock them. All recipes that you've checked in in this fashion are automatically set to status 'approved' with your name as the approver and the timestamp of when you checked them back in.
+
+## Testing a Recipe
+
+You can run a specific recipe like this ...
+
+`docker exec haa-recipe-manager python checked_out/retrieve_the_total_population_of_a_specified_country/recipe.py`
+
+You can also exec into the container to do it ...
+
+1. `docker exec -it haa-recipe-manager /bin/bash`
+2. `cd ./checked_out`, then `cd <RECIPE_DIR>`
+3. `python recipe.py`
+
+You can also configure VS Code to connect to the recipe-manage container for running recipes ...
+
+1. Install the DevContainers VSCode extension 
+2. Build data recipes using the `docker compose` command mentioned above
+3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
+
+   `Dev Containers: Attach to remote container`. 
+
+   Select the recipe-manager container. This opens a new VSCode window - use it for the next steps.
+4. Open folder `/app`
+5. Navigate to your recipe in sub-folder `checked_out`
+6. Run the `recipe.py` in a terminal or set up the docker interpretor
+
+# Autogen Studio and autogen agent teams for creating data recipes
+
+![alt text](../assets/autogen-studio-recipes.png)
+
+Data recipes AI contains an autogenstudio instance for the Docker build, as well as sample skill, agent and workflows to use a team of autogen agents for creating data recipes.
+
+You can information on Autogen studio [here](https://github.com/microsoft/autogen/tree/main/samples/apps/autogen-studio). This folder includes a skill to query the data recipes data DB, an agent to use that, with some prompts to help it, and a workflow that uses the agent.
+
+To activate:
+
+1. Go to [http://localhost:8091/](http://localhost:8091/)
+2. Click on 'Build'
+3. Click 'Skills' on left, top right click '...' and import the skill in `./assets`
+4. Click 'Agents' on left, top right click '...' and import the skill in `./assets`
+5. Click 'Workflows' on left, top right click '...' and import the skill in `./assets`
+6. Go to playground and start a new session, select the 'Recipes data Analysis' workflow
+7. Ask 'What is the total population of Mali?'
 
 # Deployment
 

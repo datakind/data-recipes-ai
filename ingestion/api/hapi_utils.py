@@ -53,10 +53,10 @@ def post_process_data(df, standard_names):
     df = filter_hapi_df(df, standard_names["admin0_code_field"])
 
     # Add a flag to indicate latest dataset by HDX ID, useful for LLM queries
-    if "resource_hdx_id" in df.columns:
+    if "resource_hdx_id" in df.columns and "reference_period_start" in df.columns:
         df["latest"] = 0
         df["reference_period_start"] = pd.to_datetime(df["reference_period_start"])
-        df["latest"] = df.groupby("dataset_hdx_stub")[
+        df["latest"] = df.groupby("resource_hdx_id")[
             "reference_period_start"
         ].transform(lambda x: x == x.max())
 
