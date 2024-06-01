@@ -114,7 +114,7 @@ services:
     ports:
       - 5435:5432
     volumes:
-      - ./actions/actions_plugins/recipe-server/db/:/docker-entrypoint-initdb.d
+      - ./db/recipedb:/docker-entrypoint-initdb.d
       - ./ui/recipes-chat/recipesdb:/var/lib/postgresql/data
     env_file:
       - .env
