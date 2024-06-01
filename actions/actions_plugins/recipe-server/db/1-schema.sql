@@ -23,7 +23,11 @@ CREATE TABLE public.langchain_pg_embedding (
 	cmetadata json NULL,
 	custom_id varchar NULL,
 	uuid uuid NOT NULL,
-  "checksum" varchar NULL,
+  approval_status varchar NULL,
+  approver varchar NULL,
+  approval_latest_update varchar NULL,
+  locked_by varchar NULL,
+  locked_at varchar NULL,
 	CONSTRAINT langchain_pg_embedding_pkey PRIMARY KEY (uuid)
 );
 

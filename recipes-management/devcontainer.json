@@ -1,8 +1,0 @@
-{
-    "name": "Python Container",
-    "build": {
-        "context": ".",
-        "dockerfile": "Dockerfile"
-    },
-    "postCreateCommand": "echo 'Container ready!'"
-}

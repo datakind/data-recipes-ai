@@ -110,7 +110,7 @@ def normalize_hdx_boundaries(
         None
     """
 
-    output_dir = "./tmp/normalized/"
+    output_dir = "./tmp/processed/"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -146,7 +146,7 @@ def normalize_hdx_boundaries(
 
 
 def download_hdx_boundaries(
-    datafile="./api/hapi/hapi_population.csv",
+    datafile="./api/hapi/api_v1_population-social_population.csv",
     datafile_country_col="location_code",
     target_dir="./api/hdx/",
     field_map={},
@@ -175,6 +175,9 @@ def download_hdx_boundaries(
     get_hdx_config()
 
     df = pd.read_csv(datafile)
+
+    print(df.columns)
+
     countries = df[datafile_country_col].unique()
     countries = [c.lower() for c in countries]
 

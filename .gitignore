@@ -18,5 +18,9 @@ ui/recipes-chat/recipesdb
 instructions.txt
 dataset_details.json
 .DS_Store
-recipes-management/checked_out
+recipes-management/checked_out/*
+!recipes-management/checked_out/.gitkeep
+!recipes-management/checked_out/skills.py
+recipes-management/files/
+database.sqlite
 
