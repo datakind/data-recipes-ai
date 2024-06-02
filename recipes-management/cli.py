@@ -29,12 +29,17 @@ cli_config_file = '.cli_config'
 def _get_checkout_folders():
     global recipes
     checked_out_dir = 'work/checked_out'
-    checked_out_folders = os.listdir(checked_out_dir)
-    checked_out_folders = [folder for folder in checked_out_folders if not folder.endswith('.txt')]
-    count = 0
-    for folder in checked_out_folders:
-        recipes[count] = folder
-        count += 1
+
+    if not os.path.exists(checked_out_dir):
+        checked_out_folders = []
+    else:
+        checked_out_folders = os.listdir(checked_out_dir)
+        checked_out_folders = [folder for folder in checked_out_folders if not folder.endswith('.txt')]
+        count = 0
+        for folder in checked_out_folders:
+            recipes[count] = folder
+            count += 1
+            
     return checked_out_folders
 
 def _updated_recipes_to_be_deleted(uuid):
