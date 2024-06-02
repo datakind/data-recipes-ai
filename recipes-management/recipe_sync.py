@@ -96,6 +96,43 @@ def get_recipes(force_checkout=False):
             sys.exit(1)
         return recipes
 
+def get_folder_cksum(folder):
+    """
+    Get the checksum of the files in the folder.
+
+    Args:
+        folder (str): The path to the folder.
+
+    Returns:
+        str: The checksum of the files in the folder.
+    """
+
+    files = ["record_info.json", "metadata.json", "recipe.py"]
+    files = [os.path.join(folder, file) for file in files]
+    result = subprocess.run(
+        ["cksum"] + files, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    return result
+
+
+
+def save_cksum(folder):
+    """
+    Save the checksum of the files in the folder.
+
+    Args:
+        folder (str): The path to the folder.
+
+    Returns:
+        None
+    """
+
+    # Calculate the checksum of the files in the folder
+    result = get_folder_cksum(folder)
+
+    # Save the checksum to a file
+    with open(os.path.join(folder, "cksum.txt"), "w", encoding="utf-8") as file:
+        file.write(result.stdout.replace("./", ""))
 
 def save_data(df):
     """
@@ -158,6 +195,9 @@ def save_data(df):
         with open(metadata_path, "w", encoding="utf-8") as file:
             json_data = json.dumps(metadata, indent=4)
             file.write(json_data)
+
+        # Save the checksum of the files
+        save_cksum(folder_path)
 
 
 def format_code_with_black():
@@ -461,7 +501,7 @@ def generate_openapi_from_function_code(function_code):
     """
  
     prompt = f"""
-        Generate OpenAPI JSON from the given function code below.
+        Generate openapi.json JSON for the code below. 
 
         ```{function_code}```
     """
@@ -564,6 +604,39 @@ def generate_openapi_json(df):
         df.at[index, "metadata"]["openapi_json"] = openapi_json
     return df
 
+def compare_cksums(folder):
+    """
+    Compare the old and new checksums.
+
+    Args:
+        folder (str): Folder where files and old cksum are
+
+    Returns:
+        bool: True if the checksums match, False otherwise.
+    """
+    # get cksums of files in the directory
+    new_cksum = get_folder_cksum(folder)
+    new_cksum = new_cksum.stdout
+
+    # read the cksum.txt file into a variable
+    cksum_path = os.path.join(folder, "cksum.txt")
+
+    if os.path.exists(cksum_path):
+        with open(cksum_path, "r") as file:
+            old_cksum = file.read()
+
+        old_cksum = old_cksum.replace('\r\n', '\n')
+        new_cksum = new_cksum.replace('\r\n', '\n')
+
+        if old_cksum == new_cksum:
+            #print(f"No changes detected in {folder}")
+            return True
+        else:
+            print(f"Changes detected in {folder}")
+            return False
+
+    
+
 def check_in(recipe_checker="Mysterious Recipe Checker"):
     """
     Check in function to process each subdirectory in the checked_out directory.
@@ -584,6 +657,11 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
     for subdir in os.listdir(base_directory):
         subdir_path = os.path.join(base_directory, subdir)
         if os.path.isdir(subdir_path):
+
+            # Skip if the checksums match
+            if compare_cksums(subdir_path):
+                continue
+
             add_updated_files(subdir_path)
             new_record_path = os.path.join(subdir_path, "record_info_new.json")
 
@@ -591,8 +669,6 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
                 with open(new_record_path, "r", encoding="utf-8") as file:
                     record = json.load(file)
                     records.append(record)
-                # delete the subdirectory and all its contents
-                shutil.rmtree(subdir_path)
 
     # Create a DataFrame from the list of records
     records_to_check_in = pd.DataFrame(records)
@@ -601,7 +677,10 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
     records_to_check_in = generate_openapi_json(records_to_check_in)
 
     # Update database
-    update_database(df=records_to_check_in, approver=recipe_checker)
+    if records_to_check_in.empty:
+        print("No records to check in.")
+    else:
+        update_database(df=records_to_check_in, approver=recipe_checker)
 
 
 def main():
