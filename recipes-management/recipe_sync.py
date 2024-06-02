@@ -65,6 +65,7 @@ def connect_to_db():
     user = os.getenv("POSTGRES_RECIPE_USER")
     password = os.getenv("POSTGRES_RECIPE_PASSWORD")
     conn_str = f"postgresql://{user}:{password}@{host}:{port}/{database}"
+    # add an echo=True to see the SQL queries
     conn = create_engine(conn_str)
     return conn
 
@@ -96,7 +97,7 @@ def get_recipes(force_checkout=False):
         """
 
         if force_checkout is False:
-            query += "AND cmetadata->>'locked_at' = ''"
+            query += "AND lr.locked_at = '' OR lr.locked_at IS NULL"
 
         query = text(query)
         result = connection.execute(query)
@@ -186,7 +187,7 @@ def save_data(df):
         calling_code = metadata["sample_call"]
         function_code = metadata["function_code"]
         # if import it not already in the function_code, add it with a linebreak
-        if imports_content not in function_code:
+        if 'from skills import *' not in function_code:
             function_code = imports_content + "\n\n" + function_code
         # Concatenate function_code and calling_code into recipe code
         recipe_code = (
@@ -252,16 +253,8 @@ def lock_records(df, locker_name):
 
     # Prepare the SQL query
     query = f"""
-    UPDATE public.langchain_pg_embedding
-    SET cmetadata = jsonb_set(
-        jsonb_set(
-            cmetadata::jsonb,
-            '{{locked_by}}',
-            '\"{locker_name}\"'
-        ),
-        '{{locked_at}}',
-        '\"{current_time}\"'
-    );
+    UPDATE public.recipe
+    SET locked_by = '{locker_name}', locked_at = '{current_time}'
     """
 
     query = text(query)
@@ -412,7 +405,10 @@ def insert_records_in_db(df, approver):
                 source,
                 created_by,
                 updated_by,
-                last_updated                   
+                last_updated,
+                approval_status,
+                approver,
+                approval_latest_update
         )
         VALUES (
             :uuid,
@@ -428,6 +424,9 @@ def insert_records_in_db(df, approver):
             :source,
             :created_by,
             :updated_by,
+            NOW(),
+            'approved',
+            :created_by,
             NOW()
         )
         """
@@ -501,7 +500,10 @@ def update_records_in_db(df, approver):
             sample_result_type = :sample_result_type,
             source = :source,
             updated_by = :updated_by,
-            last_updated = NOW()
+            last_updated = NOW(),
+            approval_status = 'approved',
+            approver = :updated_by,
+            approval_latest_update = NOW()
         WHERE
             uuid = :uuid
         """
@@ -724,18 +726,44 @@ def delete_recipe(recipe_uuid):
     Returns:
         None
     """
-    conn = connect_to_db()
-    with conn.connect() as connection:
-        query = f"""
-            DELETE FROM
-                public.recipe
-            WHERE
-                uuid = '{recipe_uuid}'
-        """
-        query = text(query)
-        connection.execute(query)
+    engine = connect_to_db()
+    with engine.connect() as conn:
+        trans = conn.begin()
 
+        for table in ["langchain_pg_embedding", "recipe"]:
+
+            query = f"""
+                DELETE FROM
+                    public.{table}
+                WHERE
+                    uuid = '{recipe_uuid}'
+            """
+            query = text(query)
+            conn.execute(query)
+        trans.commit()
     print(f"Recipe with UUID {recipe_uuid} deleted from the database.")
+
+def unlock_records(recipe_author):
+    """
+    Clear locked records in the 'public.langchain_pg_embedding' table.
+
+    Args:
+        recipe_author (str): The name of the recipe checker.
+
+    Returns:
+        None
+    """
+    conn = connect_to_db()
+    query = f"""
+        UPDATE public.recipe
+        SET locked_by = '', locked_at = ''
+        WHERE locked_by = '{recipe_author}'
+    """
+    query = text(query)
+    with conn.connect() as connection:
+        with connection.begin():
+            connection.execute(query)
+            print(f"Locked records cleared for recipe checker {recipe_author}.")
 
 
 def check_in(recipe_author="Mysterious Recipe Checker"):
@@ -778,10 +806,9 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
         print("Nothing changed, no records to check in.")
     else:
         update_database(df=records_to_check_in, approver=recipe_author)
-
-    # Now update the cksums
-    for subdir in cksums_to_update:
-        save_cksum(subdir)
+        for subdir in cksums_to_update:
+            save_cksum(subdir)
+        unlock_records(recipe_author)
 
 def create_new_recipe(recipe_intent, recipe_author):
     """

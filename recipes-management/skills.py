@@ -356,7 +356,7 @@ def call_llm(instructions, prompt, chat):
             response = json.loads(response.content)
         except Exception as e:
             print(f"Error creating json from response from the LLM {e}")
-            print("Aborting further processing")
+            print("Aborting further processing. GPT-3.5 can be silly, just try again usally works")
             sys.exit()
         return response
     except Exception as e:

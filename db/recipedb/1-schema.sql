@@ -23,11 +23,6 @@ CREATE TABLE public.langchain_pg_embedding (
 	cmetadata json NULL,
 	custom_id varchar NULL,
 	uuid uuid NOT NULL,
-  approval_status varchar NULL,
-  approver varchar NULL,
-  approval_latest_update varchar NULL,
-  locked_by varchar NULL,
-  locked_at varchar NULL,
 	CONSTRAINT langchain_pg_embedding_pkey PRIMARY KEY (uuid)
 );
 
@@ -57,6 +52,11 @@ CREATE TABLE public.recipe (
   created_by varchar NOT NULL,
   updated_by timestamp NOT NULL,
   last_updated timestamp NOT NULL,
+  approval_status varchar NULL,
+  approver varchar NULL,
+  approval_latest_update varchar NULL,
+  locked_by varchar NULL,
+  locked_at varchar NULL,
   CONSTRAINT langchain_pg_embedding_pkey2 PRIMARY KEY (uuid),
   CONSTRAINT result_type_fkey FOREIGN KEY (sample_result_type) REFERENCES result_type(name)
 );
