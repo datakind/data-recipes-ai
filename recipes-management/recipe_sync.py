@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
 # Where recipes will be checked out to
-base_path = "./checked_out"
+base_path = "./work/checked_out"
 
 # read the imports.txt file into a variable incl. linebreaks
 with open("imports.txt", "r") as file:
@@ -625,8 +625,7 @@ def compare_cksums(folder):
         with open(cksum_path, "r") as file:
             old_cksum = file.read()
 
-        old_cksum = old_cksum.replace('\r\n', '\n')
-        new_cksum = new_cksum.replace('\r\n', '\n')
+        new_cksum = new_cksum.replace('./', '')
 
         if old_cksum == new_cksum:
             #print(f"No changes detected in {folder}")
@@ -641,21 +640,20 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
     """
     Check in function to process each subdirectory in the checked_out directory.
     """
-    base_directory = "checked_out"
 
     # delete pycache if it exists
-    pycache_path = os.path.join(base_directory, "__pycache__")
+    pycache_path = os.path.join(base_path, "__pycache__")
     if os.path.exists(pycache_path):
         shutil.rmtree(pycache_path)
 
-    if not os.path.exists(base_directory):
-        print(f"Base directory {base_directory} does not exist.")
+    if not os.path.exists(base_path):
+        print(f"Base directory {base_path} does not exist.")
         return
 
     records = []
 
-    for subdir in os.listdir(base_directory):
-        subdir_path = os.path.join(base_directory, subdir)
+    for subdir in os.listdir(base_path):
+        subdir_path = os.path.join(base_path, subdir)
         if os.path.isdir(subdir_path):
 
             # Skip if the checksums match
