@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 from datetime import datetime
+from uuid import uuid4
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -19,17 +20,19 @@ from langchain_openai import (
     OpenAIEmbeddings,
 )
 
+
+from jinja2 import Environment, FileSystemLoader
+
 logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
-# Where recipes will be checked out to
-base_path = "./work/checked_out"
+# Where recipes will be checkout out or created
+checked_out_folder_name = "./work/checked_out"
+#new_recipe_folder_name = "./work/new_recipe_staging"
+new_recipe_folder_name = checked_out_folder_name
 
-# read the imports.txt file into a variable incl. linebreaks
-with open("imports.txt", "r") as file:
-    imports = file.read()
-
+environment = Environment(loader=FileSystemLoader("templates/"))
 
 # ToDo: This function is taken from ingest.py. perhaps it should be moved to something like a utils.py file
 def connect_to_db():
@@ -145,11 +148,14 @@ def save_data(df):
         None
     """
 
+    import_template = environment.get_template("imports_template.jinja2")
+    imports_content = import_template.render()
+
     # Iterate through each row in the DataFrame
     for index, row in df.iterrows():
         folder_name = row["document"].replace(" ", "_").lower()[:100]
         # Folder path for this row
-        folder_path = os.path.join(base_path, folder_name)
+        folder_path = os.path.join(checked_out_folder_name, folder_name)
 
         # Create the folder if it does not exist
         if not os.path.exists(folder_path):
@@ -170,8 +176,8 @@ def save_data(df):
         calling_code = metadata["sample_call"]
         function_code = metadata["function_code"]
         # if import it not already in the function_code, add it with a linebreak
-        if imports not in function_code:
-            function_code = imports + "\n\n" + function_code
+        if imports_content not in function_code:
+            function_code = imports_content + "\n\n" + function_code
         # Concatenate function_code and calling_code into recipe code
         recipe_code = (
             f"{function_code}\n\n" f"# Calling code:\n{calling_code}\n\n"
@@ -464,8 +470,7 @@ def update_database(df: pd.DataFrame, approver: str):
                 "updated_by": approver,
                 "uuid": row["uuid"],
             }
-            print(params)
-
+            
             # TO DO Might need to update document on embedding table too if intent changed
 
             conn.execute(query_template, params)
@@ -473,19 +478,19 @@ def update_database(df: pd.DataFrame, approver: str):
         trans.commit()
 
 
-def check_out(recipe_checker="Mysterious Recipe Checker", force_checkout=False):
+def check_out(recipe_author="Mysterious Recipe Checker", force_checkout=False):
     """
     Checks out recipes for editing.
 
     Args:
-        recipe_checker (str): The name of the recipe checker.
+        recipe_author (str): The name of the recipe checker.
         force_checkout (bool): Whether to force checkout the recipes.
 
     Returns:
         None
     """
     recipes = get_recipes(force_checkout=force_checkout)
-    lock_records(df=recipes, locker_name=recipe_checker)
+    lock_records(df=recipes, locker_name=recipe_author)
     save_data(recipes)
     format_code_with_black()
 
@@ -576,7 +581,6 @@ def call_llm(instructions, prompt, chat):
             HumanMessage(content=prompt),
         ]
         response = chat(messages)
-        print(response)
         try:
             response = json.loads(response.content)
         except Exception as e:
@@ -586,6 +590,8 @@ def call_llm(instructions, prompt, chat):
         return response
     except Exception as e:
         print(f"Error calling LLM {e}")
+        print("Aborting further processing")
+        sys.exit(1)
 
 
 def generate_openapi_json(df):
@@ -636,24 +642,24 @@ def compare_cksums(folder):
 
 
 
-def check_in(recipe_checker="Mysterious Recipe Checker"):
+def check_in(recipe_author="Mysterious Recipe Checker"):
     """
     Check in function to process each subdirectory in the checked_out directory.
     """
 
     # delete pycache if it exists
-    pycache_path = os.path.join(base_path, "__pycache__")
+    pycache_path = os.path.join(checked_out_folder_name, "__pycache__")
     if os.path.exists(pycache_path):
         shutil.rmtree(pycache_path)
 
-    if not os.path.exists(base_path):
-        print(f"Base directory {base_path} does not exist.")
+    if not os.path.exists(checked_out_folder_name):
+        print(f"Base directory {checked_out_folder_name} does not exist.")
         return
 
     records = []
 
-    for subdir in os.listdir(base_path):
-        subdir_path = os.path.join(base_path, subdir)
+    for subdir in os.listdir(checked_out_folder_name):
+        subdir_path = os.path.join(checked_out_folder_name, subdir)
         if os.path.isdir(subdir_path):
 
             # Skip if the checksums match
@@ -679,12 +685,59 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
 
     # Update database
     if records_to_check_in.empty:
-        print("No records to check in.")
+        print("Nothing changed, no records to check in.")
     else:
-        update_database(df=records_to_check_in, approver=recipe_checker)
+        update_database(df=records_to_check_in, approver=recipe_author)
 
         # Now update the cksums
 
+def create_new_recipe(recipe_name, recipe_author):
+    """
+    Create a new recipe folder with necessary metadata and template files.
+
+    Parameters:
+    - recipe_name (str): The name of the recipe.
+
+    This function performs the following steps:
+    1. Defines the folder name and path for the new recipe.
+    2. Creates the folder if it does not already exist.
+    3. Defines the metadata structure with placeholder values.
+    4. Writes the metadata to a `metadata.json` file in the recipe folder.
+    5. Reads an `imports.txt` file if it exists, or uses a default import template.
+    6. Writes a `recipe.py` file in the recipe folder with the imports and a template for the recipe code.
+    """
+
+    # Create new folder
+    recipe_folder = os.path.join(new_recipe_folder_name, recipe_name)
+    os.makedirs(recipe_folder, exist_ok=True)
+
+    # Render jinja templates
+    import_template = environment.get_template("imports_template.jinja2")
+    imports_content = import_template.render()
+
+    new_recipe_code_template = environment.get_template("new_recipe_code_template.jinja2")
+    code_content = new_recipe_code_template.render(
+        imports=imports_content,
+        recipe_name=recipe_name
+    )
+    new_recipe_metadata_template = environment.get_template("new_recipe_metadata_template.jinja2")
+    metadata_content = new_recipe_metadata_template.render(
+        uuid= uuid4(),
+        recipe_name=recipe_name,
+        recipe_author=recipe_author
+    )
+
+    # Write content to recipe.py file
+    recipe_path = os.path.join(recipe_folder, "recipe.py")
+    with open(recipe_path, "w", encoding="utf-8") as recipe_file:
+        recipe_file.write(code_content)
+    metadata_path = os.path.join(recipe_folder, "metadata.json")
+    with open(metadata_path, "w", encoding="utf-8") as metadata_file:
+        metadata_file.write(metadata_content)
+
+    # Save an empty cksum file
+    with open(os.path.join(recipe_folder, "cksum.txt"), "w", encoding="utf-8") as file:
+        file.write("")
 
 def main():
     """
@@ -693,17 +746,20 @@ def main():
     This function parses the command-line arguments using the `argparse` module and calls the appropriate function based on the provided arguments. It supports two operations: check out and check in.
 
     Usage:
-        python recipe_sync.py --check_out <recipe_checker> [--force_checkout]
-        python recipe_sync.py --check_in <recipe_checker>
+        python recipe_sync.py --check_out <recipe_author> [--force_checkout]
+        python recipe_sync.py --check_in <recipe_author>
+        python recipe_sync.py --create_recipe
 
     Arguments:
-        --check_out: Perform check out operation.
-        --check_in: Perform check in operation.
-        <recipe_checker>: Name of the recipe checker.
-        --force_checkout: Force check out operation.
+        --check_out --recipe_author <recipe author>: Perform check out operation.
+        --check_in --recipe_author <recipe author>: Perform check in operation.
+        --force_checkout: Force check out operation
+        --create_recipe <recipe_name>: Create a new blank recipe
+
+    <recipe author>: The name of the recipe author, used for locking recipes for editing.
 
     Example:
-        python recipe_sync.py --check_out my_recipe_checker --force_checkout
+        python recipe_sync.py --check_out my_recipe_author --force_checkout
 
     """
     parser = argparse.ArgumentParser(
@@ -718,9 +774,15 @@ def main():
     group.add_argument(
         "--check_in", action="store_true", help="Perform check in operation"
     )
+    group.add_argument(
+        "--create_recipe", action="store_true", help="Create a new blank recipe"
+    )
 
-    # Add recipe_checker argument
-    parser.add_argument("recipe_checker", type=str, help="Name of the recipe checker")
+    # Make recipe_author an argument supplied like --recipe_author <checker>"
+    parser.add_argument("--recipe_author", type=str, help="Name of the recipe checker")
+
+    # Make recipe_author an argument supplied like --recipe_author <checker>"
+    parser.add_argument("--recipe_name", type=str, help="Name of the new recipe to create")
 
     # Add force_checkout argument
     parser.add_argument(
@@ -729,10 +791,17 @@ def main():
 
     args = parser.parse_args()
 
+    if (args.check_out or args.check_in or args.create_recipe) and not args.recipe_author:
+        parser.error("--recipe_author is required for this action")
+
     if args.check_out:
-        check_out(args.recipe_checker, force_checkout=args.force_checkout)
+        check_out(args.recipe_author, force_checkout=args.force_checkout)
     elif args.check_in:
-        check_in(args.recipe_checker)
+        check_in(args.recipe_author)
+    elif args.create_recipe:
+        check_out(args.recipe_author, force_checkout=True)
+        create_new_recipe(args.recipe_name, args.recipe_author)
+
 
 
 if __name__ == "__main__":
