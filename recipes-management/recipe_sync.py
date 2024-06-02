@@ -584,9 +584,9 @@ def call_llm(instructions, prompt, chat):
         try:
             response = json.loads(response.content)
         except Exception as e:
-            print(f"Error creating json from response {e}")
-            # Until gpt 3.5 has json output, we'll return just the string for now when prompting fails to create json
-            response = response.content
+            print(f"Error creating json from response from the LLM {e}")
+            print("Aborting further processing")
+            sys.exit()
         return response
     except Exception as e:
         print(f"Error calling LLM {e}")
@@ -640,6 +640,28 @@ def compare_cksums(folder):
             print(f"Changes detected in {folder}")
             return False
 
+def delete_recipe(recipe_uuid):
+    """
+    Delete a recipe by UUID
+
+    Args:
+        recipe_uuid (str): The UUID of the recipe to delete
+
+    Returns:
+        None
+    """
+    conn = connect_to_db()
+    with conn.connect() as connection:
+        query = f"""
+            DELETE FROM
+                public.recipe
+            WHERE
+                uuid = '{recipe_uuid}'
+        """
+        query = text(query)
+        connection.execute(query)
+
+    print(f"Recipe with UUID {recipe_uuid} deleted from the database.")
 
 
 def check_in(recipe_author="Mysterious Recipe Checker"):
@@ -786,12 +808,13 @@ def main():
     group.add_argument(
         "--create_recipe", action="store_true", help="Create a new blank recipe"
     )
+    group.add_argument(
+        "--delete_recipe", action="store_true", help="Delete a recipe by UUID"
+    )
 
-    # Make recipe_author an argument supplied like --recipe_author <checker>"
     parser.add_argument("--recipe_author", type=str, help="Name of the recipe checker")
-
-    # Make recipe_author an argument supplied like --recipe_author <checker>"
     parser.add_argument("--recipe_intent", type=str, help="Intent of the new recipe")
+    parser.add_argument("--recipe_uuid", type=str, help="UUID of recipe")
 
     # Add force_checkout argument
     parser.add_argument(
@@ -813,6 +836,8 @@ def main():
         recipe_intent = args.recipe_intent.lower().replace(" ","_")
         check_out(args.recipe_author, force_checkout=True)
         create_new_recipe(recipe_intent, args.recipe_author)
+    elif args.delete_recipe:
+        delete_recipe(args.recipe_uuid)
 
 
 
