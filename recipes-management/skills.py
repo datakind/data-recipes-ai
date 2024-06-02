@@ -9,11 +9,11 @@ import numpy as np
 import psycopg2
 import requests
 from dotenv import load_dotenv
-from langchain.chat_models import AzureChatOpenAI
+from langchain_community.chat_models import AzureChatOpenAI
 from langchain.docstore.document import Document
-from langchain_community.embeddings import AzureOpenAIEmbeddings
 from langchain_community.vectorstores.pgvector import PGVector
 from openai import OpenAI
+from langchain_openai import AzureOpenAIEmbeddings
 
 load_dotenv()
 
