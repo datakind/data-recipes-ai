@@ -635,7 +635,7 @@ def compare_cksums(folder):
             print(f"Changes detected in {folder}")
             return False
 
-    
+
 
 def check_in(recipe_checker="Mysterious Recipe Checker"):
     """
@@ -670,6 +670,9 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
                     record = json.load(file)
                     records.append(record)
 
+            # Update the cksum file
+            save_cksum(subdir_path)
+
     # Create a DataFrame from the list of records
     records_to_check_in = pd.DataFrame(records)
 
@@ -681,6 +684,8 @@ def check_in(recipe_checker="Mysterious Recipe Checker"):
         print("No records to check in.")
     else:
         update_database(df=records_to_check_in, approver=recipe_checker)
+
+        # Now update the cksums
 
 
 def main():
