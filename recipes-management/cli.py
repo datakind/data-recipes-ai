@@ -24,6 +24,7 @@ commands_help = f"""
 """
 
 to_be_deleted_file = 'work/checked_out/to_be_deleted.txt'
+cli_config_file = '.cli_config'
 
 def _get_checkout_folders():
     global recipes
@@ -42,6 +43,20 @@ def _updated_recipes_to_be_deleted(uuid):
             f.write("")
     with open(to_be_deleted_file, 'a') as f:
         f.write(f"{uuid}\n")
+
+def _get_session_defaults():
+    #if .cli_config exists, read it
+    if os.path.exists(cli_config_file):
+        with open(cli_config_file, 'r') as f:
+            config = f.read()
+            config = json.loads(config)
+            return config
+    else:
+        return {}
+
+def _update_session_defaults(config):
+    with open(cli_config_file, 'w') as f:
+        f.write(json.dumps(config))
 
 def checkout():
     cmd = f'docker exec haa-recipe-manager python recipe_sync.py --check_out --recipe_author {user_name} --force_checkout'
@@ -98,7 +113,7 @@ def add(intent: Optional[str] = typer.Argument(None)):
     typer.echo(f"Creating new recipe with intent {intent}")
     os.system(cmd)
     list()
-    typer.echo(f"Now edit your new recipe and when done do a 'checkin'")
+    typer.echo(f"Now edit your new recipe in folder ./work/checked_out and when done do a 'checkin'")
 
 def delete():
     list()
@@ -136,7 +151,14 @@ def main():
     app.command()(delete)
     app.command()(help)
 
-    user_name = input("Enter your name: ")
+    config = _get_session_defaults()
+
+    if 'user_name' in config:
+        user_name = config['user_name']
+    else:
+        user_name = input("Enter your name: ")
+        config['user_name'] = user_name
+        _update_session_defaults(config)
 
     welcome_message = f"""\nWelcome to the recipes management CLI, {user_name}!\n"""
     welcome_message += commands_help
