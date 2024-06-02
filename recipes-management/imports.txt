@@ -1,4 +1,0 @@
-import sys
-import os
-import requests
-from skills import *
