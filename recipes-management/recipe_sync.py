@@ -691,12 +691,12 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
 
         # Now update the cksums
 
-def create_new_recipe(recipe_name, recipe_author):
+def create_new_recipe(recipe_intent, recipe_author):
     """
     Create a new recipe folder with necessary metadata and template files.
 
     Parameters:
-    - recipe_name (str): The name of the recipe.
+    - recipe_intent (str): The name of the recipe.
 
     This function performs the following steps:
     1. Defines the folder name and path for the new recipe.
@@ -708,7 +708,7 @@ def create_new_recipe(recipe_name, recipe_author):
     """
 
     # Create new folder
-    recipe_folder = os.path.join(new_recipe_folder_name, recipe_name)
+    recipe_folder = os.path.join(new_recipe_folder_name, recipe_intent)
     os.makedirs(recipe_folder, exist_ok=True)
 
     # Render jinja templates
@@ -718,13 +718,19 @@ def create_new_recipe(recipe_name, recipe_author):
     new_recipe_code_template = environment.get_template("new_recipe_code_template.jinja2")
     code_content = new_recipe_code_template.render(
         imports=imports_content,
-        recipe_name=recipe_name
+        recipe_intent=recipe_intent
     )
     new_recipe_metadata_template = environment.get_template("new_recipe_metadata_template.jinja2")
     metadata_content = new_recipe_metadata_template.render(
         uuid= uuid4(),
-        recipe_name=recipe_name,
+        recipe_intent=recipe_intent,
         recipe_author=recipe_author
+    )
+
+    new_recipe_record_info_template = environment.get_template("new_recipe_record_info_template.jinja2")
+    record_info_content = new_recipe_record_info_template.render(
+        uuid= uuid4(),
+        recipe_intent=recipe_intent
     )
 
     # Write content to recipe.py file
@@ -734,6 +740,9 @@ def create_new_recipe(recipe_name, recipe_author):
     metadata_path = os.path.join(recipe_folder, "metadata.json")
     with open(metadata_path, "w", encoding="utf-8") as metadata_file:
         metadata_file.write(metadata_content)
+    record_info_path = os.path.join(recipe_folder, "record_info.json")
+    with open(record_info_path, "w", encoding="utf-8") as record_info_file:
+        record_info_file.write(record_info_content)
 
     # Save an empty cksum file
     with open(os.path.join(recipe_folder, "cksum.txt"), "w", encoding="utf-8") as file:
@@ -754,7 +763,7 @@ def main():
         --check_out --recipe_author <recipe author>: Perform check out operation.
         --check_in --recipe_author <recipe author>: Perform check in operation.
         --force_checkout: Force check out operation
-        --create_recipe <recipe_name>: Create a new blank recipe
+        --create_recipe <recipe_intent>: Create a new blank recipe
 
     <recipe author>: The name of the recipe author, used for locking recipes for editing.
 
@@ -782,7 +791,7 @@ def main():
     parser.add_argument("--recipe_author", type=str, help="Name of the recipe checker")
 
     # Make recipe_author an argument supplied like --recipe_author <checker>"
-    parser.add_argument("--recipe_name", type=str, help="Name of the new recipe to create")
+    parser.add_argument("--recipe_intent", type=str, help="Intent of the new recipe")
 
     # Add force_checkout argument
     parser.add_argument(
@@ -798,9 +807,12 @@ def main():
         check_out(args.recipe_author, force_checkout=args.force_checkout)
     elif args.check_in:
         check_in(args.recipe_author)
-    elif args.create_recipe:
+        # Check out to refresh metadata file. TODO, do this as part fo check in
         check_out(args.recipe_author, force_checkout=True)
-        create_new_recipe(args.recipe_name, args.recipe_author)
+    elif args.create_recipe:
+        recipe_intent = args.recipe_intent.lower().replace(" ","_")
+        check_out(args.recipe_author, force_checkout=True)
+        create_new_recipe(recipe_intent, args.recipe_author)
 
 
 
