@@ -1,11 +1,9 @@
-{# templates/new_recipe_template.jinja2 #}
-
+{# templates/new_recipe_code_template.jinja2 #}
 {{ imports }}
-
 # !!!!!! BELOW IS JUST AN EXAMPLE TO GET YOU STARTED !!!
 # Edit it to be what your recipe needs.
 
-def {{ recipe_name }}(country_code):
+def {{ recipe_intent }}(country_code):
     query = f"""
         SELECT 
             SUM(population) as total_population 
@@ -20,6 +18,6 @@ def {{ recipe_name }}(country_code):
 
 # Calling code:
 country_code = 'MLI'
-population = {{ recipe_name }}(country_code)
+population = {{ recipe_intent }}(country_code)
 print(f"The total population of Mali is: {population}")
 
