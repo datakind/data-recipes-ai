@@ -12,14 +12,14 @@ from uuid import uuid4
 import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
-from langchain.schema import HumanMessage, SystemMessage
 from langchain_openai import (
     AzureChatOpenAI,
     AzureOpenAIEmbeddings,
     ChatOpenAI,
     OpenAIEmbeddings,
 )
-
+from langchain_community.vectorstores.pgvector import PGVector
+from skills import add_memory, call_llm
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -29,10 +29,21 @@ load_dotenv()
 
 # Where recipes will be checkout out or created
 checked_out_folder_name = "./work/checked_out"
-#new_recipe_folder_name = "./work/new_recipe_staging"
 new_recipe_folder_name = checked_out_folder_name
 
+# Lower numbers are more similar
+similarity_cutoff = {"memory": 0.2, "recipe": 0.3, "helper_function": 0.1}
+
 environment = Environment(loader=FileSystemLoader("templates/"))
+
+CONNECTION_STRING = PGVector.connection_string_from_db_params(
+    driver=os.environ.get("POSTGRES_DRIVER", "psycopg2"),
+    host=os.environ.get("POSTGRES_RECIPE_HOST", "localhost"),
+    port=int(os.environ.get("POSTGRES_RECIPE_PORT", "5432")),
+    database=os.environ.get("POSTGRES_RECIPE_DB", "postgres"),
+    user=os.environ.get("POSTGRES_RECIPE_USER", "postgres"),
+    password=os.environ.get("POSTGRES_RECIPE_PASSWORD", "postgres"),
+)
 
 # ToDo: This function is taken from ingest.py. perhaps it should be moved to something like a utils.py file
 def connect_to_db():
@@ -110,7 +121,7 @@ def get_folder_cksum(folder):
         str: The checksum of the files in the folder.
     """
 
-    files = ["record_info.json", "metadata.json", "recipe.py"]
+    files = ["metadata.json", "recipe.py"]
     files = [os.path.join(folder, file) for file in files]
     result = subprocess.run(
         ["cksum"] + files, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
@@ -162,7 +173,6 @@ def save_data(df):
             os.makedirs(folder_path)
 
         # Define file paths
-        record_info_path = os.path.join(folder_path, "record_info.json")
         metadata_path = os.path.join(folder_path, "metadata.json")
         recipe_code_path = os.path.join(folder_path, "recipe.py")
 
@@ -187,15 +197,8 @@ def save_data(df):
         with open(recipe_code_path, "w", encoding="utf-8") as file:
             file.write(recipe_code)
 
-        # Create a dictionary with the variables
-        record = {"uuid": str(uuid), "document": document, "output": output}
-
-        # Convert the dictionary to a JSON string
-        json_record = json.dumps(record, indent=4)
-
-        # Save files
-        with open(record_info_path, "w", encoding="utf-8") as file:
-            file.write(json_record)
+        # Add intent to metadata, useful later on
+        metadata["intent"] = document
 
         # Save the metadata; assuming it's a JSON string, we write it directly
         with open(metadata_path, "w", encoding="utf-8") as file:
@@ -321,7 +324,7 @@ def extract_code_sections(recipe_path):
         "calling_code": calling_code_match.group(1).strip(),
     }
 
-def update_metadata_file(metadata_path, code_sections):
+def add_code_to_metadata(metadata_path, code_sections):
     """
     Update the metadata file with the provided code sections.
 
@@ -354,38 +357,7 @@ def update_metadata_file(metadata_path, code_sections):
         json.dump(metadata, file, indent=4)
 
 
-def merge_metadata_with_record(new_metadata_path, new_record_path):
-    """
-    Merges the content of a metadata file with a record file.
-
-    Args:
-        new_metadata_path (str): The path to the new metadata file.
-        new_record_path (str): The path to the new record file.
-
-    Raises:
-        FileNotFoundError: If the new metadata file or the new record file does not exist.
-
-    """
-    if not os.path.exists(new_metadata_path):
-        raise FileNotFoundError(
-            f"New metadata file {new_metadata_path} does not exist."
-        )
-    if not os.path.exists(new_record_path):
-        raise FileNotFoundError(f"New record file {new_record_path} does not exist.")
-
-    with open(new_metadata_path, "r", encoding="utf-8") as metadata_file:
-        metadata = json.load(metadata_file)
-
-    with open(new_record_path, "r", encoding="utf-8") as record_file:
-        record = json.load(record_file)
-
-    # Include the entire metadata content as a 'metadata' key in the record
-    record["metadata"] = metadata
-
-    with open(new_record_path, "w", encoding="utf-8") as record_file:
-        json.dump(record, record_file, indent=4)
-
-def add_updated_files(directory):
+def update_metadata_file(directory):
     """
     Adds updated files to the specified directory.
 
@@ -395,35 +367,118 @@ def add_updated_files(directory):
     Returns:
     - None
     """
-    source_metadata_path = os.path.join(directory, "metadata.json")
-    new_metadata_path = os.path.join(directory, "metadata_new.json")
+    metadata_path = os.path.join(directory, "metadata.json")
     recipe_path = os.path.join(directory, "recipe.py")
-    source_record_path = os.path.join(directory, "record_info.json")
-    new_record_path = os.path.join(directory, "record_info_new.json")
-
-    # Clone the metadata file
-    clone_file(source_metadata_path, new_metadata_path)
-
-    # Clone the record file
-    clone_file(source_record_path, new_record_path)
 
     # Extract code sections from recipe.py
     code_sections = extract_code_sections(recipe_path)
 
     # Update the new metadata file with the extracted code sections
-    update_metadata_file(new_metadata_path, code_sections)
+    add_code_to_metadata(metadata_path, code_sections)
 
-    # Merge the updated metadata into the new record file
-    merge_metadata_with_record(new_metadata_path, new_record_path)
+    # Here update metadata outputs
 
+    with open(metadata_path, "r") as file:
+        metadata = json.load(file)
 
-def update_database(df: pd.DataFrame, approver: str):
+    return metadata
+
+def insert_records_in_db(df, approver):
     """
-    Updates the recipe records in the database with the provided DataFrame.
+    Inserts the recipe records in the database with the provided metadata.
 
     Args:
-        df (pd.DataFrame): The DataFrame containing the recipe data to update.
-        approver (str): The name of the user who is approving the update.
+        metadata (dict): The metadata to insert.
+
+    Returns:
+        None
+    """
+    engine = connect_to_db()
+
+    query_template = text(
+        """
+        INSERT INTO
+            recipe (
+                uuid,
+                function_code,
+                description,
+                openapi_json,
+                datasets,
+                python_packages,
+                used_recipes_list,
+                sample_call,
+                sample_result,
+                sample_result_type,
+                source,
+                created_by,
+                updated_by,
+                last_updated                   
+        )
+        VALUES (
+            :uuid,
+            :function_code,
+            :description,
+            :openapi_json,
+            :datasets,
+            :python_packages,
+            :used_recipes_list,
+            :sample_call,
+            :sample_result,
+            :sample_result_type,
+            :source,
+            :created_by,
+            :updated_by,
+            NOW()
+        )
+        """
+    )
+ 
+    with engine.connect() as conn:
+        trans = conn.begin()
+        for index, row in df.iterrows():
+            metadata = row   
+            response = add_memory(
+                intent=metadata["intent"],
+                metadata=metadata,
+                mem_type=metadata["mem_type"],
+            )
+            if 'already_exists' in response:
+                print(response)
+                print("\nCannot add this recipe, a very similar one already exists. Aborting operation")
+                sys.exit()
+
+            uuid = response[0]
+
+            # Now insert into recipe table
+            params = {
+                "uuid": uuid,
+                "function_code": metadata["function_code"],
+                "description": metadata["description"],
+                "openapi_json": str(metadata["openapi_json"]),
+                "datasets": metadata["datasets"],
+                "python_packages": metadata["python_packages"],
+                "used_recipes_list": metadata["used_recipes_list"],
+                "sample_call": metadata["sample_call"],
+                "sample_result": metadata["sample_result"],
+                "sample_result_type": metadata["sample_result_type"],
+                "source": metadata["source"],
+                "created_by": approver,
+                "updated_by": approver,
+                "intent": metadata["intent"],
+            }
+            conn.execute(query_template, params)
+        
+        print("Committing changes to the database")
+        trans.commit()
+
+
+def update_records_in_db(df, approver):
+    """
+    Updates the recipe record in the database with the provided metadata.
+
+    Args:
+        metadata (dict): The metadata to update.
+        uuid (str): The UUID of the record to update.
 
     Returns:
         None
@@ -451,11 +506,12 @@ def update_database(df: pd.DataFrame, approver: str):
             uuid = :uuid
         """
     )
+
     with engine.connect() as conn:
+
         trans = conn.begin()
         for index, row in df.iterrows():
-            metadata = row["metadata"]
-
+            metadata = row   
             params = {
                 "function_code": metadata["function_code"],
                 "description": metadata["description"],
@@ -470,12 +526,61 @@ def update_database(df: pd.DataFrame, approver: str):
                 "updated_by": approver,
                 "uuid": row["uuid"],
             }
-            
-            # TO DO Might need to update document on embedding table too if intent changed
-
             conn.execute(query_template, params)
+
         print("Committing changes to the database")
         trans.commit()
+    
+
+
+def update_database(df: pd.DataFrame, approver: str):
+    """
+    Updates the recipe records in the database with the provided DataFrame.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the recipe data to update.
+        approver (str): The name of the user who is approving the update.
+
+    Returns:
+        None
+    """
+    engine = connect_to_db()
+
+    # Get list of uuids in table recipe
+    query = text(
+        """
+        SELECT
+            uuid
+        FROM
+            recipe
+        """
+    )
+    conn = connect_to_db()
+    with conn.connect() as connection:
+        result = connection.execute(query)
+        result = result.fetchall()
+        result = pd.DataFrame(result)
+        uuids = result["uuid"].tolist()
+        uuids = [str(uuid) for uuid in uuids]
+
+    update_ids = []
+    insert_ids = []
+    for index, row in df.iterrows():
+        uuid = str(row["uuid"])
+        if uuid in uuids:  
+           update_ids.append(uuid) 
+        else:
+           insert_ids.append(uuid)   
+
+    if len(update_ids) > 0:
+        print(f"Proceeding with update of {len(update_ids)} records in the database")
+        update_df = df[df["uuid"].isin(update_ids)]
+        update_records_in_db(update_df, approver)
+    
+    if len(insert_ids) > 0:
+        print(f"Proceeding with insert of {len(insert_ids)} records in the database")
+        insert_df = df[df["uuid"].isin(insert_ids)]
+        insert_records_in_db(insert_df, approver)
 
 
 def check_out(recipe_author="Mysterious Recipe Checker", force_checkout=False):
@@ -525,7 +630,7 @@ def get_models():
     completion_model = os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME")
 
     if api_type == "openai":
-        print("Using OpenAI API in memory.py")
+        #print("Using OpenAI API in memory.py")
         embedding_model = OpenAIEmbeddings(
             api_key=api_key,
             # model=completion_model
@@ -538,7 +643,7 @@ def get_models():
             max_tokens=1000,
         )
     elif api_type == "azure":
-        print("Using Azure OpenAI API in memory.py")
+        #print("Using Azure OpenAI API in memory.py")
         embedding_model = AzureOpenAIEmbeddings(
             api_key=api_key,
             deployment=completion_model,
@@ -562,38 +667,6 @@ def get_models():
     return embedding_model, chat
 
 
-def call_llm(instructions, prompt, chat):
-    """
-    Call the LLM (Language Learning Model) API with the given instructions and prompt.
-
-    Args:
-        instructions (str): The instructions to provide to the LLM API.
-        prompt (str): The prompt to provide to the LLM API.
-        chat (Langchain Open AI model): Chat model used for AI judging
-
-    Returns:
-        dict or None: The response from the LLM API as a dictionary, or None if an error occurred.
-    """
-
-    try:
-        messages = [
-            SystemMessage(content=instructions),
-            HumanMessage(content=prompt),
-        ]
-        response = chat(messages)
-        try:
-            response = json.loads(response.content)
-        except Exception as e:
-            print(f"Error creating json from response from the LLM {e}")
-            print("Aborting further processing")
-            sys.exit()
-        return response
-    except Exception as e:
-        print(f"Error calling LLM {e}")
-        print("Aborting further processing")
-        sys.exit(1)
-
-
 def generate_openapi_json(df):
     """
     Generate OpenAPI JSON from function_code.
@@ -605,9 +678,10 @@ def generate_openapi_json(df):
         pd.DataFrame: The DataFrame with the OpenAPI JSON added.
     """
     for index, row in df.iterrows():
-        function_code = row["metadata"]["function_code"]
+        function_code = row["function_code"]
         openapi_json = generate_openapi_from_function_code(function_code)
-        df.at[index, "metadata"]["openapi_json"] = openapi_json
+        df.at[index, "openapi_json"] = openapi_json        
+
     return df
 
 def compare_cksums(folder):
@@ -679,6 +753,7 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
         return
 
     records = []
+    cksums_to_update = []
 
     for subdir in os.listdir(checked_out_folder_name):
         subdir_path = os.path.join(checked_out_folder_name, subdir)
@@ -688,16 +763,9 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
             if compare_cksums(subdir_path):
                 continue
 
-            add_updated_files(subdir_path)
-            new_record_path = os.path.join(subdir_path, "record_info_new.json")
-
-            if os.path.exists(new_record_path):
-                with open(new_record_path, "r", encoding="utf-8") as file:
-                    record = json.load(file)
-                    records.append(record)
-
-            # Update the cksum file
-            save_cksum(subdir_path)
+            record = update_metadata_file(subdir_path)
+            records.append(record)
+            cksums_to_update.append(subdir_path)
 
     # Create a DataFrame from the list of records
     records_to_check_in = pd.DataFrame(records)
@@ -711,7 +779,9 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
     else:
         update_database(df=records_to_check_in, approver=recipe_author)
 
-        # Now update the cksums
+    # Now update the cksums
+    for subdir in cksums_to_update:
+        save_cksum(subdir)
 
 def create_new_recipe(recipe_intent, recipe_author):
     """
@@ -749,12 +819,6 @@ def create_new_recipe(recipe_intent, recipe_author):
         recipe_author=recipe_author
     )
 
-    new_recipe_record_info_template = environment.get_template("new_recipe_record_info_template.jinja2")
-    record_info_content = new_recipe_record_info_template.render(
-        uuid= uuid4(),
-        recipe_intent=recipe_intent
-    )
-
     # Write content to recipe.py file
     recipe_path = os.path.join(recipe_folder, "recipe.py")
     with open(recipe_path, "w", encoding="utf-8") as recipe_file:
@@ -762,9 +826,6 @@ def create_new_recipe(recipe_intent, recipe_author):
     metadata_path = os.path.join(recipe_folder, "metadata.json")
     with open(metadata_path, "w", encoding="utf-8") as metadata_file:
         metadata_file.write(metadata_content)
-    record_info_path = os.path.join(recipe_folder, "record_info.json")
-    with open(record_info_path, "w", encoding="utf-8") as record_info_file:
-        record_info_file.write(record_info_content)
 
     # Save an empty cksum file
     with open(os.path.join(recipe_folder, "cksum.txt"), "w", encoding="utf-8") as file:
