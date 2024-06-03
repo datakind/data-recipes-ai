@@ -876,14 +876,17 @@ def llm_generate_new_recipe_code(recipe_intent, imports_content):
         file.write(prompt)
 
     print("Calling LLM to generate recipe starting code ...")
-    code = call_llm("", prompt)
+    response = call_llm("", prompt)
+    try:
+        code = response["code"]
+    except KeyError:
+        code = response["content"]
     return code
 
 def create_new_recipe(recipe_intent, recipe_author):
 
     # Create new folder
     recipe_folder = os.path.join(new_recipe_folder_name, recipe_intent)
-    os.makedirs(recipe_folder, exist_ok=True)
 
     # Render jinja templates
     import_template = environment.get_template("imports_template.jinja2")
@@ -898,7 +901,6 @@ def create_new_recipe(recipe_intent, recipe_author):
 
     # Generate recipe code using LLM single-shot. Later this can go to AI team
     code_content = llm_generate_new_recipe_code(recipe_intent, imports_content)
-    code_content = code_content["code"]
 
     new_recipe_metadata_template = environment.get_template("new_recipe_metadata_template.jinja2")
     metadata_content = new_recipe_metadata_template.render(
@@ -906,6 +908,8 @@ def create_new_recipe(recipe_intent, recipe_author):
         recipe_intent=recipe_intent,
         recipe_author=recipe_author
     )
+
+    os.makedirs(recipe_folder, exist_ok=True)
 
     # Write content to recipe.py file
     recipe_path = os.path.join(recipe_folder, "recipe.py")

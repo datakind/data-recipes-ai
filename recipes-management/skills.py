@@ -11,7 +11,12 @@ import numpy as np
 import psycopg2
 import requests
 from dotenv import load_dotenv
-from langchain_openai import AzureChatOpenAI
+from langchain_openai import (
+    AzureChatOpenAI,
+    AzureOpenAIEmbeddings,
+    ChatOpenAI,
+    OpenAIEmbeddings,
+)
 from langchain.docstore.document import Document
 from langchain_community.vectorstores.pgvector import PGVector
 from openai import OpenAI
@@ -41,20 +46,60 @@ CONNECTION_STRING = PGVector.connection_string_from_db_params(
     user=os.environ.get("POSTGRES_RECIPE_USER", "postgres"),
     password=os.environ.get("POSTGRES_RECIPE_PASSWORD", "postgres"),
 )
-embedding_model = AzureOpenAIEmbeddings(
-    deployment=os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME"),
-    azure_endpoint=os.getenv("RECIPES_BASE_URL"),
-    chunk_size=16,
-)
 
-chat = AzureChatOpenAI(
-    model_name = os.getenv("RECIPES_MODEL"),
-    azure_endpoint=os.getenv("RECIPES_BASE_URL"),
-    api_version=os.getenv("RECIPES_OPENAI_API_VERSION"),
-    temperature=0,
-    max_tokens=4000,
-    response_format={"type": "json_object"}
-)
+
+def get_models():
+    """Write short summary.
+
+    Returns:
+        _type_: _description_
+    """
+    api_key = os.getenv("RECIPES_OPENAI_API_KEY")
+    base_url = os.getenv("RECIPES_BASE_URL")
+    api_version = os.getenv("RECIPES_OPENAI_API_VERSION")
+    api_type = os.getenv("RECIPES_OPENAI_API_TYPE")
+    completion_model = os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME")
+    model = os.getenv("RECIPES_MODEL")
+
+    if api_type == "openai":
+        print("Using OpenAI API in memory.py")
+        embedding_model = OpenAIEmbeddings(
+            api_key=api_key,
+            # model=completion_model
+        )
+        chat = ChatOpenAI(
+            # model_name="gpt-3.5-turbo",
+            model_name="gpt-3.5-turbo-16k",
+            api_key=api_key,
+            temperature=0,
+            max_tokens=5000
+            #response_format={"type": "json_object"}
+        )
+    elif api_type == "azure":
+        print("Using Azure OpenAI API in memory.py")
+        embedding_model = AzureOpenAIEmbeddings(
+            api_key=api_key,
+            deployment=completion_model,
+            azure_endpoint=base_url,
+            chunk_size=16,
+        )
+        chat = AzureChatOpenAI(
+            api_key=api_key,
+            api_version=api_version,
+            azure_endpoint=base_url,
+            model_name="gpt-35-turbo",
+            # model_name="gpt-4-turbo",
+            # model="gpt-3-turbo-1106", # Model = should match the deployment name you chose for your 1106-preview model deployment
+            # response_format={ "type": "json_object" },
+            temperature=1,
+            max_tokens=1000,
+        )
+    else:
+        print("OPENAI API type not supported")
+        sys.exit(1)
+    return embedding_model, chat
+
+embedding_model, chat = get_models()
 
 # Stored in langchain_pg_collection and langchain_pg_embedding as this
 def initialize_vector_db():
@@ -357,10 +402,10 @@ def call_llm(instructions, prompt):
         try:
             response = json.loads(response.content)
         except Exception as e:
-            print(response.content)
-            print(f"Error creating json from response from the LLM {e}")
-            print("Aborting further processing. Possibly intermittent, just try again usally works")
-            sys.exit()
+            print("LLM didn't provide valid JSON, will create one")
+            response = {
+                "content": response.content
+            }
         return response
     except Exception as e:
         print(f"Error calling LLM {e}")
