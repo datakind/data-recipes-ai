@@ -194,8 +194,11 @@ def save_data(df):
             function_code = imports_content + "\n\n" + function_code
         # Concatenate function_code and calling_code into recipe code
         recipe_code = (
-            f"{function_code}\n\n" f"{code_separator}\n    {calling_code}\n\n"
+            f"{function_code}\n\n" f"{code_separator}\n{calling_code}\n\n"
         )
+
+        # Make max number blank lines in a row as 3
+        recipe_code = re.sub(r"\n{4,}", "\n\n\n", recipe_code)
 
         # Save the recipe code
         with open(recipe_code_path, "w", encoding="utf-8") as file:
