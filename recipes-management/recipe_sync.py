@@ -326,8 +326,8 @@ def extract_code_sections(recipe_path):
         after_name = []
 
     # Convert lists back to strings
-    function_code = ''.join(before_name)
-    calling_code = ''.join(after_name)
+    function_code = '\n'.join(before_name)
+    calling_code = '\n'.join(after_name)
 
     if function_code is None or calling_code is None:
         raise ValueError(f"Function code or calling code not found in the recipe file '{recipe_path}'.")
