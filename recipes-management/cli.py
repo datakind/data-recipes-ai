@@ -195,7 +195,7 @@ def main():
 
     while True:
         command = input(">> ")
-        if command.lower() == 'quit':
+        if command.lower() in ['quit','exit','stop']:
             break
         if command.lower().split()[0] not in ['checkout', 'run', 'checkin', 'list', 'add', 'delete', 'makemem', 'help']:
             typer.echo("Invalid command, type 'list' to see available options.")
