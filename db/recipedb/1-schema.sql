@@ -62,7 +62,7 @@ CREATE TABLE public.recipe (
   locked_at varchar NULL,
   CONSTRAINT langchain_pg_embedding_pkey2 PRIMARY KEY (custom_id),
   CONSTRAINT result_type_fkey FOREIGN KEY (sample_result_type) REFERENCES result_type(name),
-  CONSTRAINT custom_id_fkey FOREIGN KEY (custom_id) REFERENCES langchain_pg_embedding(custom_id)
+  CONSTRAINT custom_id_fkey FOREIGN KEY (custom_id) REFERENCES langchain_pg_embedding(custom_id) ON DELETE CASCADE
 );
 
 CREATE TABLE public.memory (
@@ -77,7 +77,7 @@ CREATE TABLE public.memory (
   last_updated timestamp NOT NULL,
   CONSTRAINT langchain_pg_embedding_pkey3 PRIMARY KEY (custom_id),
   CONSTRAINT result_type_fkey FOREIGN KEY (result_type) REFERENCES result_type(name),
-  CONSTRAINT custom_id_fkey FOREIGN KEY (custom_id) REFERENCES langchain_pg_embedding(custom_id)
+  CONSTRAINT custom_id_fkey FOREIGN KEY (custom_id) REFERENCES langchain_pg_embedding(custom_id) ON DELETE CASCADE
 );
 
 

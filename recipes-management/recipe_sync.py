@@ -307,6 +307,9 @@ def extract_code_sections(recipe_path):
     with open(recipe_path, "r", encoding="utf-8") as file:
         content = file.read()
 
+    code_separator_singles = code_separator.replace("'", '"')
+    content = content.replace(code_separator_singles, code_separator)
+
     function_code_match = re.search(
         r"^(.*?)(?=" + re.escape(code_separator) + ")", content, re.DOTALL
     )
@@ -1142,6 +1145,7 @@ def main():
         --check_in --recipe_author <recipe author>: Perform check in operation.
         --force_checkout: Force check out operation
         --create_recipe --recipe_intent <recipe_intent>: Create a new blank recipe
+        --delete_recipe --recipe_custom_id <recipe_custom_id>: Delete a recipe by custom_id
         --save_as_memory --recipe_path <recipe_path>: Save a memory from recipe sample outputs
         --run_recipe --recipe_path <recipe_path>: Run recipe and update its metadata results
 

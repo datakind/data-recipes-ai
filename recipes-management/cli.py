@@ -43,12 +43,12 @@ def _get_checkout_folders():
 
     return checked_out_folders
 
-def _updated_recipes_to_be_deleted(uuid):
+def _updated_recipes_to_be_deleted(custom_id):
     if not os.path.exists(to_be_deleted_file):
         with open(to_be_deleted_file, 'w') as f:
             f.write("")
     with open(to_be_deleted_file, 'a') as f:
-        f.write(f"{uuid}\n")
+        f.write(f"{custom_id}\n")
 
 def _get_session_defaults():
     #if .cli_config exists, read it
@@ -106,9 +106,9 @@ def checkin():
     # Read to_be_deleted file and delete the recipes
     if os.path.exists(to_be_deleted_file):
         with open(to_be_deleted_file, 'r') as f:
-            uuids = f.readlines()
-            for uuid in uuids:
-                cmd = f"docker exec haa-recipe-manager python recipe_sync.py --delete_recipe --recipe_uuid {uuid}"
+            custom_ids = f.readlines()
+            for custom_id in custom_ids:
+                cmd = f"docker exec haa-recipe-manager python recipe_sync.py --delete_recipe --recipe_custom_id {custom_id}"
                 os.system(cmd)
         os.remove(to_be_deleted_file)
 
@@ -138,8 +138,8 @@ def delete():
     with open(metadata_file, 'r') as f:
         metadata = f.read()
         metadata = json.loads(metadata)
-        uuid = metadata['uuid']
-        _updated_recipes_to_be_deleted(uuid)
+        custom_id = metadata['custom_id']
+        _updated_recipes_to_be_deleted(custom_id)
 
     if os.path.exists(recipe_folder):
         typer.echo(f"Deleting recipe {recipe}")
