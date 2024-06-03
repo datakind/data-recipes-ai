@@ -49,25 +49,24 @@ CONNECTION_STRING = PGVector.connection_string_from_db_params(
     password=os.environ.get("POSTGRES_RECIPE_PASSWORD", "postgres"),
 )
 
-# ToDo: This function is taken from ingest.py. perhaps it should be moved to something like a utils.py file
-def connect_to_db():
+def connect_to_db(instance="recipe"):
     """
-    Connects to the PostgreSQL database using the environment variables for host, port, database, user, and password.
+    Connects to the specified database instance (RECIPE or DATA) DB and returns a connection object.
+
+    Args:
+        instance (str): The name of the database instance to connect to. Defaults to "RECIPE".
 
     Returns:
-        sqlalchemy.engine.base.Engine: The database connection engine.
+        sqlalchemy.engine.base.Engine: The connection object for the specified database instance.
     """
 
-    # if is_running_in_docker():
-    #    print("Running in Docker ...")
-    #    host = os.getenv("POSTGRES_RECIPE_HOST")
-    # else:
-    #    host = "localhost"
-    host = "recipedb"
-    port = os.getenv("POSTGRES_RECIPE_PORT")
-    database = os.getenv("POSTGRES_RECIPE_DB")
-    user = os.getenv("POSTGRES_RECIPE_USER")
-    password = os.getenv("POSTGRES_RECIPE_PASSWORD")
+    instance = instance.upper()
+
+    host = os.getenv(f"POSTGRES_{instance}_HOST")
+    port = os.getenv(f"POSTGRES_{instance}_PORT")
+    database = os.getenv(f"POSTGRES_{instance}_DB")
+    user = os.getenv(f"POSTGRES_{instance}_USER")
+    password = os.getenv(f"POSTGRES_{instance}_PASSWORD")
     conn_str = f"postgresql://{user}:{password}@{host}:{port}/{database}"
     # add an echo=True to see the SQL queries
     conn = create_engine(conn_str)
@@ -86,7 +85,7 @@ def get_recipes(force_checkout=False):
     Raises:
         SystemExit: If no recipes are found in the database and force_checkout is False.
     """
-    conn = connect_to_db()
+    conn = connect_to_db(instance="recipe")
     with conn.connect() as connection:
         query = """
             SELECT 
@@ -248,7 +247,7 @@ def lock_records(df, locker_name):
         None
     """
     # Connect to the database
-    conn = connect_to_db()
+    conn = connect_to_db(instance="recipe")
 
     # Get the current timestamp
     current_time = (
@@ -390,7 +389,7 @@ def insert_records_in_db(df, approver):
     Returns:
         None
     """
-    engine = connect_to_db()
+    engine = connect_to_db(instance="recipe")
 
     query_template = text(
         """
@@ -486,7 +485,7 @@ def update_records_in_db(df, approver):
     Returns:
         None
     """
-    engine = connect_to_db()
+    engine = connect_to_db(instance="recipe")
 
     query_template = text(
         """
@@ -550,7 +549,7 @@ def update_database(df: pd.DataFrame, approver: str):
     Returns:
         None
     """
-    engine = connect_to_db()
+    engine = connect_to_db(instance="recipe")
 
     # Get list of custom_ids in table recipe
     query = text(
@@ -561,7 +560,7 @@ def update_database(df: pd.DataFrame, approver: str):
             recipe
         """
     )
-    conn = connect_to_db()
+    conn = connect_to_db(instance="recipe")
     with conn.connect() as connection:
         result = connection.execute(query)
         result = result.fetchall()
@@ -575,20 +574,24 @@ def update_database(df: pd.DataFrame, approver: str):
     update_ids = []
     insert_ids = []
     for index, row in df.iterrows():
-        custom_id = str(row["custom_id"])
-        if custom_id in custom_ids:  
-           update_ids.append(custom_id) 
+        if 'custom_id' not in row:
+            insert_ids.append(index)
         else:
-           insert_ids.append(custom_id)   
+            custom_id = str(row["custom_id"])
+            if custom_id in custom_ids:  
+                update_ids.append(index) 
+            else:
+                insert_ids.append(index)   
+
 
     if len(update_ids) > 0:
         print(f"Proceeding with update of {len(update_ids)} records in the database")
-        update_df = df[df["custom_id"].isin(update_ids)]
+        update_df = df.iloc[update_ids]
         update_records_in_db(update_df, approver)
     
     if len(insert_ids) > 0:
         print(f"Proceeding with insert of {len(insert_ids)} records in the database")
-        insert_df = df[df["custom_id"].isin(insert_ids)]
+        insert_df = df.iloc[insert_ids]
         insert_records_in_db(insert_df, approver)
 
 
@@ -733,7 +736,7 @@ def delete_recipe(recipe_custom_id):
     Returns:
         None
     """
-    engine = connect_to_db()
+    engine = connect_to_db(instance="recipe")
     with engine.connect() as conn:
         trans = conn.begin()
 
@@ -760,7 +763,7 @@ def unlock_records(recipe_author):
     Returns:
         None
     """
-    conn = connect_to_db()
+    conn = connect_to_db(instance="recipe")
     query = f"""
         UPDATE public.recipe
         SET locked_by = '', locked_at = ''
@@ -817,21 +820,61 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
             save_cksum(subdir)
         unlock_records(recipe_author)
 
+def get_data_metadata(df):
+
+    # Connect to the data db
+    conn = connect_to_db(instance="recipe")
+
+
+def llm_generate_new_recipe_code(recipe_intent, imports_content):
+    """
+    Generate new recipe code using LLM.
+
+    Args:
+        recipe_intent (str): The intent of the recipe.
+        imports_content (str): The content of the imports.
+
+    Returns:
+        str: The generated recipe code.
+    """
+
+    db = connect_to_db(instance="data")
+
+    # run this query: select table_name, summary, columns from table_metadata
+
+    query = text(
+        """
+        SELECT
+            table_name,
+            summary,
+            columns
+        FROM
+            table_metadata
+        """
+    )
+
+    with db.connect() as connection:
+        result = connection.execute(query)
+        result = result.fetchall()
+        result = pd.DataFrame(result)
+        data_info = result.to_json(orient="records")
+
+    new_recipe_code_template = environment.get_template("new_recipe_code_prompt.jinja2")
+    prompt = new_recipe_code_template.render(
+        imports=imports_content,
+        recipe_intent=recipe_intent,
+        data_info=data_info
+    )
+
+    # Save the prompt to a file
+    with open("prompt.txt", "w", encoding="utf-8") as file:
+        file.write(prompt)
+
+    print("Calling LLM to generate recipe starting code ...")
+    code = call_llm("", prompt)
+    return code
+
 def create_new_recipe(recipe_intent, recipe_author):
-    """
-    Create a new recipe folder with necessary metadata and template files.
-
-    Parameters:
-    - recipe_intent (str): The name of the recipe.
-
-    This function performs the following steps:
-    1. Defines the folder name and path for the new recipe.
-    2. Creates the folder if it does not already exist.
-    3. Defines the metadata structure with placeholder values.
-    4. Writes the metadata to a `metadata.json` file in the recipe folder.
-    5. Reads an `imports.txt` file if it exists, or uses a default import template.
-    6. Writes a `recipe.py` file in the recipe folder with the imports and a template for the recipe code.
-    """
 
     # Create new folder
     recipe_folder = os.path.join(new_recipe_folder_name, recipe_intent)
@@ -841,11 +884,17 @@ def create_new_recipe(recipe_intent, recipe_author):
     import_template = environment.get_template("imports_template.jinja2")
     imports_content = import_template.render()
 
-    new_recipe_code_template = environment.get_template("new_recipe_code_template.jinja2")
-    code_content = new_recipe_code_template.render(
-        imports=imports_content,
-        recipe_intent=recipe_intent
-    )
+    # Use a fixed template for the recipe code
+    #new_recipe_code_template = environment.get_template("new_recipe_code_template.jinja2")
+    #code_content = new_recipe_code_template.render(
+    #    imports=imports_content,
+    #    recipe_intent=recipe_intent
+    #)
+
+    # Generate recipe code using LLM single-shot. Later this can go to AI team
+    code_content = llm_generate_new_recipe_code(recipe_intent, imports_content)
+    code_content = code_content["code"]
+
     new_recipe_metadata_template = environment.get_template("new_recipe_metadata_template.jinja2")
     metadata_content = new_recipe_metadata_template.render(
         custom_id= uuid4(),
@@ -882,13 +931,22 @@ def update_metadata_file_results(recipe_folder, result):
     with open(metadata_path, "r") as file:
         metadata = json.load(file)
 
+    # Remove any lines starting with DEBUG
+    result.stdout = re.sub(r"DEBUG.*\n", "", result.stdout)
+
     if '.png' in result.stdout:
 
-        # Extract png file name from text
-        png_file = re.search(r"(\w+\.png)", result.stdout).group(1)
+        # See if result.stdout is a JSON file, if so extract "file"
+        try:
+            result = json.loads(str(result.stdout))
+            png_file = result["file"]
+        except json.JSONDecodeError:
+            print("Error decoding JSON, trying to extract png file from stdout")
+            png_file = re.search(r"(\w+\.png)", result.stdout).group(1)
 
         # Move png file to recipe folder 
-        png_file_path = os.path.join(recipe_folder, png_file)
+        png_file_basename = os.path.basename(png_file)
+        png_file_path = os.path.join(recipe_folder, png_file_basename)
         shutil.move(png_file, png_file_path)
 
         with open(png_file_path, "rb") as image_file:
@@ -1019,7 +1077,7 @@ def save_as_memory(recipe_folder):
 
     custom_id = response[0]
 
-    engine = connect_to_db()
+    engine = connect_to_db(instance="recipe")
     with engine.connect() as conn:
         trans = conn.begin()
 
