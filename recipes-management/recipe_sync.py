@@ -449,7 +449,7 @@ def insert_records_in_db(df, approver):
             if 'already_exists' in response:
                 print(response)
                 print("\nCannot add this recipe, a very similar one already exists. Aborting operation")
-                sys.exit()
+                continue
 
             custom_id = response[0]
 
