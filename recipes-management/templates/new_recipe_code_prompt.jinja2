@@ -100,6 +100,26 @@ If the data in the answer is a plot, return as file location to a png image file
 
 Never convert a JSON response to a string, leave it as JSON
 
+DATA-SPECIFIC TIPS:
+
+1. HAPI
+
+Any data queried from hap tables can have aggregated and disagregated data mixed together. For admin colulms, a null value
+indicated aggregated. For dimensions such as gender and age_group 'all' indicates aggregated data. So for example to query
+all data for a country, you would query with
+
+WHERE 
+    adm0_code ='MLI' AND 
+    gender = 'all' and 
+    age_range = 'all' 
+	and adm1_code is not null
+	and adm2_code is not null
+
+Conversely, if you do not exclude the aggregate data, you will get a mix of aggregated and disaggregated data.
+
+
+EXAMPLE CODE LAYOUT:
+
 Here is a pseudo-code example layout ...
 
 ```
