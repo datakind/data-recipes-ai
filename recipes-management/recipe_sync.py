@@ -950,10 +950,33 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
     with open(recipe_path, "r") as file:
         recipe_code = file.read()
 
+    # Automatically run recipe to get errors and output
+    result = run_recipe(recipe_path)
+    stderr_ouput= result.stderr
+    stdout_output = result.stdout
+
     prompt = f"""
         Edit the recipe code below to edit it as follows:  {llm_prompt}
             
-            ```{recipe_code}```
+            ```
+            {recipe_code}
+            ```
+
+    """
+
+    prompt += f"""
+
+    The last time it run, it produced the following output:
+
+    ```
+    {stdout_output}
+    ```
+
+    And the following errors:
+
+    ```
+    {stderr_ouput}
+    ```
 
     """
 
@@ -964,7 +987,17 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
     try:
         code = response["code"]
     except KeyError:
-        code = response["content"]
+        # find matching "```" in response['content] and extract the code
+        if "```" in response['content']:
+            code = response['content'].split("```")[1]
+            comment1 = response['content'].split("```")[0]
+            comment2 = response['content'].split("```")[2]
+            comment = comment1 + comment2
+            print(comment)
+        else:
+            code = response['content']
+            comment = ""
+
 
     # Write content to recipe.py file
     with open(recipe_path, "w", encoding="utf-8") as recipe_file:

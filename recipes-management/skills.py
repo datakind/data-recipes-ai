@@ -402,7 +402,7 @@ def call_llm(instructions, prompt):
         try:
             response = json.loads(response.content)
         except Exception as e:
-            print("LLM didn't provide valid JSON, will create one")
+            #print("LLM didn't provide valid JSON, will create one")
             response = {
                 "content": response.content
             }

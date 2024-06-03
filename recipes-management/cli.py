@@ -92,7 +92,7 @@ def run(recipe_index: Optional[int] = typer.Argument(None)):
 
     recipe = recipes[int(recipe_index) - 1] 
     cmd = f'docker exec haa-recipe-manager python recipe_sync.py --run_recipe --recipe_path work/checked_out/{recipe}/recipe.py'
-    typer.echo(f"Running recipe {recipe}")
+    typer.echo(f"Running recipe {recipe} ...\n\n")
     os.system(cmd)
 
 def edit():
