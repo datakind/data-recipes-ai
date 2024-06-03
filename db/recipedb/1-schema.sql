@@ -38,7 +38,7 @@ CREATE TABLE result_type (
 );
 
 INSERT INTO result_type ("name", "description") VALUES  ('text', 'plain text');
-INSERT INTO result_type ("name", "description") VALUES  ('png', 'encoded png as text');
+INSERT INTO result_type ("name", "description") VALUES  ('image', 'encoded as text');
 
 CREATE TABLE public.recipe (
   custom_id varchar NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE public.recipe (
 
 CREATE TABLE public.memory (
   custom_id varchar NOT NULL,
-  recipe_uuid uuid NOT NULL,
+  recipe_custom_id uuid NOT NULL,
   recipe_params json NOT NULL,
   result varchar NOT NULL,
   result_type varchar NOT NULL,

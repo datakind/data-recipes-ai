@@ -16,6 +16,7 @@ commands_help = f"""
     'add': Add a new recipe
     'delete': Delete a recipe, you will be prompted to choose which one
     'checkin': Check in recipes you have completed
+    'makemem': Create a memory using recipe sample output
     'help': Show a list of commands
     'quit': Exit this recipes CLI
 
@@ -145,6 +146,24 @@ def delete():
         shutil.rmtree(recipe_folder)
         typer.echo(f"Run 'checkin' to update recipes DB, or checkout to undelete")
 
+def makemem():
+    list()
+    # Ask which one to run
+    recipe_index = input("Enter the recipe number to save memory for: ")
+    if int(recipe_index) - 1 not in recipes:
+        typer.echo("Invalid recipe number. Please try again. Type 'list' to see recipes.")
+        return
+    
+    recipe = recipes[int(recipe_index) - 1] 
+
+    recipe_folder = f"work/checked_out/{recipe}"
+
+    if os.path.exists(recipe_folder):
+        typer.echo(f"Saving memory for recipe: {recipe}")
+        typer.echo(f"Saving memory for recipe: {recipe_folder}")
+        cmd = f"docker exec haa-recipe-manager python recipe_sync.py --save_as_memory --recipe_path {recipe_folder}"
+        os.system(cmd)
+
 def main():
     global user_name
     app = typer.Typer()
@@ -154,6 +173,7 @@ def main():
     app.command()(run)
     app.command()(add)
     app.command()(delete)
+    app.command()(makemem)
     app.command()(help)
 
     config = _get_session_defaults()
@@ -177,7 +197,7 @@ def main():
         command = input(">> ")
         if command.lower() == 'quit':
             break
-        if command.lower().split()[0] not in ['checkout', 'run', 'checkin', 'list', 'add', 'delete', 'help']:
+        if command.lower().split()[0] not in ['checkout', 'run', 'checkin', 'list', 'add', 'delete', 'makemem', 'help']:
             typer.echo("Invalid command, type 'list' to see available options.")
             continue
         readline.add_history(command)

@@ -929,7 +929,143 @@ def run_recipe(recipe_path):
     else:
         print("Error running recipe, skipping metadata update")
 
+def generate_calling_params(functions_code, calling_code):
+    """
+    Generate calling parameters JSON for the recipe.
 
+    Args:
+        functions_code (str): The function code.
+        calling_code (str): The calling code.
+
+    Returns:
+        dict: The calling parameters JSON for the recipe.
+    """
+    print("Generating calling parameters JSON for the recipe")
+    prompt = f"""
+        Using the following function code and sample call, generate a calling parameters JSON for the recipe.
+
+        ```{functions_code}```
+
+        ```{calling_code}```
+    """
+
+    params = call_llm("", prompt)
+    params = json.dumps(params)
+    return params
+
+def generate_memory_intent(functions_code, calling_code):
+    """
+    Generate memory intent for the recipe.
+
+    Args:
+        functions_code (str): The function code.
+        calling_code (str): The calling code.
+
+    Returns:
+        str: The memory intent for the recipe.
+    """
+    print("Generating memory intent for the recipe")
+    prompt = f"""
+        Using the following function code and sample call, generate a memory intent.
+        The intent should capture detaiuls on how the recipe is being used, ie the input parameters
+        The intent should be concise, no need for phrases like "The intent of the code is ..."
+
+        Your response must be a JSON record with the following fields:
+        - intent: The intent of the recipe
+
+        What is the exact intent of this code?
+
+        ```{calling_code}```
+
+    """
+    print(prompt)
+
+    intent = call_llm("", prompt)
+    intent = intent['intent']
+    return intent
+
+def save_as_memory(recipe_folder):
+    """
+    Save a memory from recipe sample outputs
+
+    Args:
+        recipe_folder (str): The path to the recipe folder
+
+    Returns:
+        None
+    """
+    metadata_path = os.path.join(recipe_folder, "metadata.json")
+    with open(metadata_path, "r") as file:
+        metadata = json.load(file)
+
+    # Generate recipe params
+    function_code = metadata["function_code"]
+    sample_call = metadata["sample_call"]
+    params = generate_calling_params(function_code, sample_call)
+    
+    # Generate memory intent
+    memory_intent = generate_memory_intent(function_code, sample_call)
+
+    response = add_memory(
+        intent=memory_intent,
+        metadata={},
+        mem_type="memory",
+    )
+    print(response)
+
+    if 'already_exists' in response:
+        print(response)
+        print("\nCannot add this memory, a very similar one already exists. Aborting operation")
+        sys.exit()
+
+    custom_id = response[0]
+
+    engine = connect_to_db()
+    with engine.connect() as conn:
+        trans = conn.begin()
+
+        query_template = text(
+            """
+            INSERT INTO memory (
+                custom_id,
+                recipe_custom_id,
+                recipe_params,
+                result,
+                result_type,
+                source,
+                created_by,
+                updated_by,
+                last_updated
+            )
+            VALUES (
+                :custom_id,
+                :recipe_custom_id,
+                :recipe_params,
+                :result,
+                :result_type,
+                :source,
+                :created_by,
+                :updated_by,
+                NOW()
+            )
+            """
+        )
+
+        # Now insert into recipe table
+        params = {
+            "custom_id": custom_id,
+            "recipe_custom_id": metadata["custom_id"],
+            "recipe_params": params, 
+            "result": metadata["sample_result"],
+            "result_type": metadata["sample_result_type"],
+            "source": "Recipe sample result",
+            "created_by": metadata["created_by"],
+            "updated_by": metadata["created_by"]
+        }
+        conn.execute(query_template, params)
+
+        print("Committing changes to the database")
+        trans.commit()
 
 
 def main():
@@ -948,6 +1084,7 @@ def main():
         --check_in --recipe_author <recipe author>: Perform check in operation.
         --force_checkout: Force check out operation
         --create_recipe --recipe_intent <recipe_intent>: Create a new blank recipe
+        --save_as_memory --recipe_path <recipe_path>: Save a memory from recipe sample outputs
         --run_recipe --recipe_path <recipe_path>: Run recipe and update its metadata results
 
     <recipe author>: The name of the recipe author, used for locking recipes for editing.
@@ -976,6 +1113,9 @@ def main():
     )
     group.add_argument(
         "--run_recipe", action="store_true", help="Create a new blank recipe"
+    )
+    group.add_argument(
+        "--save_as_memory", action="store_true", help="Create a memory from recipe sample outputs"
     )
 
     parser.add_argument("--recipe_author", type=str, help="Name of the recipe checker")
@@ -1007,6 +1147,8 @@ def main():
         delete_recipe(args.recipe_custom_id)
     elif args.run_recipe:
         run_recipe(args.recipe_path)
+    elif args.save_as_memory:
+        save_as_memory(args.recipe_path)
 
 
 if __name__ == "__main__":

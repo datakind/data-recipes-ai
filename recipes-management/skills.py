@@ -48,11 +48,13 @@ embedding_model = AzureOpenAIEmbeddings(
 )
 
 chat = AzureChatOpenAI(
-    model_name="gpt-35-turbo",
+    #model_name="gpt-35-turbo",
+    model_name = "gpt-4-turbo",
     azure_endpoint=os.getenv("RECIPES_BASE_URL"),
     api_version=os.getenv("RECIPES_OPENAI_API_VERSION"),
     temperature=1,
     max_tokens=1000,
+    response_format={"type": "json_object"}
 )
 
 # Stored in langchain_pg_collection and langchain_pg_embedding as this
@@ -297,7 +299,7 @@ def check_memory(intent, mem_type, db, debug=True):
 
             """
 
-            response = call_llm(prompt_map[mem_type], prompt, chat)
+            response = call_llm(prompt_map[mem_type], prompt)
 
             if 'user_intent_output_format' in response:
                 if response['user_intent_output_format'] != response['generic_db_output_format']:
@@ -334,7 +336,7 @@ def initialize_vector_db():
         )
     return db
 
-def call_llm(instructions, prompt, chat):
+def call_llm(instructions, prompt):
     """
     Call the LLM (Language Learning Model) API with the given instructions and prompt.
 
