@@ -53,6 +53,8 @@ endpoints:
           deploymentName: "gpt-4"
         gpt-4-turbo:
           deploymentName: "gpt-4-turbo"
+        gpt-4o:
+          deploymentName: "gpt-4o"
   assistants:
     disableBuilder: false # Disable Assistants Builder Interface by setting to `true`
     #pollIntervalMs: 750  # Polling interval for checking assistant updates
