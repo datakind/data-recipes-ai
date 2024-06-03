@@ -1,6 +1,6 @@
 {# templates/new_recipe_metadata_template.jinja2 #}
 {
-    "uuid": "{{ uuid }}",
+    "custom_id": "{{ custom_id }}",
     "function_code": "import sys\nimport os\nimport requests\nfrom skills import *\n\ndef get_total_population(country_code):\n    query = f\"\"\"\n        SELECT \n            SUM(population) as total_population \n        FROM \n            hapi_population_social_population \n        WHERE \n            adm0_code ='{country_code}' AND \n            gender = '*'\n    \"\"\"\n    result = execute_query(query)\n    return result[0][0] if result else None",
     "description": "{{ recipe_intent }}",
     "openapi_json": {},

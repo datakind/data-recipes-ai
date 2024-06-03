@@ -48,12 +48,11 @@ embedding_model = AzureOpenAIEmbeddings(
 )
 
 chat = AzureChatOpenAI(
-    #model_name="gpt-35-turbo",
-    model_name = "gpt-4-turbo",
+    model_name = os.getenv("RECIPES_MODEL"),
     azure_endpoint=os.getenv("RECIPES_BASE_URL"),
     api_version=os.getenv("RECIPES_OPENAI_API_VERSION"),
-    temperature=1,
-    max_tokens=1000,
+    temperature=0,
+    max_tokens=4000,
     response_format={"type": "json_object"}
 )
 

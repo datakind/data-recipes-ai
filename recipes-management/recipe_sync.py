@@ -853,6 +853,8 @@ def llm_generate_new_recipe_code(recipe_intent, imports_content):
             columns
         FROM
             table_metadata
+        WHERE
+            countries is not null
         """
     )
 

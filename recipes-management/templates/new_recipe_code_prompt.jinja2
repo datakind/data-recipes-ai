@@ -1,13 +1,14 @@
 {# templates/new_recipe_code_template.jinja2 #}
 
-Using the database tables list below, and the columns provided in each table, generate 
-Python that does the following
+Using the database tables list below, and the columns provided in each table, generate PEP8 compliant code in
+Python to answer the following request: 
 
 {{ recipe_intent }}
 
-Coding tips ...
+==== Coding tips ...
 
-The shapefile in the database will need to be converted to a geoseries for plotting, here is an example:
+If asked to create maps, you will need to use shapefiles in the database. These will need to be 
+converted to a geoseries for plotting, here is an example:
 
 ```
 # Convert the data into a DataFrame
@@ -19,6 +20,7 @@ df['geometry'] = df['geometry'].apply(lambda x: wkb.loads(x, hex=True))
 # Convert the DataFrame into a GeoDataFrame
 gdf = gpd.GeoDataFrame(df, geometry='geometry')
 ```
+
 Also, please always save any images to a .png file.
 
 Always specify a clear title on any graphs or maps. 
