@@ -1053,7 +1053,12 @@ def run_recipe(recipe_path):
     if result.returncode == 0 and len(result.stdout) > 0:
         update_metadata_file_results(recipe_folder, result)
     else:
-        print("Error running recipe, skipping metadata update")
+        if len(result.stderr) > 0:
+            print("Error running recipe, skipping metadata update")
+        else:
+            print("No output printed by recipe, skipping metadata update")
+
+    return result
 
 def generate_calling_params(functions_code, calling_code):
     """
