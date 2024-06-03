@@ -872,17 +872,13 @@ def llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder):
         data_info=data_info
     )
 
-    # Save the prompt to a recipe folder
-    with open(os.path.join(recipe_folder, "prompt.txt"), "w", encoding="utf-8") as file:
-        file.write(prompt)
-
     print("Calling LLM to generate recipe starting code ...")
     response = call_llm("", prompt)
     try:
         code = response["code"]
     except KeyError:
         code = response["content"]
-    return code
+    return code, prompt
 
 def create_new_recipe(recipe_intent, recipe_author):
 
@@ -901,7 +897,7 @@ def create_new_recipe(recipe_intent, recipe_author):
     #)
 
     # Generate recipe code using LLM single-shot. Later this can go to AI team
-    code_content = llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder)
+    code_content, prompt = llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder)
 
     new_recipe_metadata_template = environment.get_template("new_recipe_metadata_template.jinja2")
     metadata_content = new_recipe_metadata_template.render(
@@ -919,6 +915,11 @@ def create_new_recipe(recipe_intent, recipe_author):
     metadata_path = os.path.join(recipe_folder, "metadata.json")
     with open(metadata_path, "w", encoding="utf-8") as metadata_file:
         metadata_file.write(metadata_content)
+
+
+    # Save the prompt to a recipe folder
+    with open(os.path.join(recipe_folder, "prompt.txt"), "w", encoding="utf-8") as file:
+        file.write(prompt)
 
     # Save an empty cksum file
     with open(os.path.join(recipe_folder, "cksum.txt"), "w", encoding="utf-8") as file:
