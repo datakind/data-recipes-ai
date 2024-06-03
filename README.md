@@ -163,41 +163,49 @@ As the robocorp actions might differ slightly, this can lead to differing requir
 
 The management of recipes is part of the human in the loop approach of this repo. New recipes are created in status pending and only get marked as approved, once they have been verified by a recipe manager. Recipe managers can 'check out' recipes from the database into their local development environment such as VS Code to run, debug, and edit the recipes, before checking them back in. To make this process platform independent, recipes are checked out into a docker container, which can be used as the runtime environment to run the recipes via VSCode. 
 
-1. To check out recipes:
+Recipes are managed using the recipes Command Line Interface (CLI), which allows you to check out recipes, run and refine, the commit them back to the recipes database for use in data recipes AI.
 
-`cd recipes-management`
-`docker exec haa-recipe-manager python recipe_sync.py --check_out <YOUR NAME>`
+To run the cli, you will need to install some packages ...
 
-Note: This will lock the recipes in the database so others cannot edit them.
+`pip3 install typer`
 
-2. The checked_out folder in the recipes-management directory now shows all the recipes that were checked out from the database including the recipe code as a .py file. Note that after this step, the recipes in the database are marked as locked with your name and the timestamp you checked them out. If someone else tries to check them out, they are notified accordingly and cannot proceed until you've unlocked the records (more on that below).
+Once this is done, and you have your docker environment running as  described above, you start the recipes CLI with ...
 
-This step checks out three files:
+`python cli.py`
 
-   -  Recipe.py - Contains the recipe code (re-assembled from the corresponding sections in the metadata json file)
-   -  metadata.json - Contains the content of the cmetadata column in the recipe database.
-   -  record_info.json - Contains additional information about the record such as its custom_id, and output.
+When you first log in, you will be asked for your name. This is used when checking in recipes. Once in, you will be presented with a menu like this ...
 
-   You can edit all files according to your needs. Please makes sure to not change the custom_id anywehere because it's needed for the check in process.
+```
 
-3. Run the scripts and edit them as you deem fit. Please note: Do not delete the #Functions Code and #Calling Code comments as they're mandatory to reassemble the metadata json for the check in process.
-4. Once you've checked and edited the recipes, run 
+Welcome to the recipes management CLI, matt!
 
-   `docker exec haa-recipe-manager python recipe_sync.py --check_in <YOUR NAME>`
+    Here are the commands you can run:
+    
+    'checkout': Check out recipes for you to work on
+    'list': List all recipes that are checked out
+    'run': Run a recipe, you will be prompted to choose which one
+    'add': Add a new recipe
+    'delete': Delete a recipe, you will be prompted to choose which one
+    'checkin': Check in recipes you have completed
+    'makemem': Create a memory using recipe sample output
+    'help': Show a list of commands
+    'quit': Exit this recipes CLI
 
-   To check the records back into the database and unlock them. All recipes that you've checked in in this fashion are automatically set to status 'approved' with your name as the approver and the timestamp of when you checked them back in.
+    Type one of the commands above to do some stuff.
 
-## Testing a Recipe
 
-You can run a specific recipe like this ...
+>> 
+```
 
-`docker exec haa-recipe-manager python checked_out/retrieve_the_total_population_of_a_specified_country/recipe.py`
+The first thing you will want to do is run 'checkout' to get all the recipe code from the database onto your computer so you can run them. Once you have them locally, you can edit them in tools like Visual Studio code. 
 
-You can also exec into the container to do it ...
+To run recipes locally you can use the CLI 'run' command. This will run the recipe in the same environment, and will save the results like sample outputs, for you so they can be published back to the database.
 
-1. `docker exec -it haa-recipe-manager /bin/bash`
-2. `cd ./checked_out`, then `cd <RECIPE_DIR>`
-3. `python recipe.py`
+You can create new recipes by entering 'add', where you'll be prompted for an intent. This will call an LLM to generate a first pass at your recipe, using the data that's in the data recipes environment.
+
+When ready, you can check in your new and edited recipes with 'checkin'.
+
+### Other approaches
 
 You can also configure VS Code to connect to the recipe-manage container for running recipes ...
 
