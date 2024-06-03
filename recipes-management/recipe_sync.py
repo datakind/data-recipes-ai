@@ -309,7 +309,6 @@ def extract_code_sections(recipe_path):
 
     code_separator_singles = code_separator.replace("'", '"')
     content = content.replace(code_separator_singles, code_separator)
-    print(content)
 
     if '__name__' not in content:
         raise ValueError(f"Code separator '{code_separator}' not found in the recipe file '{recipe_path}'.")
@@ -317,9 +316,13 @@ def extract_code_sections(recipe_path):
 
     function_code, calling_code = content.split("__name__", 1)
 
+    if function_code is None or calling_code is None:
+        raise ValueError(f"Function code or calling code not found in the recipe file '{recipe_path}'.")
+        sys.exit()
+
     return {
-        "function_code": function_code_match.group(1).strip(),
-        "calling_code": calling_code_match.group(1).strip(),
+        "function_code": function_code,
+        "calling_code": calling_code,
     }
 
 def add_code_to_metadata(metadata_path, code_sections):
