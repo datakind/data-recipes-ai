@@ -442,9 +442,7 @@ def insert_records_in_db(df, approver):
             metadata = row   
             response = add_memory(
                 intent=metadata["intent"],
-                #metadata=metadata,
-                # Moved to its own tables, so no need
-                metadata={},
+                metadata={"mem_type": "recipe"},
                 mem_type="recipe",
             )
             if 'already_exists' in response:
@@ -628,7 +626,7 @@ def generate_openapi_from_function_code(function_code):
     """
 
     _, chat = get_models()
-    openapi_json = call_llm("", prompt, chat)
+    openapi_json = call_llm("", prompt)
     openapi_json = json.dumps(openapi_json, indent=4)
     return openapi_json
 
@@ -943,6 +941,7 @@ def generate_calling_params(functions_code, calling_code):
     print("Generating calling parameters JSON for the recipe")
     prompt = f"""
         Using the following function code and sample call, generate a calling parameters JSON for the recipe.
+        The JSON should have fields 'function' and 'params'
 
         ```{functions_code}```
 
@@ -1008,7 +1007,7 @@ def save_as_memory(recipe_folder):
 
     response = add_memory(
         intent=memory_intent,
-        metadata={},
+        metadata={"mem_type": "memory"},
         mem_type="memory",
     )
     print(response)
