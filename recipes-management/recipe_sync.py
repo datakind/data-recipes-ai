@@ -8,6 +8,7 @@ import subprocess
 import sys
 from datetime import datetime
 from uuid import uuid4
+import base64
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -866,6 +867,71 @@ def create_new_recipe(recipe_intent, recipe_author):
     with open(os.path.join(recipe_folder, "cksum.txt"), "w", encoding="utf-8") as file:
         file.write("")
 
+def update_metadata_file_results(recipe_folder, result):
+    """
+    Update the metadata file for a given recipe folder with the provided result.
+
+    Args:
+        recipe_folder (str): The path to the recipe folder.
+        result (subprocess.CompletedProcess): The result of a subprocess command.
+
+    Returns:
+        None
+    """
+    metadata_path = os.path.join(recipe_folder, "metadata.json")
+    print(f"Updating metadata file with recipe sample call results: {metadata_path}")
+
+    with open(metadata_path, "r") as file:
+        metadata = json.load(file)
+
+    if '.png' in result.stdout:
+
+        # Extract png file name from text
+        png_file = re.search(r"(\w+\.png)", result.stdout).group(1)
+
+        # Move png file to recipe folder 
+        png_file_path = os.path.join(recipe_folder, png_file)
+        shutil.move(png_file, png_file_path)
+
+        with open(png_file_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode()  
+            metadata["sample_result"] = encoded_string
+            metadata["sample_result_type"] = "image"
+
+    else:
+        metadata["sample_result"] = result.stdout
+        metadata["sample_result_type"] = "text"
+
+    with open(metadata_path, "w") as file:
+        json.dump(metadata, file, indent=4)
+    
+
+def run_recipe(recipe_path):
+    """
+    Run recipe and update its metadata results
+
+    Args:
+        recipe_path (str): The path to the recipe.py file to run
+        recipe_author (str): The name of the recipe checker.
+
+    Returns:
+        None
+    """
+    cmd = f"python {recipe_path}"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    print(result.stdout)
+    print(result.stderr)
+
+    recipe_folder = os.path.dirname(recipe_path)
+
+    if result.returncode == 0 and len(result.stdout) > 0:
+        update_metadata_file_results(recipe_folder, result)
+    else:
+        print("Error running recipe, skipping metadata update")
+
+
+
+
 def main():
     """
     Main function to parse command-line arguments and call the appropriate function.
@@ -881,7 +947,8 @@ def main():
         --check_out --recipe_author <recipe author>: Perform check out operation.
         --check_in --recipe_author <recipe author>: Perform check in operation.
         --force_checkout: Force check out operation
-        --create_recipe <recipe_intent>: Create a new blank recipe
+        --create_recipe --recipe_intent <recipe_intent>: Create a new blank recipe
+        --run_recipe --recipe_path <recipe_path>: Run recipe and update its metadata results
 
     <recipe author>: The name of the recipe author, used for locking recipes for editing.
 
@@ -907,10 +974,14 @@ def main():
     group.add_argument(
         "--delete_recipe", action="store_true", help="Delete a recipe by custom_id"
     )
+    group.add_argument(
+        "--run_recipe", action="store_true", help="Create a new blank recipe"
+    )
 
     parser.add_argument("--recipe_author", type=str, help="Name of the recipe checker")
     parser.add_argument("--recipe_intent", type=str, help="Intent of the new recipe")
-    parser.add_argument("--recipe_custom_id", type=str, help="custom_id of recipe")
+    parser.add_argument("--recipe_custom_id", type=str, help="custom_id of recipe") 
+    parser.add_argument("--recipe_path", type=str, help="Path to recipe.py file to run")
 
     # Add force_checkout argument
     parser.add_argument(
@@ -934,7 +1005,8 @@ def main():
         create_new_recipe(recipe_intent, args.recipe_author)
     elif args.delete_recipe:
         delete_recipe(args.recipe_custom_id)
-
+    elif args.run_recipe:
+        run_recipe(args.recipe_path)
 
 
 if __name__ == "__main__":
