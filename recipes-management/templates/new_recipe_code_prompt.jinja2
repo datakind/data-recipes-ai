@@ -5,6 +5,13 @@ Python to answer the following request:
 
 {{ recipe_intent }}
 
+IMPORTANT: You must respond with a JSON record with the following fields:
+
+{
+    "code": "<EXECUTABLE CODE FOR YOUR ANSWER>",
+    "message": "<Supporting information>",
+}
+
 ==== Coding tips ...
 
 If asked to create maps, you will need to use shapefiles in the database. These will need to be 
@@ -21,7 +28,7 @@ df['geometry'] = df['geometry'].apply(lambda x: wkb.loads(x, hex=True))
 gdf = gpd.GeoDataFrame(df, geometry='geometry')
 ```
 
-Also, please always save any images to a .png file.
+Also, ALWAYS save any images to a .png file in the ./work folder.
 
 Always specify a clear title on any graphs or maps. 
 Always add annotations, labels and units on any graphs/maps
@@ -124,10 +131,3 @@ IMPORTANT: If calling a function already available to you, do not copy the code 
 Tables and their columns of data available to you ...
 
 {{ data_info }}
-
-IMPORTANT: YOU ONLY RESPOND WITH A VALID JSON RECORD IN THIS FORM:
-
-{
-    "code": "<EXECUTABLE CODE>",
-    "message": "<Supporting text information>",
-}

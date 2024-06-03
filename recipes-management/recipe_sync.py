@@ -892,11 +892,9 @@ def llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder):
 
     print("Calling LLM to generate recipe starting code ...")
     response = call_llm("", prompt)
-    try:
-        code = response["code"]
-    except KeyError:
-        code = response["content"]
-    return code, prompt
+    code, comment = extract_code_from_llm_response(response)
+
+    return code
 
 def create_new_recipe(recipe_intent, recipe_author):
 
@@ -914,8 +912,12 @@ def create_new_recipe(recipe_intent, recipe_author):
     #    recipe_intent=recipe_intent
     #)
 
+    prompt = ""
+
     # Generate recipe code using LLM single-shot. Later this can go to AI team
-    code_content, prompt = llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder)
+    code_content = llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder)
+
+    print(code_content)
 
     new_recipe_metadata_template = environment.get_template("new_recipe_metadata_template.jinja2")
     metadata_content = new_recipe_metadata_template.render(
@@ -942,6 +944,29 @@ def create_new_recipe(recipe_intent, recipe_author):
     # Save an empty cksum file
     with open(os.path.join(recipe_folder, "cksum.txt"), "w", encoding="utf-8") as file:
         file.write("")
+
+def extract_code_from_llm_response(response):
+
+    code = ""
+    comment = ""
+
+    response = response['content']
+
+    try:
+        response = json.loads(response)
+        code = response["code"]
+        comment = response["message"]
+    except:
+        # Extract code between ```
+        match = re.search(r"```python(.*?)```", response, re.DOTALL)
+        if match:
+            code = match.group(1)
+            comment = response.replace('```python' + code + '```', '')
+        else:
+            code = ''
+            comment = response
+
+    return code, comment
 
 def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
 
@@ -984,20 +1009,7 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
         file.write(prompt)
 
     response = call_llm("", prompt)
-    try:
-        code = response["code"]
-    except KeyError:
-        # find matching "```" in response['content] and extract the code
-        if "```" in response['content']:
-            code = response['content'].split("```")[1]
-            comment1 = response['content'].split("```")[0]
-            comment2 = response['content'].split("```")[2]
-            comment = comment1 + comment2
-            print(comment)
-        else:
-            code = response['content']
-            comment = ""
-
+    code, comment = extract_code_from_llm_response(response)
 
     # Write content to recipe.py file
     with open(recipe_path, "w", encoding="utf-8") as recipe_file:
@@ -1045,6 +1057,16 @@ def update_metadata_file_results(recipe_folder, result):
         except json.JSONDecodeError:
             print("Error decoding JSON, trying to extract png file from stdout")
             png_file = re.search(r"(\w+\.png)", result.stdout).group(1)
+        
+        # does png exist?
+        if not os.path.exists(png_file):
+
+            # Is it in working directory?
+            if os.path.exists(os.path.join('./work', png_file)):
+                png_file = os.path.join('./work', png_file)
+            else:
+                print(f"PNG file {png_file} does not exist, skipping metadata update")
+                return
 
         # Move png file to recipe folder 
         png_file_basename = os.path.basename(png_file)

@@ -68,11 +68,10 @@ def get_models():
             # model=completion_model
         )
         chat = ChatOpenAI(
-            # model_name="gpt-3.5-turbo",
-            model_name="gpt-3.5-turbo-16k",
+            model_name=model,
             api_key=api_key,
             temperature=0,
-            max_tokens=5000
+            max_tokens=3000,
             #response_format={"type": "json_object"}
         )
     elif api_type == "azure":
@@ -87,9 +86,7 @@ def get_models():
             api_key=api_key,
             api_version=api_version,
             azure_endpoint=base_url,
-            model_name="gpt-35-turbo",
-            # model_name="gpt-4-turbo",
-            # model="gpt-3-turbo-1106", # Model = should match the deployment name you chose for your 1106-preview model deployment
+            model_name=model,
             # response_format={ "type": "json_object" },
             temperature=1,
             max_tokens=1000,
