@@ -947,6 +947,7 @@ def update_metadata_file_results(recipe_folder, result):
         # Move png file to recipe folder 
         png_file_basename = os.path.basename(png_file)
         png_file_path = os.path.join(recipe_folder, png_file_basename)
+        print(f"Moving {png_file} to {png_file_path}")
         shutil.move(png_file, png_file_path)
 
         with open(png_file_path, "rb") as image_file:
