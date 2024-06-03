@@ -311,6 +311,10 @@ def extract_code_sections(recipe_path):
     content = content.replace(code_separator_singles, code_separator)
     print(content)
 
+    if code_separator not in content:
+        raise ValueError(f"Code separator '{code_separator}' not found in the recipe file.")
+        sys.exit()
+
     function_code_match = re.search(
         r"^(.*?)(?=" + re.escape(code_separator) + ")", content, re.DOTALL
     )
