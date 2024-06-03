@@ -33,7 +33,7 @@ checked_out_folder_name = "./work/checked_out"
 new_recipe_folder_name = checked_out_folder_name
 
 # String separating sample calling code and recipe functions
-code_separator = "if __name__ == '__main__':"
+code_separator = 'if __name__ == "__main__":'
 
 # Lower numbers are more similar
 similarity_cutoff = {"memory": 0.2, "recipe": 0.3, "helper_function": 0.1}
@@ -309,6 +309,7 @@ def extract_code_sections(recipe_path):
 
     code_separator_singles = code_separator.replace("'", '"')
     content = content.replace(code_separator_singles, code_separator)
+    print(content)
 
     function_code_match = re.search(
         r"^(.*?)(?=" + re.escape(code_separator) + ")", content, re.DOTALL
