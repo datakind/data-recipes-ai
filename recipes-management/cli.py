@@ -13,7 +13,8 @@ commands_help = f"""
     'checkout': Check out recipes for you to work on
     'list': List all recipes that are checked out
     'run': Run a recipe, you will be prompted to choose which one
-    'add': Add a new recipe
+    'add': Add a new recipe (using LLM)
+    'edit': Edit a new recipe (using LLM)
     'delete': Delete a recipe, you will be prompted to choose which one
     'checkin': Check in recipes you have completed
     'makemem': Create a memory using recipe sample output
@@ -94,6 +95,21 @@ def run(recipe_index: Optional[int] = typer.Argument(None)):
     typer.echo(f"Running recipe {recipe}")
     os.system(cmd)
 
+def edit():
+
+    list()
+    recipe_index = input("Enter the recipe number to edit: ")
+
+    if int(recipe_index) - 1 not in recipes:
+        typer.echo("Invalid recipe number. Please try again. Type 'list' to see recipes.")
+        return
+    recipe = recipes[int(recipe_index) - 1] 
+
+    prompt = input("Enter how you would like to adjust/change the recipe: ")
+
+    cmd = f'docker exec haa-recipe-manager python recipe_sync.py --edit_recipe --recipe_path work/checked_out/{recipe}/recipe.py --llm_prompt "{prompt}"    '
+    typer.echo(f"Running recipe {recipe}")
+    os.system(cmd)
 
 def help():
     typer.echo(commands_help)
@@ -172,6 +188,7 @@ def main():
     app.command()(checkin)
     app.command()(run)
     app.command()(add)
+    app.command()(edit)
     app.command()(delete)
     app.command()(makemem)
     app.command()(help)
@@ -203,7 +220,8 @@ def main():
         command = input(">> ")
         if command.lower() in ['quit','exit','stop']:
             break
-        if command.lower().split()[0] not in ['checkout', 'run', 'checkin', 'list', 'add', 'delete', 'makemem', 'help']:
+        if command.lower().split()[0] not in ['checkout', 'run', 'checkin', 'list', 'add', 'edit', 'delete', \
+                                              'makemem', 'help']:
             typer.echo("Invalid command, type 'list' to see available options.")
             continue
         readline.add_history(command)

@@ -62,7 +62,7 @@ def get_models():
     model = os.getenv("RECIPES_MODEL")
 
     if api_type == "openai":
-        print("Using OpenAI API in memory.py")
+        #print("Using OpenAI API in memory.py")
         embedding_model = OpenAIEmbeddings(
             api_key=api_key,
             # model=completion_model
@@ -76,7 +76,7 @@ def get_models():
             #response_format={"type": "json_object"}
         )
     elif api_type == "azure":
-        print("Using Azure OpenAI API in memory.py")
+        #print("Using Azure OpenAI API in memory.py")
         embedding_model = AzureOpenAIEmbeddings(
             api_key=api_key,
             deployment=completion_model,
