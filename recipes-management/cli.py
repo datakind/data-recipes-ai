@@ -26,10 +26,10 @@ commands_help = f"""
 
 to_be_deleted_file = 'work/checked_out/to_be_deleted.txt'
 cli_config_file = '.cli_config'
+checked_out_dir = 'work/checked_out'
 
 def _get_checkout_folders():
     global recipes
-    checked_out_dir = 'work/checked_out'
 
     if not os.path.exists(checked_out_dir):
         checked_out_folders = []
@@ -175,6 +175,12 @@ def main():
     app.command()(delete)
     app.command()(makemem)
     app.command()(help)
+
+    # check cli is running in folder recipes-management 
+    current_dir = os.getcwd()
+    if not current_dir.endswith('recipes-management'):
+        typer.echo("Please run the CLI from the recipes-management folder")
+        return
 
     config = _get_session_defaults()
 
