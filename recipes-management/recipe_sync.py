@@ -31,6 +31,9 @@ load_dotenv()
 checked_out_folder_name = "./work/checked_out"
 new_recipe_folder_name = checked_out_folder_name
 
+# String separating sample calling code and recipe functions
+code_separator = "if __name__ == '__main__':"
+
 # Lower numbers are more similar
 similarity_cutoff = {"memory": 0.2, "recipe": 0.3, "helper_function": 0.1}
 
@@ -191,7 +194,7 @@ def save_data(df):
             function_code = imports_content + "\n\n" + function_code
         # Concatenate function_code and calling_code into recipe code
         recipe_code = (
-            f"{function_code}\n\n" f"# Calling code:\n{calling_code}\n\n"
+            f"{function_code}\n\n" f"{code_separator}\n    {calling_code}\n\n"
         )
 
         # Save the recipe code
@@ -305,9 +308,9 @@ def extract_code_sections(recipe_path):
         content = file.read()
 
     function_code_match = re.search(
-        r"^(.*?)(?=# Calling code:)", content, re.DOTALL
+        r"^(.*?)(?=" + re.escape(code_separator) + ")", content, re.DOTALL
     )
-    calling_code_match = re.search(r"# Calling code:\s*(.*)", content, re.DOTALL)
+    calling_code_match = re.search(r"" + re.escape(code_separator) + "\s*(.*)", content, re.DOTALL)
 
     if not function_code_match or not calling_code_match:
         raise ValueError("Required sections not found in the recipe file.")
@@ -344,11 +347,11 @@ def add_code_to_metadata(metadata_path, code_sections):
         metadata = json.load(file)
 
     metadata["function_code"] = code_sections["function_code"]
-    metadata["calling_code"] = code_sections["calling_code"]
+    metadata["sample_call"] = code_sections["calling_code"]
 
     with open(metadata_path, "w", encoding="utf-8") as file:
         json.dump(metadata, file, indent=4)
-
+    
 
 def update_metadata_file(directory):
     """
