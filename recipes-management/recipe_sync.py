@@ -285,35 +285,6 @@ def clone_file(source_path, dest_path):
     with open(dest_path, "w", encoding="utf-8") as dest_file:
         dest_file.write(data)
 
-def split_code_sections(code):
-    """
-    Splits the recipe code into function code and calling code sections.
-
-    Args:
-        code (str): The recipe code to split.
-
-    Returns:
-        dict: A dictionary containing the function code and calling code sections.
-    """
-    content = content.split('\n')
-
-    # Find the line containing '__name__'
-    split_index = next((i for i, line in enumerate(content) if '__name__' in line), None)
-
-    # If the line is found, split the content into two parts
-    if split_index is not None:
-        before_name = content[:split_index]
-        after_name = content[split_index+1:]
-    else:
-        before_name = content
-        after_name = []
-
-    # Convert lists back to strings
-    functions_code = ''.join(before_name)
-    calling_code = ''.join(after_name)
-
-    return functions_code, calling_code
-
 
 def extract_code_sections(recipe_path):
     """
@@ -337,14 +308,26 @@ def extract_code_sections(recipe_path):
     with open(recipe_path, "r", encoding="utf-8") as file:
         content = file.read()
 
-    code_separator_singles = code_separator.replace("'", '"')
-    content = content.replace(code_separator_singles, code_separator)
-
     if '__name__' not in content:
         raise ValueError(f"Code separator '{code_separator}' not found in the recipe file '{recipe_path}'.")
         sys.exit()
 
-    function_code, calling_code = split_code_sections(content)
+    content = content.split('\n')
+
+    # Find the line containing '__name__'
+    split_index = next((i for i, line in enumerate(content) if '__name__' in line), None)
+
+    # If the line is found, split the content into two parts
+    if split_index is not None:
+        before_name = content[:split_index]
+        after_name = content[split_index+1:]
+    else:
+        before_name = content
+        after_name = []
+
+    # Convert lists back to strings
+    function_code = ''.join(before_name)
+    calling_code = ''.join(after_name)
 
     if function_code is None or calling_code is None:
         raise ValueError(f"Function code or calling code not found in the recipe file '{recipe_path}'.")
