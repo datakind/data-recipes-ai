@@ -1,5 +1,15 @@
 FROM python:3.11.4
 
+# Needed for geopandas poetry installation
+RUN apt-get update && apt-get install -y python3-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+     libgeos-dev \
+     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN  apt-get update && apt-get install -y --no-install-recommends \
+     libgdal-dev \
+     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+ENV GDAL_CONFIG=/usr/bin/gdal-config
+
 # Copy application files and install dependencies
 COPY ./recipes-management/ /app
 RUN pip install --upgrade pip
