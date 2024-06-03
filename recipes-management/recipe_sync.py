@@ -312,7 +312,7 @@ def extract_code_sections(recipe_path):
     print(content)
 
     if code_separator not in content:
-        raise ValueError(f"Code separator '{code_separator}' not found in the recipe file.")
+        raise ValueError(f"Code separator '{code_separator}' not found in the recipe file '{recipe_path}'.")
         sys.exit()
 
     function_code_match = re.search(
