@@ -1026,6 +1026,8 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
     with open(metadata_path, "w", encoding="utf-8") as metadata_file:
         json.dump(metadata, metadata_file, indent=4)
 
+    print("\n\nRecipe editing done")
+
 
 
 def update_metadata_file_results(recipe_folder, result):
