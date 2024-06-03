@@ -29,6 +29,9 @@ CREATE TABLE public.langchain_pg_embedding (
 -- public.langchain_pg_embedding foreign keys
 ALTER TABLE public.langchain_pg_embedding ADD CONSTRAINT langchain_pg_embedding_collection_id_fkey FOREIGN KEY (collection_id) REFERENCES public.langchain_pg_collection(uuid) ON DELETE CASCADE;
 
+ALTER TABLE langchain_pg_embedding
+ADD CONSTRAINT custom_id_unique UNIQUE (custom_id);
+
 CREATE TABLE result_type (
   name varchar NOT NULL PRIMARY KEY,
   description varchar NOT NULL
@@ -38,7 +41,7 @@ INSERT INTO result_type ("name", "description") VALUES  ('text', 'plain text');
 INSERT INTO result_type ("name", "description") VALUES  ('png', 'encoded png as text');
 
 CREATE TABLE public.recipe (
-  uuid uuid NOT NULL,
+  custom_id varchar NOT NULL,
   function_code varchar NOT NULL,
   description varchar NOT NULL,
   openapi_json json NOT NULL,
@@ -50,19 +53,20 @@ CREATE TABLE public.recipe (
   sample_result_type varchar NOT NULL,
   source varchar NOT NULL,
   created_by varchar NOT NULL,
-  updated_by timestamp NOT NULL,
+  updated_by varchar NOT NULL,
   last_updated timestamp NOT NULL,
   approval_status varchar NULL,
   approver varchar NULL,
   approval_latest_update varchar NULL,
   locked_by varchar NULL,
   locked_at varchar NULL,
-  CONSTRAINT langchain_pg_embedding_pkey2 PRIMARY KEY (uuid),
-  CONSTRAINT result_type_fkey FOREIGN KEY (sample_result_type) REFERENCES result_type(name)
+  CONSTRAINT langchain_pg_embedding_pkey2 PRIMARY KEY (custom_id),
+  CONSTRAINT result_type_fkey FOREIGN KEY (sample_result_type) REFERENCES result_type(name),
+  CONSTRAINT custom_id_fkey FOREIGN KEY (custom_id) REFERENCES langchain_pg_embedding(custom_id)
 );
 
 CREATE TABLE public.memory (
-  uuid uuid NOT NULL,
+  custom_id varchar NOT NULL,
   recipe_uuid uuid NOT NULL,
   recipe_params json NOT NULL,
   result varchar NOT NULL,
@@ -71,8 +75,9 @@ CREATE TABLE public.memory (
   created_by varchar NOT NULL,
   updated_by varchar NOT NULL,
   last_updated timestamp NOT NULL,
-  CONSTRAINT langchain_pg_embedding_pkey3 PRIMARY KEY (uuid),
-  CONSTRAINT result_type_fkey FOREIGN KEY (result_type) REFERENCES result_type(name)
+  CONSTRAINT langchain_pg_embedding_pkey3 PRIMARY KEY (custom_id),
+  CONSTRAINT result_type_fkey FOREIGN KEY (result_type) REFERENCES result_type(name),
+  CONSTRAINT custom_id_fkey FOREIGN KEY (custom_id) REFERENCES langchain_pg_embedding(custom_id)
 );
 
 

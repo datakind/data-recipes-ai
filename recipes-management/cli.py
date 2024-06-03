@@ -34,12 +34,14 @@ def _get_checkout_folders():
         checked_out_folders = []
     else:
         checked_out_folders = os.listdir(checked_out_dir)
+
+
         checked_out_folders = [folder for folder in checked_out_folders if not folder.endswith('.txt')]
         count = 0
         for folder in checked_out_folders:
             recipes[count] = folder
             count += 1
-            
+
     return checked_out_folders
 
 def _updated_recipes_to_be_deleted(uuid):

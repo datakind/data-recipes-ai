@@ -225,7 +225,7 @@ def add_memory(intent, metadata, mem_type="recipe", force=False):
             if result['score'] != None and result['score'] < similarity_cutoff[mem_type]:
                 message = f"{mem_type} already exists: {result['content']}"
                 response = {
-                    "already_exists": "triue",
+                    "already_exists": "true",
                     "message": message
                 }
                 return response
@@ -245,6 +245,7 @@ def add_memory(intent, metadata, mem_type="recipe", force=False):
         page_content=intent,
         metadata=metadata
     )
+    print(metadata)
     id = db[mem_type].add_documents(
         [new_doc],
         ids=[uuid_str]
@@ -265,7 +266,7 @@ def check_memory(intent, mem_type, db, debug=True):
             If no match is found, the dictionary values will be None.
     """
     if mem_type not in ['memory','recipe','helper_function']:
-        print("Memory type not recognised")
+        print(f"Memory type {mem_type} not recognised")
         sys.exit()
         return
     r = {

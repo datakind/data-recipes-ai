@@ -86,14 +86,14 @@ def get_recipes(force_checkout=False):
     with conn.connect() as connection:
         query = """
             SELECT 
-                lc.uuid, 
+                lc.custom_id, 
                 lc.document,
                 row_to_json(lr.*) as cmetadata
             FROM
                 public.langchain_pg_embedding lc,
                 public.recipe lr
             WHERE 
-                lc.uuid=lr.uuid
+                lc.custom_id=lr.custom_id
         """
 
         if force_checkout is False:
@@ -108,7 +108,7 @@ def get_recipes(force_checkout=False):
             logging.error(
                 "No recipes found in the database - this might be due to the fact that all recipes are locked (because another recipe checker has them checked out)! You can overwrite this by using the --force_checkout flag, but this is not recommended."
             )
-            sys.exit(1)
+            #sys.exit(1)
         return recipes
 
 def get_folder_cksum(folder):
@@ -181,7 +181,7 @@ def save_data(df):
         metadata = row["cmetadata"]
         if isinstance(metadata, str):
             metadata = json.loads(metadata)
-        uuid= row["uuid"]
+        custom_id= row["custom_id"]
         document = row["document"]
         output = metadata["sample_result"]
         calling_code = metadata["sample_call"]
@@ -392,7 +392,7 @@ def insert_records_in_db(df, approver):
         """
         INSERT INTO
             recipe (
-                uuid,
+                custom_id,
                 function_code,
                 description,
                 openapi_json,
@@ -411,7 +411,7 @@ def insert_records_in_db(df, approver):
                 approval_latest_update
         )
         VALUES (
-            :uuid,
+            :custom_id,
             :function_code,
             :description,
             :openapi_json,
@@ -438,19 +438,21 @@ def insert_records_in_db(df, approver):
             metadata = row   
             response = add_memory(
                 intent=metadata["intent"],
-                metadata=metadata,
-                mem_type=metadata["mem_type"],
+                #metadata=metadata,
+                # Moved to its own tables, so no need
+                metadata={},
+                mem_type="recipe",
             )
             if 'already_exists' in response:
                 print(response)
                 print("\nCannot add this recipe, a very similar one already exists. Aborting operation")
                 sys.exit()
 
-            uuid = response[0]
+            custom_id = response[0]
 
             # Now insert into recipe table
             params = {
-                "uuid": uuid,
+                "custom_id": custom_id,
                 "function_code": metadata["function_code"],
                 "description": metadata["description"],
                 "openapi_json": str(metadata["openapi_json"]),
@@ -477,7 +479,7 @@ def update_records_in_db(df, approver):
 
     Args:
         metadata (dict): The metadata to update.
-        uuid (str): The UUID of the record to update.
+        custom_id (str): The custom_id of the record to update.
 
     Returns:
         None
@@ -505,7 +507,7 @@ def update_records_in_db(df, approver):
             approver = :updated_by,
             approval_latest_update = NOW()
         WHERE
-            uuid = :uuid
+            custom_id = :custom_id
         """
     )
 
@@ -526,7 +528,7 @@ def update_records_in_db(df, approver):
                 "sample_result_type": metadata["sample_result_type"],
                 "source": metadata["source"],
                 "updated_by": approver,
-                "uuid": row["uuid"],
+                "custom_id": row["custom_id"],
             }
             conn.execute(query_template, params)
 
@@ -548,11 +550,11 @@ def update_database(df: pd.DataFrame, approver: str):
     """
     engine = connect_to_db()
 
-    # Get list of uuids in table recipe
+    # Get list of custom_ids in table recipe
     query = text(
         """
         SELECT
-            uuid
+            custom_id
         FROM
             recipe
         """
@@ -562,26 +564,29 @@ def update_database(df: pd.DataFrame, approver: str):
         result = connection.execute(query)
         result = result.fetchall()
         result = pd.DataFrame(result)
-        uuids = result["uuid"].tolist()
-        uuids = [str(uuid) for uuid in uuids]
+        if not result.empty:
+            custom_ids = result["custom_id"].tolist()
+            custom_ids = [str(custom_id) for custom_id in custom_ids]
+        else:
+            custom_ids = []
 
     update_ids = []
     insert_ids = []
     for index, row in df.iterrows():
-        uuid = str(row["uuid"])
-        if uuid in uuids:  
-           update_ids.append(uuid) 
+        custom_id = str(row["custom_id"])
+        if custom_id in custom_ids:  
+           update_ids.append(custom_id) 
         else:
-           insert_ids.append(uuid)   
+           insert_ids.append(custom_id)   
 
     if len(update_ids) > 0:
         print(f"Proceeding with update of {len(update_ids)} records in the database")
-        update_df = df[df["uuid"].isin(update_ids)]
+        update_df = df[df["custom_id"].isin(update_ids)]
         update_records_in_db(update_df, approver)
     
     if len(insert_ids) > 0:
         print(f"Proceeding with insert of {len(insert_ids)} records in the database")
-        insert_df = df[df["uuid"].isin(insert_ids)]
+        insert_df = df[df["custom_id"].isin(insert_ids)]
         insert_records_in_db(insert_df, approver)
 
 
@@ -716,12 +721,12 @@ def compare_cksums(folder):
             print(f"Changes detected in {folder}")
             return False
 
-def delete_recipe(recipe_uuid):
+def delete_recipe(recipe_custom_id):
     """
-    Delete a recipe by UUID
+    Delete a recipe by custom_id
 
     Args:
-        recipe_uuid (str): The UUID of the recipe to delete
+        recipe_custom_id (str): The custom_id of the recipe to delete
 
     Returns:
         None
@@ -736,12 +741,12 @@ def delete_recipe(recipe_uuid):
                 DELETE FROM
                     public.{table}
                 WHERE
-                    uuid = '{recipe_uuid}'
+                    custom_id = '{recipe_custom_id}'
             """
             query = text(query)
             conn.execute(query)
         trans.commit()
-    print(f"Recipe with UUID {recipe_uuid} deleted from the database.")
+    print(f"Recipe with custom_id {recipe_custom_id} deleted from the database.")
 
 def unlock_records(recipe_author):
     """
@@ -841,7 +846,7 @@ def create_new_recipe(recipe_intent, recipe_author):
     )
     new_recipe_metadata_template = environment.get_template("new_recipe_metadata_template.jinja2")
     metadata_content = new_recipe_metadata_template.render(
-        uuid= uuid4(),
+        custom_id= uuid4(),
         recipe_intent=recipe_intent,
         recipe_author=recipe_author
     )
@@ -897,12 +902,12 @@ def main():
         "--create_recipe", action="store_true", help="Create a new blank recipe"
     )
     group.add_argument(
-        "--delete_recipe", action="store_true", help="Delete a recipe by UUID"
+        "--delete_recipe", action="store_true", help="Delete a recipe by custom_id"
     )
 
     parser.add_argument("--recipe_author", type=str, help="Name of the recipe checker")
     parser.add_argument("--recipe_intent", type=str, help="Intent of the new recipe")
-    parser.add_argument("--recipe_uuid", type=str, help="UUID of recipe")
+    parser.add_argument("--recipe_custom_id", type=str, help="custom_id of recipe")
 
     # Add force_checkout argument
     parser.add_argument(
@@ -925,7 +930,7 @@ def main():
         check_out(args.recipe_author, force_checkout=True)
         create_new_recipe(recipe_intent, args.recipe_author)
     elif args.delete_recipe:
-        delete_recipe(args.recipe_uuid)
+        delete_recipe(args.recipe_custom_id)
 
 
 
