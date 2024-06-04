@@ -1076,7 +1076,7 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
         "edit_recipe_code_prompt.jinja2"
     )
     prompt = edit_recipe_code_template.render(
-        recipe_intent=llm_prompt,
+        llm_prompt=llm_prompt,
         recipe_code=recipe_code,
         stderr_output=stderr_output,
         stdout_output=stdout_output,
@@ -1088,20 +1088,16 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
         file.write(prompt)
 
     response = call_llm("", prompt)
-    print(response)
     code = response["code"]
     comment = response["message"]
 
-    print(prompt)
-    print(code)
-    sys.exit()
+    print(f"\n\nLLM Gave this comment when generating code: \n\n{comment}\n\n")
 
-    print(f"LLM Gave this comment when generating code: {comment}")
+    # Copy recip.py to recipe.bak.py
+    recipe_bak_path = os.path.join(recipe_folder, "recipe.bak.py")
+    clone_file(recipe_path, recipe_bak_path)
 
     # Write content to recipe.py file
-
-    print(recipe_path)
-
     with open(recipe_path, "w") as recipe_file:
         recipe_file.write(code)
 
@@ -1115,6 +1111,11 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
 
     with open(metadata_path, "w", encoding="utf-8") as metadata_file:
         json.dump(metadata, metadata_file, indent=4)
+
+    print("Running recipe with the new code ...")
+    result = run_recipe(recipe_path)
+    stderr_output = result.stderr
+    stdout_output = result.stdout
 
     print("\n\nRecipe editing done")
 

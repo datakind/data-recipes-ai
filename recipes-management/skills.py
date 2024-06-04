@@ -257,7 +257,7 @@ def execute_query(query):
     return rows
 
 
-def add_memory(intent, metadata, mem_type="recipe", force=False):
+def add_recipe_memory(intent, metadata, mem_type="recipe", force=False):
     """
     Add a new memory document to the memory store.
 
@@ -274,7 +274,7 @@ def add_memory(intent, metadata, mem_type="recipe", force=False):
 
     # First see if we already have something in our memory
     if force is False:
-        result = check_memory(intent, db=db, mem_type=mem_type, debug=False)
+        result = check_recipe_memory(intent, db=db, mem_type=mem_type, debug=False)
         if result is not None:
             if (
                 result["score"] is not None
@@ -301,7 +301,7 @@ def add_memory(intent, metadata, mem_type="recipe", force=False):
     return id
 
 
-def check_memory(intent, mem_type, db, debug=True):
+def check_recipe_memory(intent, mem_type, db, debug=True):
     """
     Check the memory for a given intent.
 
@@ -361,7 +361,7 @@ def check_memory(intent, mem_type, db, debug=True):
 def initialize_vector_db():
     """
     Initializes the database by creating store tables if they don't exist and returns the initialized database.
-    The output of this function is needed as the db argument in the add_memory function
+    The output of this function is needed as the db argument in the add_recipe_memory function
 
     Returns:
         dict: The initialized database with store tables for each memory type.
@@ -399,25 +399,36 @@ def call_llm(instructions, prompt):
         ]
         response = chat(messages)
 
-        if "content" in response.content:
-            response.content = response["content"]
+        if hasattr(response, "content"):
+            response = response.content
+
+        if "content" in response and not response.startswith("```"):
+            response = json.loads(response)
+            response = response["content"]
 
         # Different models do different things when prompted for JSON. Here we try and handle this
-        # Is it already JSON?
         try:
-            response = json.loads(response.content)
+            # Is it already JSON?
+            response = json.loads(response)
         except json.decoder.JSONDecodeError:
             # Did the LLM provide JSON in ```json```?
-            if '```json' in response.content:
-                response.content = response.content.split('```json')[1]
-                response.content = response.content.replace("\n", "").split("```")[0]
-                print("JSON BACKTICKS .....")
-                print(response.content)
-                response = json.loads(response.content)
+            if '```json' in response:
+                print("LLM responded with JSON in ```json```")
+                response = response.split('```json')[1]
+                response = response.replace("\n", "").split("```")[0]
+                response = json.loads(response)
+            elif '```python' in response:
+                print("LLM responded with Python in ```python```")
+                all_sections = response.split('```python')[1]
+                code = all_sections.replace("\n", "").split("```")[0]
+                message = all_sections.split('```')[0]
+                response = {}
+                response["code"] = code
+                response["message"] = message
             else:
                 # Finally just send it back
-                print("SOMETHING .....")
-                response = {"content": response.content}
+                print("LLM response unparsable, using raw results")
+                response = {"content": response}
         return response
 
     except Exception as e:
