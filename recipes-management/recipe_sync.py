@@ -863,18 +863,13 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
         unlock_records(recipe_author)
 
 
-def llm_generate_new_recipe_code(recipe_intent, imports_content):
+def get_data_info():
     """
-    Generate new recipe code using LLM.
-
-    Args:
-        recipe_intent (str): The intent of the recipe.
-        imports_content (str): The content of the imports
+    Get data info from the database.
 
     Returns:
-        str: The generated recipe code.
+        str: The data info.
     """
-
     db = connect_to_db(instance="data")
 
     # run this query: select table_name, summary, columns from table_metadata
@@ -887,8 +882,8 @@ def llm_generate_new_recipe_code(recipe_intent, imports_content):
             columns
         FROM
             table_metadata
-        WHERE
-            countries is not null
+        --WHERE
+        --    countries is not null
         """
     )
 
@@ -898,9 +893,34 @@ def llm_generate_new_recipe_code(recipe_intent, imports_content):
         result = pd.DataFrame(result)
         data_info = result.to_json(orient="records")
 
+    data_info = json.dumps(json.loads(data_info), indent=4)
+
+    return data_info
+
+
+def llm_generate_new_recipe_code(recipe_intent, imports_content):
+    """
+    Generate new recipe code using LLM.
+
+    Args:
+        recipe_intent (str): The intent of the recipe.
+        imports_content (str): The content of the imports
+
+    Returns:
+        str: The generated recipe code.
+    """
+
+    data_info = get_data_info()
+
+    coding_standards_template = environment.get_template("coding_standards.jinja2")
+    coding_standards = coding_standards_template.render()
+
     new_recipe_code_template = environment.get_template("new_recipe_code_prompt.jinja2")
     prompt = new_recipe_code_template.render(
-        imports=imports_content, recipe_intent=recipe_intent, data_info=data_info
+        imports=imports_content,
+        recipe_intent=recipe_intent,
+        data_info=data_info,
+        coding_standards=coding_standards,
     )
 
     print("Calling LLM to generate recipe starting code ...")
@@ -971,6 +991,7 @@ def check_for_missing_intent_entities(recipe_intent):
 
     for f in required_intent_fields:
         if f not in populated_fields:
+            print(recipe_intent)
             raise ValueError(
                 f"\n\n     !!!!!!Required intent field {f} is empty, be more specific in your intent"
             )
@@ -1072,21 +1093,29 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
     stderr_output = result.stderr
     stdout_output = result.stdout
 
+    data_info = get_data_info()
+
     edit_recipe_code_template = environment.get_template(
         "edit_recipe_code_prompt.jinja2"
     )
+
+    coding_standards_template = environment.get_template("coding_standards.jinja2")
+    coding_standards = coding_standards_template.render()
+
     prompt = edit_recipe_code_template.render(
         llm_prompt=llm_prompt,
         recipe_code=recipe_code,
         stderr_output=stderr_output,
         stdout_output=stdout_output,
+        data_info=data_info,
+        coding_standards=coding_standards,
     )
-
     with open(
         os.path.join(recipe_folder, "prompt_modify.txt"), "w", encoding="utf-8"
     ) as file:
         file.write(prompt)
 
+    print("Calling LLM to generate recipe code ...")
     response = call_llm("", prompt)
     code = response["code"]
     comment = response["message"]

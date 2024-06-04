@@ -388,6 +388,8 @@ def main():
 
     while True:
         command = input(">> ")
+        if not command.strip():  # Check if command is empty
+            continue
         if command.lower() in ["quit", "exit", "stop"]:
             break
         if command.lower().split()[0] not in [
