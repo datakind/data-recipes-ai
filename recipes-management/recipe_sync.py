@@ -1092,7 +1092,9 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
     code = response["code"]
     comment = response["message"]
 
+    print(prompt)
     print(code)
+    sys.exit()
 
     print(f"LLM Gave this comment when generating code: {comment}")
 
