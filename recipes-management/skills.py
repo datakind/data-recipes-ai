@@ -326,6 +326,8 @@ def check_memory(intent, mem_type, db, debug=True):
         score = d[1]
         content = d[0].page_content
         metadata = d[0].metadata
+        if metadata["mem_type"] != mem_type:
+            continue
         if debug:
             print("\n", f"Score: {score} ===> {content}")
         if d[1] < similarity_cutoff[mem_type]:
@@ -344,15 +346,9 @@ def check_memory(intent, mem_type, db, debug=True):
 
             response = call_llm(prompt_map[mem_type], prompt)
 
-            if "user_intent_output_format" in response:
-                if (
-                    response["user_intent_output_format"]
-                    != response["generic_db_output_format"]
-                ):
-                    response["answer"] = "no"
-                    response["reason"] = "output formats do not match"
             if debug:
                 print("AI Judge of match: ", response)
+            print(response)
             if response["answer"].lower() == "yes":
                 r["score"] = score
                 r["content"] = content
@@ -402,16 +398,32 @@ def call_llm(instructions, prompt):
             HumanMessage(content=prompt),
         ]
         response = chat(messages)
+
+        if "content" in response.content:
+            response.content = response["content"]
+
+        # Different models do different things when prompted for JSON. Here we try and handle this
+        # Is it already JSON?
         try:
             response = json.loads(response.content)
         except json.decoder.JSONDecodeError:
-            # print("LLM didn't provide valid JSON, will create one")
-            response = {"content": response.content}
+            # Did the LLM provide JSON in ```json```?
+            if '```json' in response.content:
+                response.content = response.content.split('```json')[1]
+                response.content = response.content.replace("\n", "").split("```")[0]
+                print("JSON BACKTICKS .....")
+                print(response.content)
+                response = json.loads(response.content)
+            else:
+                # Finally just send it back
+                print("SOMETHING .....")
+                response = {"content": response.content}
         return response
+
     except Exception as e:
-        print(f"Error calling LLM {e}")
-        print("Aborting further processing")
-        sys.exit(1)
+        print(response)
+        print("Error calling LLM: ", e)
+        response = None
 
 
 if __name__ == "__main__":
