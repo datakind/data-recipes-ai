@@ -17,6 +17,7 @@ from langchain_openai import (
 )
 from PIL import Image
 from robocorp.actions import action
+from sqlalchemy import create_engine, text
 
 # Load environment variables from .env file
 load_dotenv()
@@ -278,6 +279,54 @@ def get_recipe_memory(intent) -> str:
     return memory_found, recipe_response
 
 
+def connect_to_db(instance="recipe"):
+    """
+    Connects to the specified database instance (RECIPE or DATA) DB and returns a connection object.
+
+    Args:
+        instance (str): The name of the database instance to connect to. Defaults to "RECIPE".
+
+    Returns:
+        sqlalchemy.engine.base.Engine: The connection object for the specified database instance.
+    """
+
+    instance = instance.upper()
+
+    host = os.getenv(f"POSTGRES_{instance}_HOST")
+    port = os.getenv(f"POSTGRES_{instance}_PORT")
+    database = os.getenv(f"POSTGRES_{instance}_DB")
+    user = os.getenv(f"POSTGRES_{instance}_USER")
+    password = os.getenv(f"POSTGRES_{instance}_PASSWORD")
+    conn_str = f"postgresql://{user}:{password}@{host}:{port}/{database}"
+    # add an echo=True to see the SQL queries
+    conn = create_engine(conn_str)
+    return conn
+
+
+def get_associated_data(metadata):
+
+    conn = connect_to_db("recipe")
+
+    with conn.connect() as connection:
+
+        if metadata["mem_type"] == "memory":
+            query = f"""
+                SELECT
+                    result,
+                    result_type
+                FROM
+                    memory
+                WHERE
+                    custom_id = '{metadata['custom_id']}'
+            """
+            result = connection.execute(text(query))
+            result = result.fetchall()
+            metadata["result"] = result[0][0]
+            metadata["result_type"] = result[0][1]
+
+    return metadata
+
+
 def check_memory(intent, mem_type, db, chat):
     """
     Check the memory for a given intent.
@@ -306,10 +355,7 @@ def check_memory(intent, mem_type, db, chat):
         score = m["score"]
         content = m["content"]
         metadata = m["metadata"]
-        if (
-            metadata["calling_code_run_status"] != "ERROR"
-            and metadata["mem_type"] == mem_type
-        ):
+        if metadata["mem_type"] == mem_type:
             print(f"\n Reranking candidate: Score: {score} ===> {content} \n")
             # Here ask LLM to confirm our match
             prompt = f"""
@@ -326,14 +372,6 @@ def check_memory(intent, mem_type, db, chat):
             response = call_llm(prompt_map[mem_type], prompt, chat)
             print(response)
 
-            if "user_intent_output_format" in response:
-                if (
-                    response["user_intent_output_format"]
-                    != response["generic_db_output_format"]
-                ):
-                    response["answer"] = "no"
-                    response["reason"] = "output formats do not match"
-
             print("AI Judge of match: ", response)
 
             if response["answer"].lower() == "yes":
@@ -341,6 +379,10 @@ def check_memory(intent, mem_type, db, chat):
                 r["score"] = score
                 r["content"] = content
                 r["metadata"] = metadata
+
+                # Here we query the DB to get supporting data from other tables
+                metadata = get_associated_data(metadata)
+
                 return True, r
 
     return False, r
@@ -374,10 +416,7 @@ def get_matching_candidates(intent, mem_type, db, cutoff=None):
         content = d[0].page_content
         metadata = d[0].metadata
         print("\n", f"\n\nMatches: Score: {score} ===> {content}\n\n")
-        if (
-            metadata["calling_code_run_status"] != "ERROR"
-            and metadata["mem_type"] == mem_type
-        ):
+        if metadata["mem_type"] == mem_type:
             if d[1] < cutoff:
                 print("\n", " << MATCHED >>")
                 r["score"] = score
@@ -458,8 +497,12 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
         user_input = json.dumps(user_input)
     memory_found, result = get_recipe_memory(user_input)
     if memory_found is True:
-        response_text = result["metadata"]["response_text"]
-        response_image = result["metadata"]["response_image"]
+        if result["metadata"]["result_type"] == "image":
+            response_image = result["metadata"]["result"]
+            response_text = ""
+        else:
+            response_text = result["metadata"]["result"]
+            response_image = ""
         recipe_id = result["metadata"]["custom_id"]
         print("Recipe ID: ", recipe_id)
         if response_image is not None and response_image != "":
@@ -474,3 +517,7 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
     else:
         result = "No memory found"
     return result
+
+
+if __name__ == "__main__":
+    get_memory("What is the population of Mali?", [], False)

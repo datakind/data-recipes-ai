@@ -50,7 +50,7 @@ def post_process_data(df, standard_names):
         pandas.DataFrame: The post-processed DataFrame.
     """
     # aggregate and disaggregated data in the same tables, where the hierarchy differs by country
-    df = filter_hapi_df(df, standard_names["admin0_code_field"])
+    # df = filter_hapi_df(df, standard_names["admin0_code_field"])
 
     # Add a flag to indicate latest dataset by HDX ID, useful for LLM queries
     if "resource_hdx_id" in df.columns and "reference_period_start" in df.columns:
