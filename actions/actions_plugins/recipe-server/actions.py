@@ -17,7 +17,6 @@ from langchain_openai import (
 )
 from PIL import Image
 from robocorp.actions import action
-
 from sqlalchemy import create_engine, text
 
 # Load environment variables from .env file
@@ -279,6 +278,7 @@ def get_recipe_memory(intent) -> str:
     memory_found, recipe_response = check_memory(intent, mem_type, db, chat)
     return memory_found, recipe_response
 
+
 def connect_to_db(instance="recipe"):
     """
     Connects to the specified database instance (RECIPE or DATA) DB and returns a connection object.
@@ -302,28 +302,30 @@ def connect_to_db(instance="recipe"):
     conn = create_engine(conn_str)
     return conn
 
+
 def get_associated_data(metadata):
 
     conn = connect_to_db("recipe")
 
     with conn.connect() as connection:
 
-        if metadata['mem_type'] == "memory":
+        if metadata["mem_type"] == "memory":
             query = f"""
-                SELECT 
+                SELECT
                     result,
                     result_type
-                FROM 
+                FROM
                     memory
-                WHERE 
+                WHERE
                     custom_id = '{metadata['custom_id']}'
             """
             result = connection.execute(text(query))
             result = result.fetchall()
-            metadata['result'] = result[0][0]
-            metadata['result_type'] = result[0][1]
+            metadata["result"] = result[0][0]
+            metadata["result_type"] = result[0][1]
 
     return metadata
+
 
 def check_memory(intent, mem_type, db, chat):
     """
@@ -353,9 +355,7 @@ def check_memory(intent, mem_type, db, chat):
         score = m["score"]
         content = m["content"]
         metadata = m["metadata"]
-        if (
-            metadata["mem_type"] == mem_type
-        ):
+        if metadata["mem_type"] == mem_type:
             print(f"\n Reranking candidate: Score: {score} ===> {content} \n")
             # Here ask LLM to confirm our match
             prompt = f"""
@@ -416,9 +416,7 @@ def get_matching_candidates(intent, mem_type, db, cutoff=None):
         content = d[0].page_content
         metadata = d[0].metadata
         print("\n", f"\n\nMatches: Score: {score} ===> {content}\n\n")
-        if (
-            metadata["mem_type"] == mem_type
-        ):
+        if metadata["mem_type"] == mem_type:
             if d[1] < cutoff:
                 print("\n", " << MATCHED >>")
                 r["score"] = score
@@ -519,6 +517,7 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
     else:
         result = "No memory found"
     return result
+
 
 if __name__ == "__main__":
     get_memory("What is the population of Mali?", [], False)
