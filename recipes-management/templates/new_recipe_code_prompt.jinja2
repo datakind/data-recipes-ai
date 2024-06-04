@@ -5,12 +5,6 @@ Python to answer the following request:
 
 {{ recipe_intent }}
 
-IMPORTANT: You must respond with a JSON record with the following fields:
-
-{
-    "code": "<EXECUTABLE CODE FOR YOUR ANSWER>",
-    "message": "<Supporting information>",
-}
 
 ==== Coding tips ...
 
@@ -82,7 +76,9 @@ Always save plot png files into the ./work folder
 Object of type int64 is not JSON serializable, convert to int
 
 Structure the code to be a set of functions, with one overall function to solve the task and a call to it. 
-Never use function name 'main' or 'main_function', instead use a descriptive name for the function
+
+IMPORTANT: NEVER use function name 'main' or 'main_function', instead use a descriptive name for the function
+
 Never create functions which have a name of a parameter, for example 'get_data_eduction' is not allowed, instead use 'get_data' and pass in a parameter 'education'
 Never use ```, only provide fully working code
 Don't write functions which perform the task done by functions you already have access to, instead call the function directly
@@ -151,3 +147,12 @@ IMPORTANT: If calling a function already available to you, do not copy the code 
 Tables and their columns of data available to you ...
 
 {{ data_info }}
+
+
+IMPORTANT: You must respond ONLY with a JSON record with the following fields:
+
+{
+    "code": "<THE CODE YOU GENERATED GOES HERE>",
+    "message": "<SUPPORTING INFORMATION YOU CAN PROVIDE>",
+}
+

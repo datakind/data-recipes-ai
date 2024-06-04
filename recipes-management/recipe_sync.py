@@ -20,7 +20,7 @@ from langchain_openai import (
     ChatOpenAI,
     OpenAIEmbeddings,
 )
-from skills import add_memory, call_llm
+from skills import add_recipe_memory, call_llm
 from sqlalchemy import create_engine, text
 
 logging.basicConfig(level=logging.INFO)
@@ -36,6 +36,16 @@ code_separator = 'if __name__ == "__main__":'
 
 # Lower numbers are more similar
 similarity_cutoff = {"memory": 0.2, "recipe": 0.3, "helper_function": 0.1}
+
+# Fields an intent must have to be useful
+required_intent_fields = [
+    "action",
+    "visualization_type",
+    "output_format",
+    "data_types",
+    "filters",
+    "data_sources",
+]
 
 environment = Environment(loader=FileSystemLoader("templates/"))
 
@@ -467,7 +477,7 @@ def insert_records_in_db(df, approver):
         trans = conn.begin()
         for index, row in df.iterrows():
             metadata = row
-            response = add_memory(
+            response = add_recipe_memory(
                 intent=metadata["intent"],
                 metadata={"mem_type": "recipe"},
                 mem_type="recipe",
@@ -853,14 +863,13 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
         unlock_records(recipe_author)
 
 
-def llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder):
+def llm_generate_new_recipe_code(recipe_intent, imports_content):
     """
     Generate new recipe code using LLM.
 
     Args:
         recipe_intent (str): The intent of the recipe.
-        imports_content (str): The content of the imports.
-        recipe_folder (str): The path to the recipe folder.
+        imports_content (str): The content of the imports
 
     Returns:
         str: The generated recipe code.
@@ -896,19 +905,114 @@ def llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder):
 
     print("Calling LLM to generate recipe starting code ...")
     response = call_llm("", prompt)
-    code, comment = extract_code_from_llm_response(response)
 
-    return code
+    code = response["code"]
+    comment = response["message"]
+
+    return code, comment, prompt
+
+
+def generate_intent_short_form(intent_long_form):
+    """
+    Generate short form and check if recipe intent has all required fields.
+
+    Will abort if required fields missing.
+
+    Aim of this function is to try and stardize somewhat inptent layout.
+
+    Args:
+        recipe_intent (dict): The long-form intent of the recipe.
+
+    Returns:
+        intent_short_form (str): The intent in short form.
+
+
+    """
+    intent_template = environment.get_template("intent_short_form_prompt.jinja2")
+    prompt = intent_template.render(intent_long_form=intent_long_form)
+
+    print("Calling LLM to generate short_form intent ...")
+    intent = call_llm("", prompt)
+    intent = intent["content"]
+
+    return intent
+
+
+def check_for_missing_intent_entities(recipe_intent):
+    """
+    Check if recipe intent has all required fields.
+
+    Will abort if required fields missing.
+
+    Args:
+        recipe_intent (dict): The long-form intent of the recipe.
+
+    Returns:
+        None
+
+    """
+    populated_fields = []
+    for f in recipe_intent:
+        val = recipe_intent[f]
+        if f == "filters":
+            has_filter = False
+            for f2 in val:
+                if f2["field"] != "":
+                    has_filter = True
+                    break
+            if has_filter is False:
+                val = ""
+        if f in ["data_sources", "data_types"]:
+            if str(val) == "['']":
+                val = ""
+
+        if val != "":
+            populated_fields.append(f)
+
+    for f in required_intent_fields:
+        if f not in populated_fields:
+            raise ValueError(
+                f"\n\n     !!!!!!Required intent field {f} is empty, be more specific in your intent"
+            )
+
+
+def generate_intent_long_format(recipe_intent):
+    """
+    Generate an intent from the user's input in standard intent format.
+
+    Args:
+        recipe_intent (str): The intent of the recipe.
+
+    Returns:
+        str: The generated intent in standard format.
+    """
+
+    intent_template = environment.get_template("intent_long_form_prompt.jinja2")
+    prompt = intent_template.render(user_input=recipe_intent)
+
+    print("Calling LLM to generate long form intent ...")
+    recipe_intent = call_llm("", prompt)
+
+    check_for_missing_intent_entities(recipe_intent)
+
+    return recipe_intent
 
 
 def create_new_recipe(recipe_intent, recipe_author):
 
-    # Create new folder
-    recipe_folder = os.path.join(new_recipe_folder_name, recipe_intent)
-
     # Render jinja templates
     import_template = environment.get_template("imports_template.jinja2")
     imports_content = import_template.render()
+
+    # Generate an intent from the user's input in standard intent format
+    intent_long_format = generate_intent_long_format(recipe_intent)
+
+    recipe_intent = generate_intent_short_form(intent_long_format)
+
+    # Create new folder
+    recipe_folder = os.path.join(
+        new_recipe_folder_name, recipe_intent.replace(" ", "_").lower()
+    )
 
     # Use a fixed template for the recipe code
     # new_recipe_code_template = environment.get_template("new_recipe_code_template.jinja2")
@@ -917,20 +1021,21 @@ def create_new_recipe(recipe_intent, recipe_author):
     #    recipe_intent=recipe_intent
     # )
 
-    prompt = ""
-
     # Generate recipe code using LLM single-shot. Later this can go to AI team
-    code_content = llm_generate_new_recipe_code(
-        recipe_intent, imports_content, recipe_folder
+    code_content, comment, prompt = llm_generate_new_recipe_code(
+        recipe_intent, imports_content
     )
 
-    print(code_content)
+    print(f"LLM generated code with this comment: {comment}")
 
     new_recipe_metadata_template = environment.get_template(
         "new_recipe_metadata_template.jinja2"
     )
     metadata_content = new_recipe_metadata_template.render(
-        custom_id=uuid4(), recipe_intent=recipe_intent, recipe_author=recipe_author
+        custom_id=uuid4(),
+        recipe_intent=recipe_intent,
+        recipe_author=recipe_author,
+        intent_long_format=intent_long_format,
     )
 
     os.makedirs(recipe_folder, exist_ok=True)
@@ -944,36 +1049,14 @@ def create_new_recipe(recipe_intent, recipe_author):
         metadata_file.write(metadata_content)
 
     # Save the prompt to a recipe folder
-    with open(os.path.join(recipe_folder, "prompt.txt"), "w", encoding="utf-8") as file:
+    with open(
+        os.path.join(recipe_folder, "prompt_generation.txt"), "w", encoding="utf-8"
+    ) as file:
         file.write(prompt)
 
     # Save an empty cksum file
     with open(os.path.join(recipe_folder, "cksum.txt"), "w", encoding="utf-8") as file:
         file.write("")
-
-
-def extract_code_from_llm_response(response):
-
-    code = ""
-    comment = ""
-
-    response = response["content"]
-
-    try:
-        response = json.loads(response)
-        code = response["code"]
-        comment = response["message"]
-    except json.JSONDecodeError:
-        # Extract code between ```
-        match = re.search(r"```python(.*?)```", response, re.DOTALL)
-        if match:
-            code = match.group(1)
-            comment = response.replace("```python" + code + "```", "")
-        else:
-            code = ""
-            comment = response
-
-    return code, comment
 
 
 def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
@@ -984,43 +1067,40 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
         recipe_code = file.read()
 
     # Automatically run recipe to get errors and output
+    print("Running recipe to capture errors for LLM ...")
     result = run_recipe(recipe_path)
-    stderr_ouput = result.stderr
+    stderr_output = result.stderr
     stdout_output = result.stdout
 
-    prompt = f"""
-        Edit the recipe code below to edit it as follows:  {llm_prompt}
+    edit_recipe_code_template = environment.get_template(
+        "edit_recipe_code_prompt.jinja2"
+    )
+    prompt = edit_recipe_code_template.render(
+        recipe_intent=llm_prompt,
+        recipe_code=recipe_code,
+        stderr_output=stderr_output,
+        stdout_output=stdout_output,
+    )
 
-            ```
-            {recipe_code}
-            ```
-
-    """
-
-    prompt += f"""
-
-    The last time it run, it produced the following output:
-
-    ```
-    {stdout_output}
-    ```
-
-    And the following errors:
-
-    ```
-    {stderr_ouput}
-    ```
-
-    """
-
-    with open(os.path.join(recipe_folder, "prompt.txt"), "w", encoding="utf-8") as file:
+    with open(
+        os.path.join(recipe_folder, "prompt_modify.txt"), "w", encoding="utf-8"
+    ) as file:
         file.write(prompt)
 
     response = call_llm("", prompt)
-    code, comment = extract_code_from_llm_response(response)
+    print(response)
+    code = response["code"]
+    comment = response["message"]
+
+    print(code)
+
+    print(f"LLM Gave this comment when generating code: {comment}")
 
     # Write content to recipe.py file
-    with open(recipe_path, "w", encoding="utf-8") as recipe_file:
+
+    print(recipe_path)
+
+    with open(recipe_path, "w") as recipe_file:
         recipe_file.write(code)
 
     # Update metadata file
@@ -1064,7 +1144,7 @@ def update_metadata_file_results(recipe_folder, result):
             result = json.loads(str(result.stdout))
             png_file = result["file"]
         except json.JSONDecodeError:
-            print("Error decoding JSON, trying to extract png file from stdout")
+            print("Extract png file location from stdout")
             png_file = re.search(r"(\w+\.png)", result.stdout).group(1)
 
         # does png exist?
@@ -1205,7 +1285,7 @@ def save_as_memory(recipe_folder):
     # Generate memory intent
     memory_intent = generate_memory_intent(function_code, sample_call)
 
-    response = add_memory(
+    response = add_recipe_memory(
         intent=memory_intent,
         metadata={"mem_type": "memory"},
         mem_type="memory",
@@ -1351,7 +1431,6 @@ def main():
         check_out(args.recipe_author, force_checkout=True)
     elif args.create_recipe:
         recipe_intent = args.recipe_intent.lower().replace(" ", "_")
-        check_out(args.recipe_author, force_checkout=True)
         create_new_recipe(recipe_intent, args.recipe_author)
     elif args.delete_recipe:
         delete_recipe(args.recipe_custom_id)

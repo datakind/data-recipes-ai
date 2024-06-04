@@ -262,7 +262,7 @@ def add(intent: Optional[str] = typer.Argument(None)):
     os.system(cmd)
     list()
     typer.echo(
-        "Now edit your new recipe in folder ./work/checked_out and when done do a 'checkin'"
+        "Now 'run' your new recipe and if needed edit its recipe.py (in folder ./work/checked_out) then do a 'checkin'"
     )
 
 
