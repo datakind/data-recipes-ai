@@ -1,30 +1,29 @@
 import json
+import logging
 import os
+import sys
 import uuid
+# TODO, temporary while we do user testing
+import warnings
 from pathlib import Path
 from typing import List
-import sys
-import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
 import psycopg2
 import requests
 from dotenv import load_dotenv
+from langchain.docstore.document import Document
+from langchain.schema import HumanMessage, SystemMessage
+from langchain_community.vectorstores.pgvector import PGVector
 from langchain_openai import (
     AzureChatOpenAI,
     AzureOpenAIEmbeddings,
     ChatOpenAI,
     OpenAIEmbeddings,
 )
-from langchain.docstore.document import Document
-from langchain_community.vectorstores.pgvector import PGVector
 from openai import OpenAI
-from langchain_openai import AzureOpenAIEmbeddings
-from langchain.schema import HumanMessage, SystemMessage
 
-# TODO, temporary while we do user testing
-import warnings
 warnings.filterwarnings("ignore")
 
 # Get the logger for 'httpx'
@@ -62,7 +61,7 @@ def get_models():
     model = os.getenv("RECIPES_MODEL")
 
     if api_type == "openai":
-        #print("Using OpenAI API in memory.py")
+        # print("Using OpenAI API in memory.py")
         embedding_model = OpenAIEmbeddings(
             api_key=api_key,
             # model=completion_model
@@ -72,10 +71,10 @@ def get_models():
             api_key=api_key,
             temperature=0,
             max_tokens=3000,
-            #response_format={"type": "json_object"}
+            # response_format={"type": "json_object"}
         )
     elif api_type == "azure":
-        #print("Using Azure OpenAI API in memory.py")
+        # print("Using Azure OpenAI API in memory.py")
         embedding_model = AzureOpenAIEmbeddings(
             api_key=api_key,
             deployment=completion_model,
@@ -96,7 +95,9 @@ def get_models():
         sys.exit(1)
     return embedding_model, chat
 
+
 embedding_model, chat = get_models()
+
 
 # Stored in langchain_pg_collection and langchain_pg_embedding as this
 def initialize_vector_db():
@@ -116,17 +117,26 @@ def initialize_vector_db():
             connection_string=CONNECTION_STRING,
             embedding_function=embedding_model,
         )
-    
+
     return db
 
 
 db = initialize_vector_db()
 
-response_formats = ['csv', 'dataframe', 'json', 'plot_image_file_location', 'shape_file_location','integer', 'float', 'string']
+response_formats = [
+    "csv",
+    "dataframe",
+    "json",
+    "plot_image_file_location",
+    "shape_file_location",
+    "integer",
+    "float",
+    "string",
+]
 
-prompt_map ={
+prompt_map = {
     "memory": """
-        You judge matches of user intent with those stored in a database to decide if they are true matches of intent. 
+        You judge matches of user intent with those stored in a database to decide if they are true matches of intent.
         When asked to compare two intents, check they are the same, have the same entities and would result in the same outcome.
         Be very strict in your judgement. If you are not sure, say no.
         A plotting intent is different from a request for just the data.
@@ -141,11 +151,11 @@ prompt_map ={
         }
     """,
     "recipe": """
-        You judge matches of user intent with generic DB intents in the database to see if a DB intent can be used to solve the user's intent. 
-        The requested output format of the user's intent MUST be the same as the output format of the generic DB intent. 
+        You judge matches of user intent with generic DB intents in the database to see if a DB intent can be used to solve the user's intent.
+        The requested output format of the user's intent MUST be the same as the output format of the generic DB intent.
         For exmaple, if the user's intent is to get a plot, the generic DB intent MUST also be to get a plot.
         The level of data aggregation is important, if the user's request differs from the DB intent, then reject it.
-        
+
         Answer with a JSON record ...
 
         {
@@ -156,16 +166,16 @@ prompt_map ={
     "helper_function": """
         You judge matches of user input helper functions and those already in the database
         If the user help function matches the database helper function, then it's a match
-        
+
         Answer with a JSON record ...
 
         {
             "answer": <yes or no>,
             "reason": <your reasoning>"
         }
-    """
-
+    """,
 }
+
 
 def generate_and_save_images(query: str, image_size: str = "1024x1024") -> List[str]:
     """
@@ -246,6 +256,7 @@ def execute_query(query):
 
     return rows
 
+
 def add_memory(intent, metadata, mem_type="recipe", force=False):
     """
     Add a new memory document to the memory store.
@@ -262,38 +273,33 @@ def add_memory(intent, metadata, mem_type="recipe", force=False):
     """
 
     # First see if we already have something in our memory
-    if force == False:
+    if force is False:
         result = check_memory(intent, db=db, mem_type=mem_type, debug=False)
-        if result != None:
-            if result['score'] != None and result['score'] < similarity_cutoff[mem_type]:
+        if result is not None:
+            if (
+                result["score"] is not None
+                and result["score"] < similarity_cutoff[mem_type]
+            ):
                 message = f"{mem_type} already exists: {result['content']}"
-                response = {
-                    "already_exists": "true",
-                    "message": message
-                }
+                response = {"already_exists": "true", "message": message}
                 return response
- 
+
     print(f"Adding new document to {mem_type} store ...")
     data = {}
-    data['page_content'] = intent
+    data["page_content"] = intent
 
     uuid_str = str(uuid.uuid4())
-    metadata['custom_id'] = uuid_str
+    metadata["custom_id"] = uuid_str
 
-    metadata['mem_type'] = mem_type
+    metadata["mem_type"] = mem_type
 
-    #print(metadata)
+    # print(metadata)
 
-    new_doc =  Document(
-        page_content=intent,
-        metadata=metadata
-    )
+    new_doc = Document(page_content=intent, metadata=metadata)
     print(metadata)
-    id = db[mem_type].add_documents(
-        [new_doc],
-        ids=[uuid_str]
-    )
+    id = db[mem_type].add_documents([new_doc], ids=[uuid_str])
     return id
+
 
 def check_memory(intent, mem_type, db, debug=True):
     """
@@ -308,15 +314,11 @@ def check_memory(intent, mem_type, db, debug=True):
         dict: A dictionary containing the score, content, and metadata of the best match found in the memory.
             If no match is found, the dictionary values will be None.
     """
-    if mem_type not in ['memory','recipe','helper_function']:
+    if mem_type not in ["memory", "recipe", "helper_function"]:
         print(f"Memory type {mem_type} not recognised")
         sys.exit()
         return
-    r = {
-        "score": None,
-        "content": None,
-        "metadata": None
-    }
+    r = {"score": None, "content": None, "metadata": None}
     if debug:
         print(f"======= Checking {mem_type} for intent: {intent}")
     docs = db[mem_type].similarity_search_with_score(intent, k=10)
@@ -342,13 +344,16 @@ def check_memory(intent, mem_type, db, debug=True):
 
             response = call_llm(prompt_map[mem_type], prompt)
 
-            if 'user_intent_output_format' in response:
-                if response['user_intent_output_format'] != response['generic_db_output_format']:
-                    response['answer'] = 'no'
-                    response['reason'] = 'output formats do not match'
+            if "user_intent_output_format" in response:
+                if (
+                    response["user_intent_output_format"]
+                    != response["generic_db_output_format"]
+                ):
+                    response["answer"] = "no"
+                    response["reason"] = "output formats do not match"
             if debug:
                 print("AI Judge of match: ", response)
-            if response['answer'].lower() == 'yes':
+            if response["answer"].lower() == "yes":
                 r["score"] = score
                 r["content"] = content
                 r["metadata"] = metadata
@@ -377,6 +382,7 @@ def initialize_vector_db():
         )
     return db
 
+
 def call_llm(instructions, prompt):
     """
     Call the LLM (Language Learning Model) API with the given instructions and prompt.
@@ -398,11 +404,9 @@ def call_llm(instructions, prompt):
         response = chat(messages)
         try:
             response = json.loads(response.content)
-        except Exception as e:
-            #print("LLM didn't provide valid JSON, will create one")
-            response = {
-                "content": response.content
-            }
+        except json.decoder.JSONDecodeError:
+            # print("LLM didn't provide valid JSON, will create one")
+            response = {"content": response.content}
         return response
     except Exception as e:
         print(f"Error calling LLM {e}")
