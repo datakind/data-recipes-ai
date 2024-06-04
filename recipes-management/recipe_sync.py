@@ -1,4 +1,5 @@
 import argparse
+import base64
 import json
 import logging
 import os
@@ -8,21 +9,19 @@ import subprocess
 import sys
 from datetime import datetime
 from uuid import uuid4
-import base64
 
 import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+from jinja2 import Environment, FileSystemLoader
+from langchain_community.vectorstores.pgvector import PGVector
 from langchain_openai import (
     AzureChatOpenAI,
     AzureOpenAIEmbeddings,
     ChatOpenAI,
     OpenAIEmbeddings,
 )
-from langchain_community.vectorstores.pgvector import PGVector
 from skills import add_memory, call_llm
-
-from jinja2 import Environment, FileSystemLoader
+from sqlalchemy import create_engine, text
 
 logging.basicConfig(level=logging.INFO)
 
@@ -49,6 +48,7 @@ CONNECTION_STRING = PGVector.connection_string_from_db_params(
     password=os.environ.get("POSTGRES_RECIPE_PASSWORD", "postgres"),
 )
 
+
 def connect_to_db(instance="recipe"):
     """
     Connects to the specified database instance (RECIPE or DATA) DB and returns a connection object.
@@ -72,6 +72,7 @@ def connect_to_db(instance="recipe"):
     conn = create_engine(conn_str)
     return conn
 
+
 def get_recipes(force_checkout=False):
     """
     Retrieves recipes from the database.
@@ -88,14 +89,14 @@ def get_recipes(force_checkout=False):
     conn = connect_to_db(instance="recipe")
     with conn.connect() as connection:
         query = """
-            SELECT 
-                lc.custom_id, 
+            SELECT
+                lc.custom_id,
                 lc.document,
                 row_to_json(lr.*) as cmetadata
             FROM
                 public.langchain_pg_embedding lc,
                 public.recipe lr
-            WHERE 
+            WHERE
                 lc.custom_id=lr.custom_id
         """
 
@@ -111,8 +112,9 @@ def get_recipes(force_checkout=False):
             logging.error(
                 "No recipes found in the database - this might be due to the fact that all recipes are locked (because another recipe checker has them checked out)! You can overwrite this by using the --force_checkout flag, but this is not recommended."
             )
-            #sys.exit(1)
+            # sys.exit(1)
         return recipes
+
 
 def get_folder_cksum(folder):
     """
@@ -133,7 +135,6 @@ def get_folder_cksum(folder):
     return result
 
 
-
 def save_cksum(folder):
     """
     Save the checksum of the files in the folder.
@@ -151,6 +152,7 @@ def save_cksum(folder):
     # Save the checksum to a file
     with open(os.path.join(folder, "cksum.txt"), "w", encoding="utf-8") as file:
         file.write(result.stdout.replace("./", ""))
+
 
 def save_data(df):
     """
@@ -184,18 +186,14 @@ def save_data(df):
         metadata = row["cmetadata"]
         if isinstance(metadata, str):
             metadata = json.loads(metadata)
-        custom_id= row["custom_id"]
         document = row["document"]
-        output = metadata["sample_result"]
         calling_code = metadata["sample_call"]
         function_code = metadata["function_code"]
         # if import it not already in the function_code, add it with a linebreak
-        if 'from skills import *' not in function_code:
+        if "from skills import *" not in function_code:
             function_code = imports_content + "\n\n" + function_code
         # Concatenate function_code and calling_code into recipe code
-        recipe_code = (
-            f"{function_code}\n\n" f"{code_separator}\n{calling_code}\n\n"
-        )
+        recipe_code = f"{function_code}\n\n" f"{code_separator}\n{calling_code}\n\n"
 
         # Make max number blank lines in a row as 3
         recipe_code = re.sub(r"\n{4,}", "\n\n\n", recipe_code)
@@ -268,6 +266,7 @@ def lock_records(df, locker_name):
         with connection.begin():
             connection.execute(query)
 
+
 def clone_file(source_path, dest_path):
     """
     Clones a file from the source path to the destination path.
@@ -311,35 +310,42 @@ def extract_code_sections(recipe_path):
     with open(recipe_path, "r", encoding="utf-8") as file:
         content = file.read()
 
-    if '__name__' not in content:
-        raise ValueError(f"Code separator '{code_separator}' not found in the recipe file '{recipe_path}'.")
+    if "__name__" not in content:
+        raise ValueError(
+            f"Code separator '{code_separator}' not found in the recipe file '{recipe_path}'."
+        )
         sys.exit()
 
-    content = content.split('\n')
+    content = content.split("\n")
 
     # Find the line containing '__name__'
-    split_index = next((i for i, line in enumerate(content) if '__name__' in line), None)
+    split_index = next(
+        (i for i, line in enumerate(content) if "__name__" in line), None
+    )
 
     # If the line is found, split the content into two parts
     if split_index is not None:
         before_name = content[:split_index]
-        after_name = content[split_index+1:]
+        after_name = content[split_index + 1 :]
     else:
         before_name = content
         after_name = []
 
     # Convert lists back to strings
-    function_code = '\n'.join(before_name)
-    calling_code = '\n'.join(after_name)
+    function_code = "\n".join(before_name)
+    calling_code = "\n".join(after_name)
 
     if function_code is None or calling_code is None:
-        raise ValueError(f"Function code or calling code not found in the recipe file '{recipe_path}'.")
+        raise ValueError(
+            f"Function code or calling code not found in the recipe file '{recipe_path}'."
+        )
         sys.exit()
 
     return {
         "function_code": function_code,
         "calling_code": calling_code,
     }
+
 
 def add_code_to_metadata(metadata_path, code_sections):
     """
@@ -372,7 +378,7 @@ def add_code_to_metadata(metadata_path, code_sections):
 
     with open(metadata_path, "w", encoding="utf-8") as file:
         json.dump(metadata, file, indent=4)
-    
+
 
 def update_metadata_file(directory):
     """
@@ -399,6 +405,7 @@ def update_metadata_file(directory):
         metadata = json.load(file)
 
     return metadata
+
 
 def insert_records_in_db(df, approver):
     """
@@ -455,19 +462,21 @@ def insert_records_in_db(df, approver):
         )
         """
     )
- 
+
     with engine.connect() as conn:
         trans = conn.begin()
         for index, row in df.iterrows():
-            metadata = row   
+            metadata = row
             response = add_memory(
                 intent=metadata["intent"],
                 metadata={"mem_type": "recipe"},
                 mem_type="recipe",
             )
-            if 'already_exists' in response:
+            if "already_exists" in response:
                 print(response)
-                print("\nCannot add this recipe, a very similar one already exists. Aborting operation")
+                print(
+                    "\nCannot add this recipe, a very similar one already exists. Aborting operation"
+                )
                 continue
 
             custom_id = response[0]
@@ -490,7 +499,7 @@ def insert_records_in_db(df, approver):
                 "intent": metadata["intent"],
             }
             conn.execute(query_template, params)
-        
+
         print("Committing changes to the database")
         trans.commit()
 
@@ -510,7 +519,7 @@ def update_records_in_db(df, approver):
 
     query_template = text(
         """
-        UPDATE 
+        UPDATE
             recipe
         SET
             function_code = :function_code,
@@ -537,7 +546,7 @@ def update_records_in_db(df, approver):
 
         trans = conn.begin()
         for index, row in df.iterrows():
-            metadata = row   
+            metadata = row
             params = {
                 "function_code": metadata["function_code"],
                 "description": metadata["description"],
@@ -556,7 +565,6 @@ def update_records_in_db(df, approver):
 
         print("Committing changes to the database")
         trans.commit()
-    
 
 
 def update_database(df: pd.DataFrame, approver: str):
@@ -570,7 +578,6 @@ def update_database(df: pd.DataFrame, approver: str):
     Returns:
         None
     """
-    engine = connect_to_db(instance="recipe")
 
     # Get list of custom_ids in table recipe
     query = text(
@@ -595,21 +602,20 @@ def update_database(df: pd.DataFrame, approver: str):
     update_ids = []
     insert_ids = []
     for index, row in df.iterrows():
-        if 'custom_id' not in row:
+        if "custom_id" not in row:
             insert_ids.append(index)
         else:
             custom_id = str(row["custom_id"])
-            if custom_id in custom_ids:  
-                update_ids.append(index) 
+            if custom_id in custom_ids:
+                update_ids.append(index)
             else:
-                insert_ids.append(index)   
-
+                insert_ids.append(index)
 
     if len(update_ids) > 0:
         print(f"Proceeding with update of {len(update_ids)} records in the database")
         update_df = df.iloc[update_ids]
         update_records_in_db(update_df, approver)
-    
+
     if len(insert_ids) > 0:
         print(f"Proceeding with insert of {len(insert_ids)} records in the database")
         insert_df = df.iloc[insert_ids]
@@ -632,6 +638,7 @@ def check_out(recipe_author="Mysterious Recipe Checker", force_checkout=False):
     save_data(recipes)
     format_code_with_black()
 
+
 def generate_openapi_from_function_code(function_code):
     """
     Generate OpenAPI JSON from function code.
@@ -642,9 +649,9 @@ def generate_openapi_from_function_code(function_code):
     Returns:
         dict: The OpenAPI JSON generated from the function code.
     """
- 
+
     prompt = f"""
-        Generate openapi.json JSON for the code below. 
+        Generate openapi.json JSON for the code below.
 
         ```{function_code}```
     """
@@ -653,6 +660,7 @@ def generate_openapi_from_function_code(function_code):
     openapi_json = call_llm("", prompt)
     openapi_json = json.dumps(openapi_json, indent=4)
     return openapi_json
+
 
 # TODO this is same code as used in recipe manager action, need to refactor so there is only one instance
 def get_models():
@@ -663,7 +671,7 @@ def get_models():
     completion_model = os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME")
 
     if api_type == "openai":
-        #print("Using OpenAI API in memory.py")
+        # print("Using OpenAI API in memory.py")
         embedding_model = OpenAIEmbeddings(
             api_key=api_key,
             # model=completion_model
@@ -676,7 +684,7 @@ def get_models():
             max_tokens=1000,
         )
     elif api_type == "azure":
-        #print("Using Azure OpenAI API in memory.py")
+        # print("Using Azure OpenAI API in memory.py")
         embedding_model = AzureOpenAIEmbeddings(
             api_key=api_key,
             deployment=completion_model,
@@ -713,9 +721,10 @@ def generate_openapi_json(df):
     for index, row in df.iterrows():
         function_code = row["function_code"]
         openapi_json = generate_openapi_from_function_code(function_code)
-        df.at[index, "openapi_json"] = openapi_json        
+        df.at[index, "openapi_json"] = openapi_json
 
     return df
+
 
 def compare_cksums(folder):
     """
@@ -738,14 +747,15 @@ def compare_cksums(folder):
         with open(cksum_path, "r") as file:
             old_cksum = file.read()
 
-        new_cksum = new_cksum.replace('./', '')
+        new_cksum = new_cksum.replace("./", "")
 
         if old_cksum == new_cksum:
-            #print(f"No changes detected in {folder}")
+            # print(f"No changes detected in {folder}")
             return True
         else:
             print(f"Changes detected in {folder}")
             return False
+
 
 def delete_recipe(recipe_custom_id):
     """
@@ -773,6 +783,7 @@ def delete_recipe(recipe_custom_id):
             conn.execute(query)
         trans.commit()
     print(f"Recipe with custom_id {recipe_custom_id} deleted from the database.")
+
 
 def unlock_records(recipe_author):
     """
@@ -841,11 +852,6 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
             save_cksum(subdir)
         unlock_records(recipe_author)
 
-def get_data_metadata(df):
-
-    # Connect to the data db
-    conn = connect_to_db(instance="recipe")
-
 
 def llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder):
     """
@@ -885,9 +891,7 @@ def llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder):
 
     new_recipe_code_template = environment.get_template("new_recipe_code_prompt.jinja2")
     prompt = new_recipe_code_template.render(
-        imports=imports_content,
-        recipe_intent=recipe_intent,
-        data_info=data_info
+        imports=imports_content, recipe_intent=recipe_intent, data_info=data_info
     )
 
     print("Calling LLM to generate recipe starting code ...")
@@ -895,6 +899,7 @@ def llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder):
     code, comment = extract_code_from_llm_response(response)
 
     return code
+
 
 def create_new_recipe(recipe_intent, recipe_author):
 
@@ -906,24 +911,26 @@ def create_new_recipe(recipe_intent, recipe_author):
     imports_content = import_template.render()
 
     # Use a fixed template for the recipe code
-    #new_recipe_code_template = environment.get_template("new_recipe_code_template.jinja2")
-    #code_content = new_recipe_code_template.render(
+    # new_recipe_code_template = environment.get_template("new_recipe_code_template.jinja2")
+    # code_content = new_recipe_code_template.render(
     #    imports=imports_content,
     #    recipe_intent=recipe_intent
-    #)
+    # )
 
     prompt = ""
 
     # Generate recipe code using LLM single-shot. Later this can go to AI team
-    code_content = llm_generate_new_recipe_code(recipe_intent, imports_content, recipe_folder)
+    code_content = llm_generate_new_recipe_code(
+        recipe_intent, imports_content, recipe_folder
+    )
 
     print(code_content)
 
-    new_recipe_metadata_template = environment.get_template("new_recipe_metadata_template.jinja2")
+    new_recipe_metadata_template = environment.get_template(
+        "new_recipe_metadata_template.jinja2"
+    )
     metadata_content = new_recipe_metadata_template.render(
-        custom_id= uuid4(),
-        recipe_intent=recipe_intent,
-        recipe_author=recipe_author
+        custom_id=uuid4(), recipe_intent=recipe_intent, recipe_author=recipe_author
     )
 
     os.makedirs(recipe_folder, exist_ok=True)
@@ -936,7 +943,6 @@ def create_new_recipe(recipe_intent, recipe_author):
     with open(metadata_path, "w", encoding="utf-8") as metadata_file:
         metadata_file.write(metadata_content)
 
-
     # Save the prompt to a recipe folder
     with open(os.path.join(recipe_folder, "prompt.txt"), "w", encoding="utf-8") as file:
         file.write(prompt)
@@ -945,28 +951,30 @@ def create_new_recipe(recipe_intent, recipe_author):
     with open(os.path.join(recipe_folder, "cksum.txt"), "w", encoding="utf-8") as file:
         file.write("")
 
+
 def extract_code_from_llm_response(response):
 
     code = ""
     comment = ""
 
-    response = response['content']
+    response = response["content"]
 
     try:
         response = json.loads(response)
         code = response["code"]
         comment = response["message"]
-    except:
+    except json.JSONDecodeError:
         # Extract code between ```
         match = re.search(r"```python(.*?)```", response, re.DOTALL)
         if match:
             code = match.group(1)
-            comment = response.replace('```python' + code + '```', '')
+            comment = response.replace("```python" + code + "```", "")
         else:
-            code = ''
+            code = ""
             comment = response
 
     return code, comment
+
 
 def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
 
@@ -977,12 +985,12 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
 
     # Automatically run recipe to get errors and output
     result = run_recipe(recipe_path)
-    stderr_ouput= result.stderr
+    stderr_ouput = result.stderr
     stdout_output = result.stdout
 
     prompt = f"""
         Edit the recipe code below to edit it as follows:  {llm_prompt}
-            
+
             ```
             {recipe_code}
             ```
@@ -1029,7 +1037,6 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
     print("\n\nRecipe editing done")
 
 
-
 def update_metadata_file_results(recipe_folder, result):
     """
     Update the metadata file for a given recipe folder with the provided result.
@@ -1050,7 +1057,7 @@ def update_metadata_file_results(recipe_folder, result):
     # Remove any lines starting with DEBUG
     result.stdout = re.sub(r"DEBUG.*\n", "", result.stdout)
 
-    if '.png' in result.stdout:
+    if ".png" in result.stdout:
 
         # See if result.stdout is a JSON file, if so extract "file"
         try:
@@ -1059,25 +1066,25 @@ def update_metadata_file_results(recipe_folder, result):
         except json.JSONDecodeError:
             print("Error decoding JSON, trying to extract png file from stdout")
             png_file = re.search(r"(\w+\.png)", result.stdout).group(1)
-        
+
         # does png exist?
         if not os.path.exists(png_file):
 
             # Is it in working directory?
-            if os.path.exists(os.path.join('./work', png_file)):
-                png_file = os.path.join('./work', png_file)
+            if os.path.exists(os.path.join("./work", png_file)):
+                png_file = os.path.join("./work", png_file)
             else:
                 print(f"PNG file {png_file} does not exist, skipping metadata update")
                 return
 
-        # Move png file to recipe folder 
+        # Move png file to recipe folder
         png_file_basename = os.path.basename(png_file)
         png_file_path = os.path.join(recipe_folder, png_file_basename)
         print(f"Moving {png_file} to {png_file_path}")
         shutil.move(png_file, png_file_path)
 
         with open(png_file_path, "rb") as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode()  
+            encoded_string = base64.b64encode(image_file.read()).decode()
             metadata["sample_result"] = encoded_string
             metadata["sample_result_type"] = "image"
 
@@ -1087,7 +1094,7 @@ def update_metadata_file_results(recipe_folder, result):
 
     with open(metadata_path, "w") as file:
         json.dump(metadata, file, indent=4)
-    
+
 
 def run_recipe(recipe_path):
     """
@@ -1117,6 +1124,7 @@ def run_recipe(recipe_path):
 
     return result
 
+
 def generate_calling_params(functions_code, calling_code):
     """
     Generate calling parameters JSON for the recipe.
@@ -1141,6 +1149,7 @@ def generate_calling_params(functions_code, calling_code):
     params = call_llm("", prompt)
     params = json.dumps(params)
     return params
+
 
 def generate_memory_intent(functions_code, calling_code):
     """
@@ -1170,8 +1179,9 @@ def generate_memory_intent(functions_code, calling_code):
     print(prompt)
 
     intent = call_llm("", prompt)
-    intent = intent['intent']
+    intent = intent["intent"]
     return intent
+
 
 def save_as_memory(recipe_folder):
     """
@@ -1191,7 +1201,7 @@ def save_as_memory(recipe_folder):
     function_code = metadata["function_code"]
     sample_call = metadata["sample_call"]
     params = generate_calling_params(function_code, sample_call)
-    
+
     # Generate memory intent
     memory_intent = generate_memory_intent(function_code, sample_call)
 
@@ -1202,9 +1212,11 @@ def save_as_memory(recipe_folder):
     )
     print(response)
 
-    if 'already_exists' in response:
+    if "already_exists" in response:
         print(response)
-        print("\nCannot add this memory, a very similar one already exists. Aborting operation")
+        print(
+            "\nCannot add this memory, a very similar one already exists. Aborting operation"
+        )
         sys.exit()
 
     custom_id = response[0]
@@ -1244,12 +1256,12 @@ def save_as_memory(recipe_folder):
         params = {
             "custom_id": custom_id,
             "recipe_custom_id": metadata["custom_id"],
-            "recipe_params": params, 
+            "recipe_params": params,
             "result": metadata["sample_result"],
             "result_type": metadata["sample_result_type"],
             "source": "Recipe sample result",
             "created_by": metadata["created_by"],
-            "updated_by": metadata["created_by"]
+            "updated_by": metadata["created_by"],
         }
         conn.execute(query_template, params)
 
@@ -1305,7 +1317,9 @@ def main():
         "--run_recipe", action="store_true", help="Create a new blank recipe"
     )
     group.add_argument(
-        "--save_as_memory", action="store_true", help="Create a memory from recipe sample outputs"
+        "--save_as_memory",
+        action="store_true",
+        help="Create a memory from recipe sample outputs",
     )
     group.add_argument(
         "--edit_recipe", action="store_true", help="Create a new blank recipe"
@@ -1313,7 +1327,7 @@ def main():
 
     parser.add_argument("--recipe_author", type=str, help="Name of the recipe checker")
     parser.add_argument("--recipe_intent", type=str, help="Intent of the new recipe")
-    parser.add_argument("--recipe_custom_id", type=str, help="custom_id of recipe") 
+    parser.add_argument("--recipe_custom_id", type=str, help="custom_id of recipe")
     parser.add_argument("--recipe_path", type=str, help="Path to recipe.py file to run")
     parser.add_argument("--llm_prompt", type=str, help="Prompt for the LLM")
 
@@ -1324,7 +1338,9 @@ def main():
 
     args = parser.parse_args()
 
-    if (args.check_out or args.check_in or args.create_recipe) and not args.recipe_author:
+    if (
+        args.check_out or args.check_in or args.create_recipe
+    ) and not args.recipe_author:
         parser.error("--recipe_author is required for this action")
 
     if args.check_out:
@@ -1334,7 +1350,7 @@ def main():
         # Check out to refresh metadata file. TODO, do this as part fo check in
         check_out(args.recipe_author, force_checkout=True)
     elif args.create_recipe:
-        recipe_intent = args.recipe_intent.lower().replace(" ","_")
+        recipe_intent = args.recipe_intent.lower().replace(" ", "_")
         check_out(args.recipe_author, force_checkout=True)
         create_new_recipe(recipe_intent, args.recipe_author)
     elif args.delete_recipe:
@@ -1344,7 +1360,7 @@ def main():
     elif args.save_as_memory:
         save_as_memory(args.recipe_path)
     elif args.edit_recipe:
-        llm_edit_recipe(args.recipe_path,args.llm_prompt, args.recipe_author)
+        llm_edit_recipe(args.recipe_path, args.llm_prompt, args.recipe_author)
 
 
 if __name__ == "__main__":
