@@ -1,0 +1,152 @@
+{# templates/coding_standards.jinja2 #}
+
+If asked to create maps, you will need to use shapefiles in the database. These will need to be 
+converted to a geoseries for plotting, here is an example:
+
+```
+# Convert the data into a DataFrame
+df = pd.DataFrame(rows, columns=["adm1_code", "population", "geometry"])
+
+# Convert the 'geometry' column into a GeoSeries
+df['geometry'] = df['geometry'].apply(lambda x: wkb.loads(x, hex=True))
+
+# Convert the DataFrame into a GeoDataFrame
+gdf = gpd.GeoDataFrame(df, geometry='geometry')
+```
+
+Also, ALWAYS save any images to a .png file in the ./work folder.
+
+Always specify a clear title on any graphs or maps. 
+Always add annotations, labels and units on any graphs/maps
+You can use any kind of visualization
+
+IMPORTANT: Generate reusable code, by putting it in a function with arguments, and provide an example of how to call it.
+
+Always print any SQL statements and the size of the results returned
+Always format SQL queries for readability
+
+Database connection details are in the following environment variables (saved in the .env file) ...
+
+POSTGRES_DATA_HOST
+POSTGRES_DATA_PORT
+POSTGRES_DATA_DB
+POSTGRES_DATA_USER
+POSTGRES_DATA_PASSWORD
+
+Using python .env module to load these environment varaibles.
+
+In SQL queries with more than one table, always use table aliases to avoid ambiguous columns
+
+Make note of column types, if you are asked to plot the count of something, SUM will not work
+
+Always use country codes instead of names where possible
+
+You ONLY generate code that can be run.
+
+You write code which adheres to best practice, well commented, formatted and structured. You must adhere to PEP 8, and the Python style guide.
+
+You write code that is generic and can be re-used just by calling them with different parameters. 
+
+DO NOT create functions specific to a country, organization, date range, etc. Instead make the function generic and pass in parameters.
+DO NOT Hard code an entities like organizations, locations, date ranges etc inside functions. The must be passed into functions as parameters.
+
+All logic to check results and handle errors must in in these functions
+
+For functions you have been provided, always pass in function params dictionaries with the '**' prefix, for example `params={'a':b}\ncall function(**params)` or `call function(**{'a':b})`
+For functions you write, specify and document all required parameters and output format
+
+If the user provides an ambiguous location and it's a country, use the ISO3 code for admin level 0
+You are coding in Python, comments start with '#'
+You only call the functions provided for getting data
+NEVER add a prefix or namespace when calling the functions you have been provided, call them directly
+Be cautious with printing, avoid output of large amounts of data, but do print the ouput of calling generated code
+Always print the size of the output data, for example `print("DEBUG INFO - Length of data is: ",len(data))`
+Only use single quotes in code, never double quotes
+Always check a dictionary or dataframe has data before accessing it by record label or index, especially when calculating a metric such as sum
+Put # filename: <filename> inside the code block as the first line.
+Never plot to the screen, ALWAYS plot to a png file and return the file location as a string
+Always save plot png files into the ./work folder
+Object of type int64 is not JSON serializable, convert to int
+
+Structure the code to be a set of functions, with one overall function to solve the task and a call to it. 
+
+IMPORTANT: NEVER use function name 'main' or 'main_function', instead use a descriptive name for the function
+
+Never create functions which have a name of a parameter, for example 'get_data_eduction' is not allowed, instead use 'get_data' and pass in a parameter 'education'
+Never use ```, only provide fully working code
+Don't write functions which perform the task done by functions you already have access to, instead call the function directly
+
+YOU MUST Prevent code from being run when the code is imported as a module by using `if __name__ == "__main__"`
+
+DO NOT create functions specific to a country, organization, date range, etc. Instead make the function generic and pass in parameters from the top level
+DO NOT Hard code an entities like organizations, locations, date ranges etc inside functions. The must be passed into functions as parameters from the top level
+
+Always return the answer from the main function to the code which calls it.
+If the data in the answer is a dataframe, return as a csv string
+If the data in the answer is a dictionary, return as a json file
+If the data in the answer is a list, return as a list
+If the data in the answer is a plot, return as file location to a png image file as a json record {‘file’:’<filename>’}
+
+Never convert a JSON response to a string, leave it as JSON
+
+DATA-SPECIFIC TIPS:
+
+1. HAPI
+
+Any data queried from hap tables can have aggregated and disagregated data mixed together. For admin colulms, a null value
+indicated aggregated. For dimensions such as gender and age_group 'all' indicates aggregated data. So for example to query
+all data for a country, you would query with
+
+WHERE 
+    adm0_code ='MLI' AND 
+    gender = 'all' and 
+    age_range = 'all' 
+	and adm1_code is not null
+	and adm2_code is not null
+
+Conversely, if you do not exclude the aggregate data, you will get a mix of aggregated and disaggregated data.
+
+2. HDX Shape files
+
+Shapefiles data can be found in hdx_shape_files. However, adm0_code in that table are two-leter country codes,
+so you must link to other tables using adm1_code, adm2_code, adm3_code etc. For example ...
+
+        SELECT p.adm1_code, p.population, s.geometry
+        FROM hapi_population_social_population p
+        JOIN hdx_shape_files s ON p.adm1_code = s.adm1_code
+        WHERE p.adm0_code = %s AND p.latest = TRUE 
+        AND     gender = 'all' 
+        AND age_range = 'all' 
+        and p.adm1_code is not null
+        and p.adm2_code is not null
+
+EXAMPLE CODE LAYOUT:
+
+Here is a pseudo-code example layout ...
+
+```
+
+{{ imports_content }}
+
+def function1(<params):
+    <CODE>
+
+def function2(<params):
+    <CODE>
+
+def function3(<params>):
+    function1(<params>)
+    function2(<params>)
+    <CODE TO CALCULATES ANSWER, HANDLING ERRORS>
+    <PRINT ANSWER>
+    return <ANSWER>
+
+
+
+if __name__ == "__main__":
+    <ANSWER> = function3(<params>):
+```
+
+
+IMPORTANT: If calling a function already available to you, do not copy the code into your function, instead call the function directly.
+
