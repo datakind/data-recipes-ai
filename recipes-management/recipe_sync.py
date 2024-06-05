@@ -13,15 +13,11 @@ from uuid import uuid4
 import pandas as pd
 from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
-from langchain_community.vectorstores.pgvector import PGVector
-from langchain_openai import (
-    AzureChatOpenAI,
-    AzureOpenAIEmbeddings,
-    ChatOpenAI,
-    OpenAIEmbeddings,
-)
-from skills import add_recipe_memory, call_llm
 from sqlalchemy import create_engine, text
+
+# These are copied in or mounted in docker from ../utils
+from utils.recipes import add_recipe_memory
+from utils.utils import call_llm
 
 logging.basicConfig(level=logging.INFO)
 
@@ -48,15 +44,6 @@ required_intent_fields = [
 ]
 
 environment = Environment(loader=FileSystemLoader("templates/"))
-
-CONNECTION_STRING = PGVector.connection_string_from_db_params(
-    driver=os.environ.get("POSTGRES_DRIVER", "psycopg2"),
-    host=os.environ.get("POSTGRES_RECIPE_HOST", "localhost"),
-    port=int(os.environ.get("POSTGRES_RECIPE_PORT", "5432")),
-    database=os.environ.get("POSTGRES_RECIPE_DB", "postgres"),
-    user=os.environ.get("POSTGRES_RECIPE_USER", "postgres"),
-    password=os.environ.get("POSTGRES_RECIPE_PASSWORD", "postgres"),
-)
 
 
 def connect_to_db(instance="recipe"):
@@ -666,56 +653,9 @@ def generate_openapi_from_function_code(function_code):
         ```{function_code}```
     """
 
-    _, chat = get_models()
     openapi_json = call_llm("", prompt)
     openapi_json = json.dumps(openapi_json, indent=4)
     return openapi_json
-
-
-# TODO this is same code as used in recipe manager action, need to refactor so there is only one instance
-def get_models():
-    api_key = os.getenv("RECIPES_OPENAI_API_KEY")
-    base_url = os.getenv("RECIPES_BASE_URL")
-    api_version = os.getenv("RECIPES_OPENAI_API_VERSION")
-    api_type = os.getenv("RECIPES_OPENAI_API_TYPE")
-    completion_model = os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME")
-
-    if api_type == "openai":
-        # print("Using OpenAI API in memory.py")
-        embedding_model = OpenAIEmbeddings(
-            api_key=api_key,
-            # model=completion_model
-        )
-        chat = ChatOpenAI(
-            # model_name="gpt-3.5-turbo",
-            model_name="gpt-3.5-turbo-16k",
-            api_key=api_key,
-            temperature=1,
-            max_tokens=1000,
-        )
-    elif api_type == "azure":
-        # print("Using Azure OpenAI API in memory.py")
-        embedding_model = AzureOpenAIEmbeddings(
-            api_key=api_key,
-            deployment=completion_model,
-            azure_endpoint=base_url,
-            chunk_size=16,
-        )
-        chat = AzureChatOpenAI(
-            api_key=api_key,
-            api_version=api_version,
-            azure_endpoint=base_url,
-            model_name="gpt-35-turbo",
-            # model_name="gpt-4-turbo",
-            # model="gpt-3-turbo-1106", # Model = should match the deployment name you chose for your 1106-preview model deployment
-            # response_format={ "type": "json_object" },
-            temperature=1,
-            max_tokens=1000,
-        )
-    else:
-        print("OPENAI API type not supported")
-        sys.exit(1)
-    return embedding_model, chat
 
 
 def generate_openapi_json(df):
@@ -1032,7 +972,8 @@ def create_new_recipe(recipe_intent, recipe_author):
 
     # Create new folder
     recipe_folder = os.path.join(
-        new_recipe_folder_name, recipe_intent.replace(" ", "_").lower()
+        new_recipe_folder_name,
+        recipe_intent.replace(" ", "_").lower().replace("(", "").replace(")", ""),
     )
 
     # Use a fixed template for the recipe code
