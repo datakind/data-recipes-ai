@@ -1016,6 +1016,10 @@ def create_new_recipe(recipe_intent, recipe_author):
     ) as file:
         file.write(prompt)
 
+    print("Running recipe to capture errors for LLM ...")
+    result = run_recipe(recipe_path)
+    print(result.stderr)
+
     # Save an empty cksum file
     with open(os.path.join(recipe_folder, "cksum.txt"), "w", encoding="utf-8") as file:
         file.write("")
