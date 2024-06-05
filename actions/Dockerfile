@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y procps nginx supervisor && \
 COPY actions/config/nginx.conf /etc/nginx/nginx.conf
 COPY actions/config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+
 # Setup user and permissions
 RUN useradd -m as-user
 RUN chown -R as-user:as-user /var/log /run /var/lib/nginx
@@ -27,6 +28,7 @@ ADD https://downloads.robocorp.com/action-server/releases/latest/linux64/action-
 RUN chmod +x /usr/local/bin/action-server
 
 COPY ./actions .
+COPY ./utils/ ./actions_plugins/recipe-server/utils
 
 RUN mkdir -p /action-server/actions/actions_plugins/recipe-server/images
 

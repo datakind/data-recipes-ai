@@ -1,4 +1,5 @@
 import argparse
+import base64
 import json
 import logging
 import os
@@ -7,167 +8,199 @@ import shutil
 import subprocess
 import sys
 from datetime import datetime
+from uuid import uuid4
 
 import pandas as pd
 from dotenv import load_dotenv
+from jinja2 import Environment, FileSystemLoader
 from sqlalchemy import create_engine, text
+
+# These are copied in or mounted in docker from ../utils
+from utils.recipes import add_recipe_memory
+from utils.utils import call_llm, connect_to_db
 
 logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
-# read the imports.txt file into a variable incl. linebreaks
-with open("imports.txt", "r") as file:
-    imports = file.read()
+# Where recipes will be checkout out or created
+checked_out_folder_name = "./work/checked_out"
+new_recipe_folder_name = checked_out_folder_name
+
+# String separating sample calling code and recipe functions
+code_separator = 'if __name__ == "__main__":'
+
+# Lower numbers are more similar
+similarity_cutoff = {"memory": 0.2, "recipe": 0.3, "helper_function": 0.1}
+
+# Fields an intent must have to be useful
+required_intent_fields = [
+    "action",
+    "visualization_type",
+    "output_format",
+    "data_types",
+    "filters",
+    "data_sources",
+]
+
+environment = Environment(loader=FileSystemLoader("templates/"))
 
 
-# ToDo: This function is taken from ingest.py. perhaps it should be moved to something like a utils.py file
-def connect_to_db():
+def get_recipes(force_checkout=False):
     """
-    Connects to the PostgreSQL database using the environment variables for host, port, database, user, and password.
-
-    Returns:
-        sqlalchemy.engine.base.Engine: The database connection engine.
-    """
-
-    # if is_running_in_docker():
-    #    print("Running in Docker ...")
-    #    host = os.getenv("POSTGRES_RECIPE_HOST")
-    # else:
-    #    host = "localhost"
-    host = "recipedb"
-    port = os.getenv("POSTGRES_RECIPE_PORT")
-    database = os.getenv("POSTGRES_RECIPE_DB")
-    user = os.getenv("POSTGRES_RECIPE_USER")
-    password = os.getenv("POSTGRES_RECIPE_PASSWORD")
-    conn_str = f"postgresql://{user}:{password}@{host}:{port}/{database}"
-    try:
-        conn = create_engine(conn_str)
-        return conn
-    except Exception as error:
-        print("--------------- Error while connecting to PostgreSQL", error)
-
-
-def get_memories(force_checkout=False):
-    """
-    Retrieves memories from the database.
-
-    Returns:
-        pandas.DataFrame: A DataFrame containing the retrieved memories.
-    """
-    conn = connect_to_db()
-    with conn.connect() as connection:
-        if force_checkout is False:
-            query = text(
-                "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding WHERE cmetadata->>'locked_at' = ''"
-            )
-        else:
-            query = text(
-                "SELECT custom_id, document, cmetadata FROM public.langchain_pg_embedding"
-            )
-        result = connection.execute(query)
-        result = result.fetchall()
-        memories = pd.DataFrame(result)
-        # If the dataset is empty, stop everything and return error
-        if memories.empty:
-            logging.error(
-                "No memories found in the database - this might be due to the fact that all memories are locked (because another recipe checker has them checked out)! You can overwrite this by using the --force_checkout flag, but this is not recommended."
-            )
-            sys.exit(1)
-        return memories
-
-
-def save_data(df):
-    """
-    Save data from a DataFrame to the file system.
+    Retrieves recipes from the database.
 
     Args:
-        df (pandas.DataFrame): The DataFrame containing the data to be saved.
+        force_checkout (bool, optional): If True, includes locked recipes in the result. Defaults to False.
+
+    Returns:
+        pandas.DataFrame: A DataFrame containing the retrieved recipes.
 
     Raises:
-        Exception: If there is an error while saving the data.
+        SystemExit: If no recipes are found in the database and force_checkout is False.
+    """
+    conn = connect_to_db(instance="recipe")
+    with conn.connect() as connection:
+        query = """
+            SELECT
+                lc.custom_id,
+                lc.document,
+                row_to_json(lr.*) as cmetadata
+            FROM
+                public.langchain_pg_embedding lc,
+                public.recipe lr
+            WHERE
+                lc.custom_id=lr.custom_id
+            ORDER BY
+                lr.created_by
+        """
+
+        if force_checkout is False:
+            query += "AND lr.locked_at = '' OR lr.locked_at IS NULL"
+
+        query = text(query)
+        result = connection.execute(query)
+        result = result.fetchall()
+        recipes = pd.DataFrame(result)
+        # If the dataset is empty, stop everything and return error
+        if recipes.empty:
+            logging.error(
+                "No recipes found in the database - this might be due to the fact that all recipes are locked (because another recipe checker has them checked out)! You can overwrite this by using the --force_checkout flag, but this is not recommended."
+            )
+            # sys.exit(1)
+        return recipes
+
+
+def get_folder_cksum(folder):
+    """
+    Get the checksum of the files in the folder.
+
+    Args:
+        folder (str): The path to the folder.
+
+    Returns:
+        str: The checksum of the files in the folder.
+    """
+
+    files = ["metadata.json", "recipe.py"]
+    files = [os.path.join(folder, file) for file in files]
+    result = subprocess.run(
+        ["cksum"] + files, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    return result
+
+
+def save_cksum(folder):
+    """
+    Save the checksum of the files in the folder.
+
+    Args:
+        folder (str): The path to the folder.
 
     Returns:
         None
     """
-    base_path = "./checked_out"
+
+    # Calculate the checksum of the files in the folder
+    result = get_folder_cksum(folder)
+
+    # Save the checksum to a file
+    with open(os.path.join(folder, "cksum.txt"), "w", encoding="utf-8") as file:
+        file.write(result.stdout.replace("./", ""))
+
+
+def save_data(df):
+    """
+    Save data from a DataFrame to files.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame containing the data to be saved.
+
+    Returns:
+        None
+    """
+
+    import_template = environment.get_template("imports_template.jinja2")
+    imports_content = import_template.render()
 
     # Iterate through each row in the DataFrame
     for index, row in df.iterrows():
         folder_name = row["document"].replace(" ", "_").lower()[:100]
         # Folder path for this row
-        folder_path = os.path.join(base_path, folder_name)
+        folder_path = os.path.join(checked_out_folder_name, folder_name)
 
         # Create the folder if it does not exist
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
         # Define file paths
-        record_info_path = os.path.join(folder_path, "record_info.json")
         metadata_path = os.path.join(folder_path, "metadata.json")
         recipe_code_path = os.path.join(folder_path, "recipe.py")
 
-        try:
-            # read relevant keys from metadata
-            metadata = row["cmetadata"]
-            if isinstance(metadata, str):
-                metadata = json.loads(metadata)
-            custom_id = row["custom_id"]
-            document = row["document"]
-            # if the metadata contains a response_text, save it as output
-            if "response_text" in metadata:
-                output = metadata["response_text"]
-            elif "response_image" in metadata:
-                output = metadata["response_image"]
-            try:
-                calling_code = metadata["calling_code"]
-                functions_code = metadata["functions_code"]
-                # if import it not already in the functions_code, add it with a linebreak
-                if imports not in functions_code:
-                    functions_code = imports + "\n\n" + functions_code
-                # Concatenate functions_code and calling_code into recipe code
-                recipe_code = (
-                    f"{functions_code}\n\n" f"# Calling code:\n{calling_code}\n\n"
-                )
+        # read relevant keys from metadata
+        metadata = row["cmetadata"]
+        if isinstance(metadata, str):
+            metadata = json.loads(metadata)
+        document = row["document"]
+        calling_code = metadata["sample_call"]
+        function_code = metadata["function_code"]
+        # if import it not already in the function_code, add it with a linebreak
+        if "from skills import *" not in function_code:
+            function_code = imports_content + "\n\n" + function_code
+        # Concatenate function_code and calling_code into recipe code
+        recipe_code = f"{function_code}\n\n" f"{code_separator}\n{calling_code}\n\n"
 
-                # Save the recipe code
-                with open(recipe_code_path, "w", encoding="utf-8") as file:
-                    file.write(recipe_code)
+        # Make max number blank lines in a row as 3
+        recipe_code = re.sub(r"\n{4,}", "\n\n\n", recipe_code)
 
-            except KeyError:
-                logging.info(f"Record '{folder_name}' doesn't contain any code!")
+        # Save the recipe code
+        with open(recipe_code_path, "w", encoding="utf-8") as file:
+            file.write(recipe_code)
 
-            # Create a dictionary with the variables
-            record = {"custom_id": custom_id, "document": document, "output": output}
+        # Add intent to metadata, useful later on
+        metadata["intent"] = document
 
-            # Convert the dictionary to a JSON string
-            json_record = json.dumps(record, indent=4)
+        # Save the metadata; assuming it's a JSON string, we write it directly
+        with open(metadata_path, "w", encoding="utf-8") as file:
+            json_data = json.dumps(metadata, indent=4)
+            file.write(json_data)
 
-            # Save files
-            with open(record_info_path, "w", encoding="utf-8") as file:
-                file.write(json_record)
-
-            # Save the metadata; assuming it's a JSON string, we write it directly
-            with open(metadata_path, "w", encoding="utf-8") as file:
-                json_data = json.dumps(metadata, indent=4)
-                file.write(json_data)
-
-        except Exception as e:
-            logging.error(f"Error while saving data for row {index}: {e}")
+        # Save the checksum of the files
+        save_cksum(folder_path)
 
 
 def format_code_with_black():
     """
     Formats the code in the current directory using the Black code formatter.
 
-    This function runs the Black command-line tool on the current directory to automatically format the code.
-    It uses the `subprocess` module to execute the Black command and captures the output.
+    This function runs the Black command-line tool on the current directory
+    with the `--force-exclude` option set to an empty string. The `--force-exclude`
+    option is used to exclude any files or directories from being formatted by Black.
 
-    Returns:
-        None
+    Note: Make sure you have Black installed before running this function.
 
-    Raises:
-        None
+    Example usage:
+        format_code_with_black()
     """
     # Define the command to run black on the current directory with --force-exclude ''
     command = ["black", ".", "--force-exclude", ""]
@@ -180,18 +213,17 @@ def format_code_with_black():
 
 def lock_records(df, locker_name):
     """
-    Locks records in the database by setting the 'locked_by' and 'locked_at' fields
-    within the 'cmetadata' JSON column for all 'custom_id' values in the DataFrame.
+    Locks the records in the 'public.langchain_pg_embedding' table by updating the 'cmetadata' column.
 
     Args:
-        df (pandas.DataFrame): DataFrame containing the 'custom_id' values to lock.
-        locker_name (str): Name of the user locking the records.
+        df (DataFrame): The DataFrame containing the records to be locked.
+        locker_name (str): The name of the locker.
 
     Returns:
         None
     """
     # Connect to the database
-    conn = connect_to_db()
+    conn = connect_to_db(instance="recipe")
 
     # Get the current timestamp
     current_time = (
@@ -200,61 +232,48 @@ def lock_records(df, locker_name):
 
     # Prepare the SQL query
     query = f"""
-    UPDATE public.langchain_pg_embedding
-    SET cmetadata = jsonb_set(
-        jsonb_set(
-            cmetadata::jsonb,
-            '{{locked_by}}',
-            '\"{locker_name}\"'
-        ),
-        '{{locked_at}}',
-        '\"{current_time}\"'
-    );
+    UPDATE public.recipe
+    SET locked_by = '{locker_name}', locked_at = '{current_time}'
     """
 
     query = text(query)
-    # Execute the query within a transaction context
-    try:
-        with conn.connect() as connection:
-            with connection.begin():
-                connection.execute(query)
-    except Exception as e:
-        print(f"Error occurred: {e}")
+    with conn.connect() as connection:
+        with connection.begin():
+            connection.execute(query)
 
 
 def clone_file(source_path, dest_path):
     """
-    Clones a JSON file from source_path to dest_path.
+    Clones a file from the source path to the destination path.
 
     Args:
-        source_path (str): Path to the source JSON file.
-        dest_path (str): Path to the destination JSON file.
+        source_path (str): The path of the source file to be cloned.
+        dest_path (str): The path where the cloned file will be saved.
 
     Raises:
         FileNotFoundError: If the source file does not exist.
-        IOError: If the file cannot be read or written.
+
     """
     if not os.path.exists(source_path):
         raise FileNotFoundError(f"Source file {source_path} does not exist.")
 
-    try:
-        with open(source_path, "r", encoding="utf-8") as src_file:
-            data = src_file.read()
-        with open(dest_path, "w", encoding="utf-8") as dest_file:
-            dest_file.write(data)
-    except IOError as e:
-        raise IOError(f"Error copying file: {e}")
+    with open(source_path, "r", encoding="utf-8") as src_file:
+        data = src_file.read()
+    with open(dest_path, "w", encoding="utf-8") as dest_file:
+        dest_file.write(data)
 
 
 def extract_code_sections(recipe_path):
     """
-    Extracts the code sections from the recipe.py file.
+    Extracts the function code and calling code sections from a recipe file.
 
     Args:
-        recipe_path (str): Path to the recipe.py file.
+        recipe_path (str): The path to the recipe file.
 
     Returns:
-        dict: A dictionary with 'functions_code' and 'calling_code' as keys.
+        dict: A dictionary containing the extracted function code and calling code sections.
+            The function code section is stored under the key "function_code",
+            and the calling code section is stored under the key "calling_code".
 
     Raises:
         FileNotFoundError: If the recipe file does not exist.
@@ -263,241 +282,1146 @@ def extract_code_sections(recipe_path):
     if not os.path.exists(recipe_path):
         raise FileNotFoundError(f"Recipe file {recipe_path} does not exist.")
 
-    try:
-        with open(recipe_path, "r", encoding="utf-8") as file:
-            content = file.read()
+    with open(recipe_path, "r", encoding="utf-8") as file:
+        content = file.read()
 
-        functions_code_match = re.search(
-            r"^(.*?)(?=# Calling code:)", content, re.DOTALL
+    if "__name__" not in content:
+        raise ValueError(
+            f"Code separator '{code_separator}' not found in the recipe file '{recipe_path}'."
         )
-        calling_code_match = re.search(r"# Calling code:\s*(.*)", content, re.DOTALL)
+        sys.exit()
 
-        if not functions_code_match or not calling_code_match:
-            raise ValueError("Required sections not found in the recipe file.")
+    content = content.split("\n")
 
-        return {
-            "functions_code": functions_code_match.group(1).strip(),
-            "calling_code": calling_code_match.group(1).strip(),
-        }
-    except IOError as e:
-        raise IOError(f"Error reading recipe file: {e}")
+    # Find the line containing '__name__'
+    split_index = next(
+        (i for i, line in enumerate(content) if "__name__" in line), None
+    )
+
+    # If the line is found, split the content into two parts
+    if split_index is not None:
+        before_name = content[:split_index]
+        after_name = content[split_index + 1 :]
+    else:
+        before_name = content
+        after_name = []
+
+    # Convert lists back to strings
+    function_code = "\n".join(before_name)
+    calling_code = "\n".join(after_name)
+
+    if function_code is None or calling_code is None:
+        raise ValueError(
+            f"Function code or calling code not found in the recipe file '{recipe_path}'."
+        )
+        sys.exit()
+
+    return {
+        "function_code": function_code,
+        "calling_code": calling_code,
+    }
 
 
-def update_metadata_file(metadata_path, code_sections):
+def add_code_to_metadata(metadata_path, code_sections):
     """
-    Updates the functions_code and calling_code fields in the metadata file.
+    Update the metadata file with the provided code sections.
 
     Args:
-        metadata_path (str): Path to the metadata file.
-        code_sections (dict): A dictionary with 'functions_code' and 'calling_code' as keys.
+        metadata_path (str): The path to the metadata file.
+        code_sections (dict): A dictionary containing the code sections to update.
 
     Raises:
         FileNotFoundError: If the metadata file does not exist.
-        IOError: If the file cannot be read or written.
-        json.JSONDecodeError: If the metadata file is not a valid JSON.
+
+    Returns:
+        None
     """
     if not os.path.exists(metadata_path):
         raise FileNotFoundError(f"Metadata file {metadata_path} does not exist.")
 
     # if code sections are empty, do not update the metadata file
-    if not code_sections["functions_code"] and not code_sections["calling_code"]:
+    if not code_sections["function_code"] and not code_sections["calling_code"]:
         logging.info(
             f"No code sections found in the recipe file. Skipping metadata update for record {metadata_path}."
         )
         return
-    try:
-        with open(metadata_path, "r", encoding="utf-8") as file:
-            metadata = json.load(file)
+    with open(metadata_path, "r", encoding="utf-8") as file:
+        metadata = json.load(file)
 
-        metadata["functions_code"] = code_sections["functions_code"]
-        metadata["calling_code"] = code_sections["calling_code"]
+    metadata["function_code"] = code_sections["function_code"]
+    metadata["sample_call"] = code_sections["calling_code"]
 
-        with open(metadata_path, "w", encoding="utf-8") as file:
-            json.dump(metadata, file, indent=4)
-    except IOError as e:
-        raise IOError(f"Error reading or writing metadata file: {e}")
-    except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(f"Invalid JSON in metadata file: {e}")
+    with open(metadata_path, "w", encoding="utf-8") as file:
+        json.dump(metadata, file, indent=4)
 
 
-def merge_metadata_with_record(new_metadata_path, new_record_path):
+def update_metadata_file(directory):
     """
-    Merges the metadata content into the record content as a 'metadata' key.
+    Adds updated files to the specified directory.
 
-    Args:
-        new_metadata_path (str): Path to the new metadata file.
-        new_record_path (str): Path to the new record file.
+    Parameters:
+    - directory (str): The directory where the files will be added.
 
-    Raises:
-        FileNotFoundError: If the new metadata file or new record file does not exist.
-        IOError: If the file cannot be read or written.
-        json.JSONDecodeError: If the metadata or record file is not a valid JSON.
+    Returns:
+    - None
     """
-    if not os.path.exists(new_metadata_path):
-        raise FileNotFoundError(
-            f"New metadata file {new_metadata_path} does not exist."
-        )
-    if not os.path.exists(new_record_path):
-        raise FileNotFoundError(f"New record file {new_record_path} does not exist.")
-
-    try:
-        with open(new_metadata_path, "r", encoding="utf-8") as metadata_file:
-            metadata = json.load(metadata_file)
-
-        with open(new_record_path, "r", encoding="utf-8") as record_file:
-            record = json.load(record_file)
-
-        # Include the entire metadata content as a 'metadata' key in the record
-        record["metadata"] = metadata
-
-        with open(new_record_path, "w", encoding="utf-8") as record_file:
-            json.dump(record, record_file, indent=4)
-    except IOError as e:
-        raise IOError(f"Error reading or writing file: {e}")
-    except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(f"Invalid JSON in file: {e}")
-
-
-def add_updated_files(directory):
-    """
-    Process a single directory to clone and update the metadata file.
-
-    Args:
-        directory (str): Path to the directory to process.
-    """
-    source_metadata_path = os.path.join(directory, "metadata.json")
-    new_metadata_path = os.path.join(directory, "metadata_new.json")
+    metadata_path = os.path.join(directory, "metadata.json")
     recipe_path = os.path.join(directory, "recipe.py")
-    source_record_path = os.path.join(directory, "record_info.json")
-    new_record_path = os.path.join(directory, "record_info_new.json")
 
-    # Clone the metadata file
-    clone_file(source_metadata_path, new_metadata_path)
+    # Extract code sections from recipe.py
+    code_sections = extract_code_sections(recipe_path)
 
-    # Clone the record file
-    clone_file(source_record_path, new_record_path)
+    # Update the new metadata file with the extracted code sections
+    add_code_to_metadata(metadata_path, code_sections)
 
-    try:
-        # Extract code sections from recipe.py
-        code_sections = extract_code_sections(recipe_path)
+    # Here update metadata outputs
 
-        # Update the new metadata file with the extracted code sections
-        update_metadata_file(new_metadata_path, code_sections)
+    with open(metadata_path, "r") as file:
+        metadata = json.load(file)
 
-    except (FileNotFoundError, IOError, ValueError, json.JSONDecodeError):
-        logging.info(f"Record '{directory}' doesn't contain any code!")
-
-    # Merge the updated metadata into the new record file
-    merge_metadata_with_record(new_metadata_path, new_record_path)
+    return metadata
 
 
-def update_database(df: pd.DataFrame, approver: str):
+def insert_records_in_db(df, approver):
     """
-    Updates the database with the values from the DataFrame and sets additional columns.
+    Inserts the recipe records in the database with the provided metadata.
 
     Args:
-        df (pandas.DataFrame): DataFrame containing the values to update.
-        approver (str): Name of the approver.
+        metadata (dict): The metadata to insert.
 
     Returns:
         None
     """
-    engine = connect_to_db()
+    engine = connect_to_db(instance="recipe")
 
     query_template = text(
         """
-        UPDATE langchain_pg_embedding
-        SET document = :document,
-            cmetadata = :metadata
-        WHERE custom_id = :custom_id
+        INSERT INTO
+            recipe (
+                custom_id,
+                function_code,
+                description,
+                openapi_json,
+                datasets,
+                python_packages,
+                used_recipes_list,
+                sample_call,
+                sample_result,
+                sample_result_type,
+                source,
+                created_by,
+                updated_by,
+                last_updated,
+                approval_status,
+                approver,
+                approval_latest_update
+        )
+        VALUES (
+            :custom_id,
+            :function_code,
+            :description,
+            :openapi_json,
+            :datasets,
+            :python_packages,
+            :used_recipes_list,
+            :sample_call,
+            :sample_result,
+            :sample_result_type,
+            :source,
+            :created_by,
+            :updated_by,
+            NOW(),
+            'approved',
+            :created_by,
+            NOW()
+        )
         """
     )
-    try:
-        with engine.connect() as conn:
-            trans = conn.begin()
-            for index, row in df.iterrows():
-                try:
-                    print(row)
-                    metadata_json = (
-                        json.dumps(row["metadata"])
-                        if isinstance(row["metadata"], dict)
-                        else row["metadata"]
-                    )
 
-                    params = {
-                        "document": row["document"],
-                        "metadata": metadata_json,
-                        "custom_id": row["custom_id"],
-                    }
+    with engine.connect() as conn:
+        trans = conn.begin()
+        for index, row in df.iterrows():
+            metadata = row
+            response = add_recipe_memory(
+                intent=metadata["intent"],
+                metadata={"mem_type": "recipe"},
+                mem_type="recipe",
+            )
+            if "already_exists" in response:
+                print(response)
+                print(
+                    "\nCannot add this recipe, a very similar one already exists. Aborting operation"
+                )
+                continue
 
-                    conn.execute(query_template, params)
-                except KeyError as ke:
-                    logging.error(
-                        f"Skipping record at index {index} due to missing field: {ke}"
-                    )
-                except Exception as e:
-                    logging.error(f"Error updating record at index {index}: {e}")
-            trans.commit()
-    except Exception as e:
-        logging.error(f"Error updating records: {e}")
+            custom_id = response[0]
+
+            # Now insert into recipe table
+            params = {
+                "custom_id": custom_id,
+                "function_code": metadata["function_code"],
+                "description": metadata["description"],
+                "openapi_json": str(metadata["openapi_json"]),
+                "datasets": metadata["datasets"],
+                "python_packages": metadata["python_packages"],
+                "used_recipes_list": metadata["used_recipes_list"],
+                "sample_call": metadata["sample_call"],
+                "sample_result": metadata["sample_result"],
+                "sample_result_type": metadata["sample_result_type"],
+                "source": metadata["source"],
+                "created_by": approver,
+                "updated_by": approver,
+                "intent": metadata["intent"],
+            }
+            conn.execute(query_template, params)
+
+        print("Committing changes to the database")
+        trans.commit()
 
 
-def check_out(recipe_checker="Mysterious Recipe Checker", force_checkout=False):
+def update_records_in_db(df, approver):
     """
-    This is the check out function that executes the check out process.
-    It retrieves memories, saves data, and formats the code using black.
+    Updates the recipe record in the database with the provided metadata.
+
+    Args:
+        metadata (dict): The metadata to update.
+        custom_id (str): The custom_id of the record to update.
+
+    Returns:
+        None
     """
-    memories = get_memories(force_checkout=force_checkout)
-    lock_records(df=memories, locker_name=recipe_checker)
-    save_data(memories)
+    engine = connect_to_db(instance="recipe")
+
+    query_template = text(
+        """
+        UPDATE
+            recipe
+        SET
+            function_code = :function_code,
+            description = :description,
+            openapi_json = :openapi_json,
+            datasets = :datasets,
+            python_packages = :python_packages,
+            used_recipes_list = :used_recipes_list,
+            sample_call = :sample_call,
+            sample_result = :sample_result,
+            sample_result_type = :sample_result_type,
+            source = :source,
+            updated_by = :updated_by,
+            last_updated = NOW(),
+            approval_status = 'approved',
+            approver = :updated_by,
+            approval_latest_update = NOW()
+        WHERE
+            custom_id = :custom_id
+        """
+    )
+
+    with engine.connect() as conn:
+
+        trans = conn.begin()
+        for index, row in df.iterrows():
+            metadata = row
+            params = {
+                "function_code": metadata["function_code"],
+                "description": metadata["description"],
+                "openapi_json": str(metadata["openapi_json"]),
+                "datasets": metadata["datasets"],
+                "python_packages": metadata["python_packages"],
+                "used_recipes_list": metadata["used_recipes_list"],
+                "sample_call": metadata["sample_call"],
+                "sample_result": metadata["sample_result"],
+                "sample_result_type": metadata["sample_result_type"],
+                "source": metadata["source"],
+                "updated_by": approver,
+                "custom_id": row["custom_id"],
+            }
+            conn.execute(query_template, params)
+
+        print("Committing changes to the database")
+        trans.commit()
+
+
+def update_database(df: pd.DataFrame, approver: str):
+    """
+    Updates the recipe records in the database with the provided DataFrame.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the recipe data to update.
+        approver (str): The name of the user who is approving the update.
+
+    Returns:
+        None
+    """
+
+    # Get list of custom_ids in table recipe
+    query = text(
+        """
+        SELECT
+            custom_id
+        FROM
+            recipe
+        """
+    )
+    conn = connect_to_db(instance="recipe")
+    with conn.connect() as connection:
+        result = connection.execute(query)
+        result = result.fetchall()
+        result = pd.DataFrame(result)
+        if not result.empty:
+            custom_ids = result["custom_id"].tolist()
+            custom_ids = [str(custom_id) for custom_id in custom_ids]
+        else:
+            custom_ids = []
+
+    update_ids = []
+    insert_ids = []
+    for index, row in df.iterrows():
+        if "custom_id" not in row:
+            insert_ids.append(index)
+        else:
+            custom_id = str(row["custom_id"])
+            if custom_id in custom_ids:
+                update_ids.append(index)
+            else:
+                insert_ids.append(index)
+
+    if len(update_ids) > 0:
+        print(f"Proceeding with update of {len(update_ids)} records in the database")
+        update_df = df.iloc[update_ids]
+        update_records_in_db(update_df, approver)
+
+    if len(insert_ids) > 0:
+        print(f"Proceeding with insert of {len(insert_ids)} records in the database")
+        insert_df = df.iloc[insert_ids]
+        insert_records_in_db(insert_df, approver)
+
+
+def check_out(recipe_author="Mysterious Recipe Checker", force_checkout=False):
+    """
+    Checks out recipes for editing.
+
+    Args:
+        recipe_author (str): The name of the recipe checker.
+        force_checkout (bool): Whether to force checkout the recipes.
+
+    Returns:
+        None
+    """
+    recipes = get_recipes(force_checkout=force_checkout)
+    lock_records(df=recipes, locker_name=recipe_author)
+    save_data(recipes)
     format_code_with_black()
 
 
-def check_in(recipe_checker="Mysterious Recipe Checker"):
+def generate_openapi_from_function_code(function_code):
+    """
+    Generate OpenAPI JSON from function code.
+
+    Args:
+        function_code (str): The function code.
+
+    Returns:
+        dict: The OpenAPI JSON generated from the function code.
+    """
+
+    prompt = f"""
+        Generate openapi.json JSON for the code below.
+
+        ```{function_code}```
+    """
+
+    openapi_json = call_llm("", prompt)
+    openapi_json = json.dumps(openapi_json, indent=4)
+    return openapi_json
+
+
+def generate_openapi_json(df):
+    """
+    Generate OpenAPI JSON from function_code.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the recipe data.
+
+    Returns:
+        pd.DataFrame: The DataFrame with the OpenAPI JSON added.
+    """
+    for index, row in df.iterrows():
+        function_code = row["function_code"]
+        openapi_json = generate_openapi_from_function_code(function_code)
+        df.at[index, "openapi_json"] = openapi_json
+
+    return df
+
+
+def compare_cksums(folder):
+    """
+    Compare the old and new checksums.
+
+    Args:
+        folder (str): Folder where files and old cksum are
+
+    Returns:
+        bool: True if the checksums match, False otherwise.
+    """
+    # get cksums of files in the directory
+    new_cksum = get_folder_cksum(folder)
+    new_cksum = new_cksum.stdout
+
+    # read the cksum.txt file into a variable
+    cksum_path = os.path.join(folder, "cksum.txt")
+
+    if os.path.exists(cksum_path):
+        with open(cksum_path, "r") as file:
+            old_cksum = file.read()
+
+        new_cksum = new_cksum.replace("./", "")
+
+        if old_cksum == new_cksum:
+            # print(f"No changes detected in {folder}")
+            return True
+        else:
+            print(f"Changes detected in {folder}")
+            return False
+
+
+def delete_recipe(recipe_custom_id):
+    """
+    Delete a recipe by custom_id
+
+    Args:
+        recipe_custom_id (str): The custom_id of the recipe to delete
+
+    Returns:
+        None
+    """
+    engine = connect_to_db(instance="recipe")
+    with engine.connect() as conn:
+        trans = conn.begin()
+
+        for table in ["langchain_pg_embedding", "recipe"]:
+
+            query = f"""
+                DELETE FROM
+                    public.{table}
+                WHERE
+                    custom_id = '{recipe_custom_id}'
+            """
+            query = text(query)
+            conn.execute(query)
+        trans.commit()
+    print(f"Recipe with custom_id {recipe_custom_id} deleted from the database.")
+
+
+def unlock_records(recipe_author):
+    """
+    Clear locked records in the 'public.langchain_pg_embedding' table.
+
+    Args:
+        recipe_author (str): The name of the recipe checker.
+
+    Returns:
+        None
+    """
+    conn = connect_to_db(instance="recipe")
+    query = f"""
+        UPDATE public.recipe
+        SET locked_by = '', locked_at = ''
+        WHERE locked_by = '{recipe_author}'
+    """
+    query = text(query)
+    with conn.connect() as connection:
+        with connection.begin():
+            connection.execute(query)
+            print(f"Locked records cleared for recipe checker {recipe_author}.")
+
+
+def check_in(recipe_author="Mysterious Recipe Checker"):
     """
     Check in function to process each subdirectory in the checked_out directory.
     """
-    base_directory = "checked_out"
 
     # delete pycache if it exists
-    pycache_path = os.path.join(base_directory, "__pycache__")
+    pycache_path = os.path.join(checked_out_folder_name, "__pycache__")
     if os.path.exists(pycache_path):
         shutil.rmtree(pycache_path)
 
-    if not os.path.exists(base_directory):
-        print(f"Base directory {base_directory} does not exist.")
+    if not os.path.exists(checked_out_folder_name):
+        print(f"Base directory {checked_out_folder_name} does not exist.")
         return
 
     records = []
+    cksums_to_update = []
 
-    for subdir in os.listdir(base_directory):
-        subdir_path = os.path.join(base_directory, subdir)
+    for subdir in os.listdir(checked_out_folder_name):
+        subdir_path = os.path.join(checked_out_folder_name, subdir)
         if os.path.isdir(subdir_path):
-            add_updated_files(subdir_path)
-            new_record_path = os.path.join(subdir_path, "record_info_new.json")
 
-            if os.path.exists(new_record_path):
-                try:
-                    with open(new_record_path, "r", encoding="utf-8") as file:
-                        record = json.load(file)
-                        records.append(record)
-                    # delete the subdirectory and all its contents
-                    shutil.rmtree(subdir_path)
-                except (IOError, json.JSONDecodeError) as e:
-                    print(f"Error reading {new_record_path}: {e}")
+            # Skip if the checksums match
+            if compare_cksums(subdir_path):
+                continue
+
+            record = update_metadata_file(subdir_path)
+            records.append(record)
+            cksums_to_update.append(subdir_path)
 
     # Create a DataFrame from the list of records
     records_to_check_in = pd.DataFrame(records)
+
+    # Generate openapi_json from function_code
+    records_to_check_in = generate_openapi_json(records_to_check_in)
+
     # Update database
-    update_database(df=records_to_check_in, approver=recipe_checker)
+    if records_to_check_in.empty:
+        print("Nothing changed, no records to check in.")
+    else:
+        update_database(df=records_to_check_in, approver=recipe_author)
+        for subdir in cksums_to_update:
+            save_cksum(subdir)
+        unlock_records(recipe_author)
+
+
+def get_data_info():
+    """
+    Get data info from the database.
+
+    Returns:
+        str: The data info.
+    """
+    db = connect_to_db(instance="data")
+
+    # run this query: select table_name, summary, columns from table_metadata
+
+    query = text(
+        """
+        SELECT
+            table_name,
+            summary,
+            columns
+        FROM
+            table_metadata
+        --WHERE
+        --    countries is not null
+        """
+    )
+
+    with db.connect() as connection:
+        result = connection.execute(query)
+        result = result.fetchall()
+        result = pd.DataFrame(result)
+        data_info = result.to_json(orient="records")
+
+    data_info = json.dumps(json.loads(data_info), indent=4)
+
+    return data_info
+
+
+def llm_generate_new_recipe_code(recipe_intent, imports_content):
+    """
+    Generate new recipe code using LLM.
+
+    Args:
+        recipe_intent (str): The intent of the recipe.
+        imports_content (str): The content of the imports
+
+    Returns:
+        str: The generated recipe code.
+    """
+
+    data_info = get_data_info()
+
+    coding_standards_template = environment.get_template("coding_standards.jinja2")
+    coding_standards = coding_standards_template.render()
+
+    new_recipe_code_template = environment.get_template("new_recipe_code_prompt.jinja2")
+    prompt = new_recipe_code_template.render(
+        imports=imports_content,
+        recipe_intent=recipe_intent,
+        data_info=data_info,
+        coding_standards=coding_standards,
+    )
+
+    print("Calling LLM to generate recipe starting code ...")
+    response = call_llm("", prompt)
+
+    code = response["code"]
+    comment = response["message"]
+
+    return code, comment, prompt
+
+
+def generate_intent_short_form(intent_long_form):
+    """
+    Generate short form and check if recipe intent has all required fields.
+
+    Will abort if required fields missing.
+
+    Aim of this function is to try and stardize somewhat inptent layout.
+
+    Args:
+        recipe_intent (dict): The long-form intent of the recipe.
+
+    Returns:
+        intent_short_form (str): The intent in short form.
+
+
+    """
+    intent_template = environment.get_template("intent_short_form_prompt.jinja2")
+    prompt = intent_template.render(intent_long_form=intent_long_form)
+
+    print("Calling LLM to generate short_form intent ...")
+    intent = call_llm("", prompt)
+    intent = intent["content"]
+
+    return intent
+
+
+def check_for_missing_intent_entities(recipe_intent):
+    """
+    Check if recipe intent has all required fields.
+
+    Will abort if required fields missing.
+
+    Args:
+        recipe_intent (dict): The long-form intent of the recipe.
+
+    Returns:
+        None
+
+    """
+    populated_fields = []
+    for f in recipe_intent:
+        val = recipe_intent[f]
+        if f == "filters":
+            has_filter = False
+            for f2 in val:
+                if f2["field"] != "":
+                    has_filter = True
+                    break
+            if has_filter is False:
+                val = ""
+        if f in ["data_sources", "data_types"]:
+            if str(val) == "['']":
+                val = ""
+
+        if val != "":
+            populated_fields.append(f)
+
+    for f in required_intent_fields:
+        if f not in populated_fields:
+            print(recipe_intent)
+            raise ValueError(
+                f"\n\n     !!!!!!Required intent field {f} is empty, be more specific in your intent"
+            )
+
+
+def generate_intent_long_format(recipe_intent):
+    """
+    Generate an intent from the user's input in standard intent format.
+
+    Args:
+        recipe_intent (str): The intent of the recipe.
+
+    Returns:
+        str: The generated intent in standard format.
+    """
+
+    intent_template = environment.get_template("intent_long_form_prompt.jinja2")
+    prompt = intent_template.render(user_input=recipe_intent)
+
+    print("Calling LLM to generate long form intent ...")
+    recipe_intent = call_llm("", prompt)
+
+    check_for_missing_intent_entities(recipe_intent)
+
+    return recipe_intent
+
+
+def create_new_recipe(recipe_intent, recipe_author):
+
+    # Render jinja templates
+    import_template = environment.get_template("imports_template.jinja2")
+    imports_content = import_template.render()
+
+    # Generate an intent from the user's input in standard intent format
+    intent_long_format = generate_intent_long_format(recipe_intent)
+
+    recipe_intent = generate_intent_short_form(intent_long_format)
+
+    # Create new folder
+    recipe_folder = os.path.join(
+        new_recipe_folder_name,
+        recipe_intent.replace(" ", "_").lower().replace("(", "").replace(")", ""),
+    )
+
+    # Use a fixed template for the recipe code
+    # new_recipe_code_template = environment.get_template("new_recipe_code_template.jinja2")
+    # code_content = new_recipe_code_template.render(
+    #    imports=imports_content,
+    #    recipe_intent=recipe_intent
+    # )
+
+    # Generate recipe code using LLM single-shot. Later this can go to AI team
+    code_content, comment, prompt = llm_generate_new_recipe_code(
+        recipe_intent, imports_content
+    )
+
+    print(f"LLM generated code with this comment: {comment}")
+
+    new_recipe_metadata_template = environment.get_template(
+        "new_recipe_metadata_template.jinja2"
+    )
+    metadata_content = new_recipe_metadata_template.render(
+        custom_id=uuid4(),
+        recipe_intent=recipe_intent,
+        recipe_author=recipe_author,
+        intent_long_format=intent_long_format,
+    )
+
+    os.makedirs(recipe_folder, exist_ok=True)
+
+    # Write content to recipe.py file
+    recipe_path = os.path.join(recipe_folder, "recipe.py")
+    with open(recipe_path, "w", encoding="utf-8") as recipe_file:
+        recipe_file.write(code_content)
+    metadata_path = os.path.join(recipe_folder, "metadata.json")
+    with open(metadata_path, "w", encoding="utf-8") as metadata_file:
+        metadata_file.write(metadata_content)
+
+    # Save the prompt to a recipe folder
+    with open(
+        os.path.join(recipe_folder, "prompt_generation.txt"), "w", encoding="utf-8"
+    ) as file:
+        file.write(prompt)
+
+    print("Running recipe to capture errors for LLM ...")
+    result = run_recipe(recipe_path)
+    print(result.stderr)
+
+    # If there was an error, call edit recipe to try and fix it one round
+    if result.returncode != 0:
+        print("My code didn't work, trying to fix it ...")
+        llm_edit_recipe(recipe_path, result.stderr, recipe_author)
+
+    # Save an empty cksum file
+    with open(os.path.join(recipe_folder, "cksum.txt"), "w", encoding="utf-8") as file:
+        file.write("")
+
+
+def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
+
+    recipe_folder = os.path.dirname(recipe_path)
+
+    with open(recipe_path, "r") as file:
+        recipe_code = file.read()
+
+    # Automatically run recipe to get errors and output
+    print("Running recipe to capture errors for LLM ...")
+    result = run_recipe(recipe_path)
+    stderr_output = result.stderr
+    stdout_output = result.stdout
+
+    data_info = get_data_info()
+
+    edit_recipe_code_template = environment.get_template(
+        "edit_recipe_code_prompt.jinja2"
+    )
+
+    coding_standards_template = environment.get_template("coding_standards.jinja2")
+    coding_standards = coding_standards_template.render()
+
+    prompt = edit_recipe_code_template.render(
+        llm_prompt=llm_prompt,
+        recipe_code=recipe_code,
+        stderr_output=stderr_output,
+        stdout_output=stdout_output,
+        data_info=data_info,
+        coding_standards=coding_standards,
+    )
+    with open(
+        os.path.join(recipe_folder, "prompt_modify.txt"), "w", encoding="utf-8"
+    ) as file:
+        file.write(prompt)
+
+    print("Calling LLM to generate recipe code ...")
+    response = call_llm("", prompt)
+    code = response["code"]
+    comment = response["message"]
+
+    print(f"\n\nLLM Gave this comment when generating code: \n\n{comment}\n\n")
+
+    # Copy recip.py to recipe.bak.py
+    recipe_bak_path = os.path.join(recipe_folder, "recipe.bak.py")
+    clone_file(recipe_path, recipe_bak_path)
+
+    # Write content to recipe.py file
+    with open(recipe_path, "w") as recipe_file:
+        recipe_file.write(code)
+
+    # Update metadata file
+    metadata_path = os.path.join(recipe_folder, "metadata.json")
+    with open(metadata_path, "r") as file:
+        metadata = json.load(file)
+
+    metadata["updated_by"] = recipe_author
+    metadata["last_updated"] = datetime.now().isoformat()
+
+    with open(metadata_path, "w", encoding="utf-8") as metadata_file:
+        json.dump(metadata, metadata_file, indent=4)
+
+    print("Running recipe with the new code ...")
+    result = run_recipe(recipe_path)
+    stderr_output = result.stderr
+    stdout_output = result.stdout
+
+    print("\n\nRecipe editing done")
+
+
+def update_metadata_file_results(recipe_folder, result):
+    """
+    Update the metadata file for a given recipe folder with the provided result.
+
+    Args:
+        recipe_folder (str): The path to the recipe folder.
+        result (subprocess.CompletedProcess): The result of a subprocess command.
+
+    Returns:
+        None
+    """
+    metadata_path = os.path.join(recipe_folder, "metadata.json")
+    print(f"Updating metadata file with recipe sample call results: {metadata_path}")
+
+    with open(metadata_path, "r") as file:
+        metadata = json.load(file)
+
+    # Remove any lines starting with DEBUG
+    result.stdout = re.sub(r"DEBUG.*\n", "", result.stdout)
+
+    if ".png" in result.stdout:
+
+        # See if result.stdout is a JSON file, if so extract "file"
+        try:
+            result = json.loads(str(result.stdout))
+            png_file = result["file"]
+        except json.JSONDecodeError:
+            print("Extract png file location from stdout")
+            png_file = re.search(r"(\w+\.png)", result.stdout).group(1)
+
+        # does png exist?
+        if not os.path.exists(png_file):
+
+            # Is it in working directory?
+            if os.path.exists(os.path.join("./work", png_file)):
+                png_file = os.path.join("./work", png_file)
+            else:
+                print(f"PNG file {png_file} does not exist, skipping metadata update")
+                return
+
+        # Move png file to recipe folder
+        png_file_basename = os.path.basename(png_file)
+        png_file_path = os.path.join(recipe_folder, png_file_basename)
+        print(f"Moving {png_file} to {png_file_path}")
+        shutil.move(png_file, png_file_path)
+
+        with open(png_file_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode()
+            metadata["sample_result"] = encoded_string
+            metadata["sample_result_type"] = "image"
+
+            # Valid with GPT-4o
+            if os.getenv("RECIPES_MODEL") == "gpt-4o":
+                image_validation_prompt = environment.get_template(
+                    "image_validation_prompt.jinja2"
+                )
+                prompt = image_validation_prompt.render(user_input=metadata["intent"])
+                result = call_llm("", prompt, image=png_file_path)
+                if "answer" in result:
+                    if result["answer"] == "yes":
+                        print("Image validation passed")
+                    else:
+                        print(
+                            "\n\n     !!!!! Image validation failed, skipping metadata update\n"
+                        )
+                        print(f"     {result['message']}\n\n")
+
+    else:
+        metadata["sample_result"] = result.stdout
+        metadata["sample_result_type"] = "text"
+
+    with open(metadata_path, "w") as file:
+        json.dump(metadata, file, indent=4)
+
+
+def run_recipe(recipe_path):
+    """
+    Run recipe and update its metadata results
+
+    Args:
+        recipe_path (str): The path to the recipe.py file to run
+        recipe_author (str): The name of the recipe checker.
+
+    Returns:
+        None
+    """
+    cmd = f"python {recipe_path}"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    print(result.stdout)
+    print(result.stderr)
+
+    recipe_folder = os.path.dirname(recipe_path)
+
+    if result.returncode == 0 and len(result.stdout) > 0:
+        update_metadata_file_results(recipe_folder, result)
+    else:
+        if len(result.stderr) > 0:
+            print("Error running recipe, skipping metadata update")
+        else:
+            print("No output printed by recipe, skipping metadata update")
+
+    return result
+
+
+def generate_calling_params(functions_code, calling_code):
+    """
+    Generate calling parameters JSON for the recipe.
+
+    Args:
+        functions_code (str): The function code.
+        calling_code (str): The calling code.
+
+    Returns:
+        dict: The calling parameters JSON for the recipe.
+    """
+    print("Generating calling parameters JSON for the recipe")
+    prompt = f"""
+        Using the following function code and sample call, generate a calling parameters JSON for the recipe.
+        The JSON should have fields 'function' and 'params'
+
+        ```{functions_code}```
+
+        ```{calling_code}```
+    """
+
+    params = call_llm("", prompt)
+    params = json.dumps(params)
+    return params
+
+
+def generate_memory_intent(recipe_intent, calling_code):
+    """
+    Generate memory intent for the recipe.
+
+    Args:
+        recipe_intent (str): The intent of the recipe.
+        calling_code (str): The calling code.
+
+    Returns:
+        str: The memory intent for the recipe.
+    """
+    print("Generating memory intent for the recipe")
+    prompt = f"""
+        You are an AI agent that modifies the generic intent for a function, to make a more specific intent due to
+        how the function is called.
+
+        Examples:
+
+        Generic intent: "plot a bar chart of humanitarian organizations by sector for a given region using Humanitarian Data Exchange data as an image"
+        Calling Code: create_bar_chart_of_humanitarian_organizations_in_a_given_region_disaggregated_by_sector('Wadi Fira')
+
+        Specific intent: "plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image"
+
+
+        Here is the generic intent:
+
+        ```{recipe_intent}```
+
+        Here is the calling code:
+
+        ```{calling_code}```
+
+        Your response must be a JSON record with the following fields:
+        - intent: The specific intent
+
+        What is the exact intent of this code?
+
+        ```{calling_code}```
+
+    """
+    print(prompt)
+
+    intent = call_llm("", prompt)
+    intent = intent["intent"]
+    print(intent)
+    return intent
+
+
+def get_data_info_summary(user_question=None):
+    """
+    Get data info from the database.
+
+    Returns:
+        str: The data info.
+    """
+    db = connect_to_db(instance="data")
+
+    # run this query: select table_name, summary, columns from table_metadata
+
+    query = text(
+        """
+        SELECT
+            table_name,
+            summary,
+            columns, countries
+        FROM
+            table_metadata
+        --WHERE
+        --    countries is not null
+        """
+    )
+
+    with db.connect() as connection:
+        result = connection.execute(query)
+        result = result.fetchall()
+        result = pd.DataFrame(result)
+        data_info = result.to_json(orient="records")
+
+    data_info = json.dumps(json.loads(data_info), indent=4)
+
+    if user_question is None:
+        prompt = "Provide a summary of what datasets are available, table names"
+    else:
+        prompt = f"Answer this questions: {user_question}"
+
+    prompt = f"""
+
+        {user_question}
+
+        DATA INFORMATION:
+
+        ```{data_info}```
+    """
+
+    print("Calling LLM to get data info ...")
+    data_summary = call_llm("", prompt)
+    print(data_summary["content"])
+
+
+def save_as_memory(recipe_folder):
+    """
+    Save a memory from recipe sample outputs
+
+    Args:
+        recipe_folder (str): The path to the recipe folder
+
+    Returns:
+        None
+    """
+    metadata_path = os.path.join(recipe_folder, "metadata.json")
+    with open(metadata_path, "r") as file:
+        metadata = json.load(file)
+
+    # Generate recipe params
+    function_code = metadata["function_code"]
+    sample_call = metadata["sample_call"]
+    params = generate_calling_params(function_code, sample_call)
+
+    # Generate memory intent
+    recipe_intent = metadata["intent"]
+    memory_intent = generate_memory_intent(recipe_intent, sample_call)
+
+    response = add_recipe_memory(
+        intent=memory_intent,
+        metadata={"mem_type": "memory"},
+        mem_type="memory",
+        force=True,
+    )
+    print(response)
+
+    if "already_exists" in response:
+        print(response)
+        print(
+            "\nCannot add this memory, a very similar one already exists. Aborting operation"
+        )
+        sys.exit()
+
+    custom_id = response[0]
+
+    engine = connect_to_db(instance="recipe")
+    with engine.connect() as conn:
+        trans = conn.begin()
+
+        query_template = text(
+            """
+            INSERT INTO memory (
+                custom_id,
+                recipe_custom_id,
+                recipe_params,
+                result,
+                result_type,
+                source,
+                created_by,
+                updated_by,
+                last_updated
+            )
+            VALUES (
+                :custom_id,
+                :recipe_custom_id,
+                :recipe_params,
+                :result,
+                :result_type,
+                :source,
+                :created_by,
+                :updated_by,
+                NOW()
+            )
+            """
+        )
+
+        # Now insert into recipe table
+        params = {
+            "custom_id": custom_id,
+            "recipe_custom_id": metadata["custom_id"],
+            "recipe_params": params,
+            "result": metadata["sample_result"],
+            "result_type": metadata["sample_result_type"],
+            "source": "Recipe sample result",
+            "created_by": metadata["created_by"],
+            "updated_by": metadata["created_by"],
+        }
+        conn.execute(query_template, params)
+
+        print("Committing changes to the database")
+        trans.commit()
 
 
 def main():
     """
     Main function to parse command-line arguments and call the appropriate function.
+
+    This function parses the command-line arguments using the `argparse` module and calls the appropriate function based on the provided arguments. It supports two operations: check out and check in.
+
+    Usage:
+        python recipe_sync.py --check_out <recipe_author> [--force_checkout]
+        python recipe_sync.py --check_in <recipe_author>
+        python recipe_sync.py --create_recipe
+
+    Arguments:
+        --check_out --recipe_author <recipe author>: Perform check out operation.
+        --check_in --recipe_author <recipe author>: Perform check in operation.
+        --force_checkout: Force check out operation
+        --create_recipe --recipe_intent <recipe_intent>: Create a new blank recipe
+        --delete_recipe --recipe_custom_id <recipe_custom_id>: Delete a recipe by custom_id
+        --save_as_memory --recipe_path <recipe_path>: Save a memory from recipe sample outputs
+        --run_recipe --recipe_path <recipe_path>: Run recipe and update its metadata results
+
+    <recipe author>: The name of the recipe author, used for locking recipes for editing.
+
+    Example:
+        python recipe_sync.py --check_out my_recipe_author --force_checkout
+
     """
     parser = argparse.ArgumentParser(
-        description="Process check in and check out operations (i.e. extracting recipes and memories from the database for quality checks and edits)."
+        description="Process check in and check out operations (i.e. extracting recipes and recipes from the database for quality checks and edits)."
     )
 
     # Add mutually exclusive group for checkout and checkin
@@ -508,9 +1432,32 @@ def main():
     group.add_argument(
         "--check_in", action="store_true", help="Perform check in operation"
     )
+    group.add_argument(
+        "--create_recipe", action="store_true", help="Create a new blank recipe"
+    )
+    group.add_argument(
+        "--delete_recipe", action="store_true", help="Delete a recipe by custom_id"
+    )
+    group.add_argument(
+        "--run_recipe", action="store_true", help="Create a new blank recipe"
+    )
+    group.add_argument(
+        "--save_as_memory",
+        action="store_true",
+        help="Create a memory from recipe sample outputs",
+    )
+    group.add_argument(
+        "--edit_recipe", action="store_true", help="Create a new blank recipe"
+    )
+    group.add_argument(
+        "--info", action="store_true", help="Get information about the data available"
+    )
 
-    # Add recipe_checker argument
-    parser.add_argument("recipe_checker", type=str, help="Name of the recipe checker")
+    parser.add_argument("--recipe_author", type=str, help="Name of the recipe checker")
+    parser.add_argument("--recipe_intent", type=str, help="Intent of the new recipe")
+    parser.add_argument("--recipe_custom_id", type=str, help="custom_id of recipe")
+    parser.add_argument("--recipe_path", type=str, help="Path to recipe.py file to run")
+    parser.add_argument("--llm_prompt", type=str, help="Prompt for the LLM")
 
     # Add force_checkout argument
     parser.add_argument(
@@ -519,10 +1466,30 @@ def main():
 
     args = parser.parse_args()
 
+    if (
+        args.check_out or args.check_in or args.create_recipe
+    ) and not args.recipe_author:
+        parser.error("--recipe_author is required for this action")
+
     if args.check_out:
-        check_out(args.recipe_checker, force_checkout=args.force_checkout)
+        check_out(args.recipe_author, force_checkout=args.force_checkout)
     elif args.check_in:
-        check_in(args.recipe_checker)
+        check_in(args.recipe_author)
+        # Check out to refresh metadata file. TODO, do this as part fo check in
+        check_out(args.recipe_author, force_checkout=True)
+    elif args.create_recipe:
+        recipe_intent = args.recipe_intent.lower().replace(" ", "_")
+        create_new_recipe(recipe_intent, args.recipe_author)
+    elif args.delete_recipe:
+        delete_recipe(args.recipe_custom_id)
+    elif args.run_recipe:
+        run_recipe(args.recipe_path)
+    elif args.save_as_memory:
+        save_as_memory(args.recipe_path)
+    elif args.edit_recipe:
+        llm_edit_recipe(args.recipe_path, args.llm_prompt, args.recipe_author)
+    elif args.info:
+        get_data_info_summary()
 
 
 if __name__ == "__main__":

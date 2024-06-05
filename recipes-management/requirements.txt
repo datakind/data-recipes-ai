@@ -11,4 +11,6 @@ langchain_openai==0.1.7
 langchain==0.2.1
 langchain-community==0.2.1
 matplotlib==3.9.0
+geopandas==0.10.2
+seaborn==0.13.2
 

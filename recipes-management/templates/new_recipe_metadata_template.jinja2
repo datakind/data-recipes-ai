@@ -1,0 +1,24 @@
+{# templates/new_recipe_metadata_template.jinja2 #}
+{
+    "custom_id": "{{ custom_id }}",
+    "function_code": "import sys\nimport os\nimport requests\nfrom skills import *\n\ndef get_total_population(country_code):\n    query = f\"\"\"\n        SELECT \n            SUM(population) as total_population \n        FROM \n            hapi_population_social_population \n        WHERE \n            adm0_code ='{country_code}' AND \n            gender = '*'\n    \"\"\"\n    result = execute_query(query)\n    return result[0][0] if result else None",
+    "description": "{{ recipe_intent }}",
+    "openapi_json": {},
+    "datasets": "{HAPI}",
+    "python_packages": null,
+    "used_recipes_list": null,
+    "sample_result_type": "text",
+    "source": "Recipe Manager",
+    "created_by": "{{ recipe_author }}",
+    "updated_by": "{{ recipe_author }}",
+    "last_updated": "2024-06-02T16:26:41.620549",
+    "intent": "{{ recipe_intent }}",
+    "intent_full_record": "{{ intent_full_record }}",
+    "mem_type": "recipe",
+    "approval_status": "approved",
+    "approver": "{{ recipe_author }}",
+    "approval_latest_update": "2024-06-02T16:26:41.620549",
+    "sample_call": "country_code = 'MLI'\npopulation = get_total_population(country_code)\nprint(f\"The total population of Mali is: {population}\")",
+    "sample_result_type": "text",
+    "sample_result": "The total population of Mali is: 17839995"
+}

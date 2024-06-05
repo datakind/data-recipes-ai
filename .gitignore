@@ -23,4 +23,7 @@ recipes-management/checked_out/*
 !recipes-management/checked_out/skills.py
 recipes-management/files/
 database.sqlite
+.cli_config
+recipes-management/work/
+actions/actions_plugins/recipe-server/utils
 

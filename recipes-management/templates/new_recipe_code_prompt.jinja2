@@ -1,0 +1,54 @@
+{# templates/new_recipe_code_template.jinja2 #}
+
+Using the database tables list below, and the columns provided in each table, generate PEP8 compliant code in
+Python to answer the following request: 
+
+{{ recipe_intent }}
+
+CODING TIPS:
+
+{{ coding_standards }}
+
+
+EXAMPLE CODE LAYOUT:
+
+Here is a pseudo-code example layout ...
+
+```
+
+{{ imports_content }}
+
+def function1(<params):
+    <CODE>
+
+def function2(<params):
+    <CODE>
+
+def function3(<params>):
+    function1(<params>)
+    function2(<params>)
+    <CODE TO CALCULATES ANSWER, HANDLING ERRORS>
+    <PRINT ANSWER>
+    return <ANSWER>
+
+
+
+if __name__ == "__main__":
+    <ANSWER> = function3(<params>):
+```
+
+
+IMPORTANT: If calling a function already available to you, do not copy the code into your function, instead call the function directly.
+
+Tables and their columns of data available to you ...
+
+{{ data_info }}
+
+
+IMPORTANT: You must respond ONLY with a JSON record with the following fields:
+
+{
+    "code": "<THE CODE YOU GENERATED GOES HERE>",
+    "message": "<SUPPORTING INFORMATION YOU CAN PROVIDE>",
+}
+
