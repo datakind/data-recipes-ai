@@ -102,10 +102,19 @@ Any data queried from hap tables can have aggregated and disagregated data mixed
 indicated aggregated. For dimensions such as gender and age_group 'all' indicates aggregated data. So for example to query
 all data for a country, you would query with
 
+For population ...
+
 WHERE 
     adm0_code ='MLI' AND 
     gender = 'all' and 
     age_range = 'all' 
+	and adm1_code is not null
+	and adm2_code is not null
+
+For other tables ... 
+
+WHERE 
+    adm0_code ='MLI' AND 
 	and adm1_code is not null
 	and adm2_code is not null
 

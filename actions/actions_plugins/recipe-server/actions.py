@@ -69,6 +69,8 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
     logging.info("Python HTTP trigger function processed a request.")
     # Retrieve the CSV file from the request
 
+    generate_intent = False
+
     if generate_intent is not None and generate_intent is True:
         # chat history is passed from promptflow as a string representation of a list and this has to be converted back to a list for the intent generation to work!
         history_list = ast.literal_eval(chat_history)
@@ -76,6 +78,7 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
         user_input = generate_intent_from_history(history_list)
         # turn user_input into a proper json record
         user_input = json.dumps(user_input)
+
     memory_found, result = check_recipe_memory(user_input, mem_type="memory")
 
     if memory_found is True:
