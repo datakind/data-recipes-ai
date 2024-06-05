@@ -535,7 +535,6 @@ def chat():
             bot_response = ask_data(command, chat_history_str)
             print(bot_response)
             chat_history.append({"you (the bot)": bot_response})
-            # truncate chat to last 3 entries
             chat_history = chat_history[-3:]
 
         except Exception as e:
@@ -611,7 +610,7 @@ def main():
             "info",
             "help",
         ]:
-            typer.echo("Invalid command, type 'list' to see available options.")
+            typer.echo("Invalid command, type 'help' to see available options.")
             continue
         readline.add_history(command)
         args = command.split()

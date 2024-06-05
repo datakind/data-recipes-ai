@@ -72,7 +72,7 @@ def get_recipes(force_checkout=False):
             WHERE
                 lc.custom_id=lr.custom_id
             ORDER BY
-                lr.created
+                lr.created_by
         """
 
         if force_checkout is False:
