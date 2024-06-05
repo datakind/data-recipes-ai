@@ -159,7 +159,7 @@ def get_models():
             model_name=model,
             api_key=api_key,
             temperature=1,
-            max_tokens=1000,
+            max_tokens=3000,
         )
     elif api_type == "azure":
         # print("Using Azure OpenAI API in memory.py")
@@ -184,15 +184,21 @@ def get_models():
     return embedding_model, chat
 
 
-def get_connection():
+def get_connection(instance="data"):
     """
     This function gets a connection to the database
+
+    Args:
+
+        instance (str): The instance of the database to connect to, "recipe" or "data". Default is "data"
     """
-    host = os.getenv("POSTGRES_DATA_HOST")
-    port = os.getenv("POSTGRES_DATA_PORT")
-    database = os.getenv("POSTGRES_DATA_DB")
-    user = os.getenv("POSTGRES_DATA_USER")
-    password = os.getenv("POSTGRES_DATA_PASSWORD")
+    instance = instance.upper()
+
+    host = os.getenv(f"POSTGRES_{instance}_HOST")
+    port = os.getenv(f"POSTGRES_{instance}_PORT")
+    database = os.getenv(f"POSTGRES_{instance}_DB")
+    user = os.getenv(f"POSTGRES_{instance}_USER")
+    password = os.getenv(f"POSTGRES_{instance}_PASSWORD")
 
     conn = psycopg2.connect(
         dbname=database, user=user, password=password, host=host, port=port
@@ -200,14 +206,14 @@ def get_connection():
     return conn
 
 
-def execute_query(query):
+def execute_query(query, instance="data"):
     """
     This skill executes a query in the data database.
 
     To find out what tables and columns are available, you can run "select table_name, api_name, summary, columns from table_metadata"
 
     """
-    conn = get_connection()
+    conn = get_connection(instance)
     cur = conn.cursor()
 
     # Execute the query

@@ -113,17 +113,18 @@ Conversely, if you do not exclude the aggregate data, you will get a mix of aggr
 
 2. HDX Shape files
 
-Shapefiles data can be found in hdx_shape_files. However, adm0_code in that table are two-leter country codes,
-so you must link to other tables using adm1_code, adm2_code, adm3_code etc. For example ...
+You Must ALWAYS link on adm1_code if linking shapefiles to hapi tables. For example ...
 
         SELECT p.adm1_code, p.population, s.geometry
         FROM hapi_population_social_population p
         JOIN hdx_shape_files s ON p.adm1_code = s.adm1_code
-        WHERE p.adm0_code = %s AND p.latest = TRUE 
-        AND     gender = 'all' 
+        WHERE p.adm0_code = %s 
+        AND gender = 'all' 
         AND age_range = 'all' 
         and p.adm1_code is not null
         and p.adm2_code is not null
+
+
 
 EXAMPLE CODE LAYOUT:
 

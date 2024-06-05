@@ -1208,12 +1208,12 @@ def generate_calling_params(functions_code, calling_code):
     return params
 
 
-def generate_memory_intent(functions_code, calling_code):
+def generate_memory_intent(recipe_intent, calling_code):
     """
     Generate memory intent for the recipe.
 
     Args:
-        functions_code (str): The function code.
+        recipe_intent (str): The intent of the recipe.
         calling_code (str): The calling code.
 
     Returns:
@@ -1221,12 +1221,27 @@ def generate_memory_intent(functions_code, calling_code):
     """
     print("Generating memory intent for the recipe")
     prompt = f"""
-        Using the following function code and sample call, generate a memory intent.
-        The intent should capture detaiuls on how the recipe is being used, ie the input parameters
-        The intent should be concise, no need for phrases like "The intent of the code is ..."
+        You are an AI agent that modifies the generic intent for a function, to make a more specific intent due to
+        how the function is called.
+
+        Examples:
+
+        Generic intent: "plot a bar chart of humanitarian organizations by sector for a given region using Humanitarian Data Exchange data as an image"
+        Calling Code: create_bar_chart_of_humanitarian_organizations_in_a_given_region_disaggregated_by_sector('Wadi Fira')
+
+        Specific intent: "plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image"
+
+
+        Here is the generic intent:
+
+        ```{recipe_intent}```
+
+        Here is the calling code:
+
+        ```{calling_code}```
 
         Your response must be a JSON record with the following fields:
-        - intent: The intent of the recipe
+        - intent: The specific intent
 
         What is the exact intent of this code?
 
@@ -1237,7 +1252,59 @@ def generate_memory_intent(functions_code, calling_code):
 
     intent = call_llm("", prompt)
     intent = intent["intent"]
+    print(intent)
     return intent
+
+
+def get_data_info_summary(user_question=None):
+    """
+    Get data info from the database.
+
+    Returns:
+        str: The data info.
+    """
+    db = connect_to_db(instance="data")
+
+    # run this query: select table_name, summary, columns from table_metadata
+
+    query = text(
+        """
+        SELECT
+            table_name,
+            summary,
+            columns, countries
+        FROM
+            table_metadata
+        --WHERE
+        --    countries is not null
+        """
+    )
+
+    with db.connect() as connection:
+        result = connection.execute(query)
+        result = result.fetchall()
+        result = pd.DataFrame(result)
+        data_info = result.to_json(orient="records")
+
+    data_info = json.dumps(json.loads(data_info), indent=4)
+
+    if user_question is None:
+        prompt = "Provide a summary of what datasets are available, table names"
+    else:
+        prompt = f"Answer this questions: {user_question}"
+
+    prompt = f"""
+
+        {user_question}
+
+        DATA INFORMATION:
+
+        ```{data_info}```
+    """
+
+    print("Calling LLM to get data info ...")
+    data_summary = call_llm("", prompt)
+    print(data_summary["content"])
 
 
 def save_as_memory(recipe_folder):
@@ -1260,12 +1327,14 @@ def save_as_memory(recipe_folder):
     params = generate_calling_params(function_code, sample_call)
 
     # Generate memory intent
-    memory_intent = generate_memory_intent(function_code, sample_call)
+    recipe_intent = metadata["intent"]
+    memory_intent = generate_memory_intent(recipe_intent, sample_call)
 
     response = add_recipe_memory(
         intent=memory_intent,
         metadata={"mem_type": "memory"},
         mem_type="memory",
+        force=True,
     )
     print(response)
 
@@ -1381,6 +1450,9 @@ def main():
     group.add_argument(
         "--edit_recipe", action="store_true", help="Create a new blank recipe"
     )
+    group.add_argument(
+        "--info", action="store_true", help="Get information about the data available"
+    )
 
     parser.add_argument("--recipe_author", type=str, help="Name of the recipe checker")
     parser.add_argument("--recipe_intent", type=str, help="Intent of the new recipe")
@@ -1417,6 +1489,8 @@ def main():
         save_as_memory(args.recipe_path)
     elif args.edit_recipe:
         llm_edit_recipe(args.recipe_path, args.llm_prompt, args.recipe_author)
+    elif args.info:
+        get_data_info_summary()
 
 
 if __name__ == "__main__":
