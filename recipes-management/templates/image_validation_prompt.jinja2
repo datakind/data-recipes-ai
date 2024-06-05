@@ -1,0 +1,15 @@
+{# templates/image_validation_prompt.jinja2 #}
+
+Does this image agree with the user's request? 
+
+USER'S INPUT:
+
+{{ user_input }}
+
+
+IMPORTANT: You must respond ONLY with a JSON record with the following fields:
+
+{
+    "answer": "<yes/no>",
+    "message": "<YOUR REASON>",
+}

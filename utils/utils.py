@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import re
@@ -12,7 +13,7 @@ from langchain_openai import (
     ChatOpenAI,
     OpenAIEmbeddings,
 )
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 
 # Suppress all warnings
 warnings.filterwarnings("ignore")
@@ -79,7 +80,7 @@ def is_running_in_docker():
     return os.path.exists("/.dockerenv")
 
 
-def call_llm(instructions, prompt):
+def call_llm(instructions, prompt, image=None):
     """
     Call the LLM (Language Learning Model) API with the given instructions and prompt.
 
@@ -96,10 +97,34 @@ def call_llm(instructions, prompt):
     if chat is None or embedding_model is None:
         embedding_model, chat = get_models()
 
+    human_message = HumanMessage(content=prompt)
+
+    # Multimodal
+    if image:
+        if os.getenv("RECIPES_MODEL") == "gpt-4o":
+            print("Sending image to LLM ...")
+            with open(image, "rb") as image_file:
+                encoded_string = base64.b64encode(image_file.read()).decode()
+
+            human_message = HumanMessage(
+                content=[
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{encoded_string}"
+                        },
+                    },
+                ]
+            )
+        else:
+            print("Multimodal not supported for this model")
+            return None
+
     try:
         messages = [
             SystemMessage(content=instructions),
-            HumanMessage(content=prompt),
+            human_message,
         ]
         response = chat(messages)
 
@@ -109,6 +134,9 @@ def call_llm(instructions, prompt):
         if "content" in response and not response.startswith("```"):
             response = json.loads(response)
             response = response["content"]
+
+        # Some silly things that sometimes happen
+        response = response.replace(",}", "}")
 
         # Different models do different things when prompted for JSON. Here we try and handle this
         try:
@@ -247,12 +275,18 @@ def connect_to_db(instance="recipe"):
 
     instance = instance.upper()
 
+    # Fallback for CLI running outside of docker
+    if not is_running_in_docker():
+        os.environ[f"POSTGRES_{instance}_HOST"] = "localhost"
+        os.environ[f"POSTGRES_{instance}_PORT"] = "5433"
+
     host = os.getenv(f"POSTGRES_{instance}_HOST")
     port = os.getenv(f"POSTGRES_{instance}_PORT")
     database = os.getenv(f"POSTGRES_{instance}_DB")
     user = os.getenv(f"POSTGRES_{instance}_USER")
     password = os.getenv(f"POSTGRES_{instance}_PASSWORD")
     conn_str = f"postgresql://{user}:{password}@{host}:{port}/{database}"
+
     # add an echo=True to see the SQL queries
     conn = create_engine(conn_str)
     return conn

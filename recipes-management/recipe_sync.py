@@ -71,6 +71,8 @@ def get_recipes(force_checkout=False):
                 public.recipe lr
             WHERE
                 lc.custom_id=lr.custom_id
+            ORDER BY
+                lr.created
         """
 
         if force_checkout is False:
@@ -996,6 +998,11 @@ def create_new_recipe(recipe_intent, recipe_author):
     result = run_recipe(recipe_path)
     print(result.stderr)
 
+    # If there was an error, call edit recipe to try and fix it one round
+    if result.returncode != 0:
+        print("My code didn't work, trying to fix it ...")
+        llm_edit_recipe(recipe_path, result.stderr, recipe_author)
+
     # Save an empty cksum file
     with open(os.path.join(recipe_folder, "cksum.txt"), "w", encoding="utf-8") as file:
         file.write("")
@@ -1120,6 +1127,22 @@ def update_metadata_file_results(recipe_folder, result):
             encoded_string = base64.b64encode(image_file.read()).decode()
             metadata["sample_result"] = encoded_string
             metadata["sample_result_type"] = "image"
+
+            # Valid with GPT-4o
+            if os.getenv("RECIPES_MODEL") == "gpt-4o":
+                image_validation_prompt = environment.get_template(
+                    "image_validation_prompt.jinja2"
+                )
+                prompt = image_validation_prompt.render(user_input=metadata["intent"])
+                result = call_llm("", prompt, image=png_file_path)
+                if "answer" in result:
+                    if result["answer"] == "yes":
+                        print("Image validation passed")
+                    else:
+                        print(
+                            "\n\n     !!!!! Image validation failed, skipping metadata update\n"
+                        )
+                        print(f"     {result['message']}\n\n")
 
     else:
         metadata["sample_result"] = result.stdout

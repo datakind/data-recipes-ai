@@ -9,9 +9,12 @@ import pandas as pd
 import typer
 from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
-from utils.utils import call_llm, connect_to_db, execute_query
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)  # noqa: E402
+from utils.utils import call_llm, connect_to_db, execute_query  # noqa: E402
 
 llm_prompt_cap = 5000
 sql_rows_cap = 100
@@ -23,18 +26,20 @@ recipes = {}
 commands_help = """
     Here are the commands you can run:
 
-    'checkout': Check out recipes for you to work on
-    'list': List all recipes that are checked out
-    'run': Run a recipe, you will be prompted to choose which one
-    'add': Add a new recipe (using LLM)
-    'edit': Edit a new recipe (using LLM)
-    'delete': Delete a recipe, you will be prompted to choose which one
-    'checkin': Check in recipes you have completed
-    'makemem': Create a memory using recipe sample output
-    'info': Get information about the data available for analysis (using LLM)
-    'chat': Enter data chat mode to ask questions about the data
-    'help': Show a list of commands
-    'quit': Exit this recipes CLI
+       'checkout': Check out recipes for you to work on
+       'list': List all recipes that are checked out
+       'run': Run a recipe, you will be prompted to choose which one
+       'add': Add a new recipe (using LLM)
+       'edit': Edit a new recipe (using LLM)
+       'delete': Delete a recipe, you will be prompted to choose which one
+       'checkin': Check in recipes you have completed
+       'makemem': Create a memory using recipe sample output
+       'help': Show a list of commands
+       'quit': Exit this recipes CLI
+
+    Chat with Data Mode:
+
+       'chat': Enter data chat mode to ask questions about the data
 
     Type one of the commands above to do some stuff.
 
@@ -45,6 +50,8 @@ cli_config_file = ".cli_config"
 checked_out_dir = "work/checked_out"
 
 environment = Environment(loader=FileSystemLoader("templates/"))
+
+last_bot_response = ""
 
 
 def _get_checkout_folders():
@@ -421,7 +428,7 @@ def get_data_info():
     return data_info
 
 
-def gen_sql(input, stdout_output, stderr_output):
+def gen_sql(input, chat_history, stdout_output, stderr_output):
 
     data_info = get_data_info()
 
@@ -431,6 +438,7 @@ def gen_sql(input, stdout_output, stderr_output):
         stderr_output=stderr_output,
         stdout_output=stdout_output,
         data_info=data_info,
+        chat_history=chat_history,
     )
 
     response = call_llm("", prompt)
@@ -445,6 +453,8 @@ def gen_sql(input, stdout_output, stderr_output):
 
 
 def gen_summarize_results(input, sql, stdout_output, stderr_output):
+
+    typer.echo("    Summarizing results ...")
 
     if len(stdout_output) > llm_prompt_cap:
         stdout_output = stdout_output[:llm_prompt_cap] + "..."
@@ -476,18 +486,19 @@ def gen_summarize_results(input, sql, stdout_output, stderr_output):
     if "content" in response:
         response = response["content"]
 
-    print(response)
+    return response
 
 
-def ask_data(input):
+def ask_data(input, chat_history):
 
     stdout_output = ""
     stderr_output = ""
 
     # Loop 3 times to retry errors
-    for i in range(3):
-        sql = gen_sql(input, stdout_output, stderr_output)
+    for i in range(5):
+        sql = gen_sql(input, chat_history, stdout_output, stderr_output)
         try:
+            print(sql)
             stdout_output = execute_query(sql, instance="data")
             stderr_output = ""
             break
@@ -499,22 +510,34 @@ def ask_data(input):
             print("Failed to execute query")
             break
 
-    gen_summarize_results(input, sql, stdout_output, stderr_output)
+    response = gen_summarize_results(input, sql, stdout_output, stderr_output)
+
+    return response
 
 
 def chat():
+    global last_bot_response
     typer.echo(
         "Entering info data chat mode. Ask me quetions about the data! Type 'exit' to leave"
     )
+    chat_history = []
     while True:
-        command = input("> chat > ")
+        command = input("data chat mode >> ")
         if not command.strip():  # Check if command is empty
             continue
         if command.lower() in ["quit", "exit", "stop"]:
             break
 
         try:
-            ask_data(command)
+            readline.add_history(command)
+            chat_history.append({"human": command})
+            chat_history_str = json.dumps(chat_history, indent=4)
+            bot_response = ask_data(command, chat_history_str)
+            print(bot_response)
+            chat_history.append({"you (the bot)": bot_response})
+            # truncate chat to last 3 entries
+            chat_history = chat_history[-3:]
+
         except Exception as e:
             typer.echo(f"Error: {e}")
 
@@ -570,7 +593,7 @@ def main():
     _get_checkout_folders()
 
     while True:
-        command = input(">> ")
+        command = input("command mode >> ")
         if not command.strip():  # Check if command is empty
             continue
         if command.lower() in ["quit", "exit", "stop"]:
