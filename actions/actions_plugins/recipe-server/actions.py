@@ -77,13 +77,12 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
         # turn user_input into a proper json record
         user_input = json.dumps(user_input)
     memory_found, result = check_recipe_memory(user_input, mem_type="memory")
-    # if 'mem_type' not in result:
-    #    return "No memory found"
-    mem_type = result["metadata"]["mem_type"]
-    custom_id = result["metadata"]["custom_id"]
-    metadata = get_memory_recipe_metadata(custom_id, mem_type)
-    print(metadata)
+
     if memory_found is True:
+        mem_type = result["metadata"]["mem_type"]
+        custom_id = result["metadata"]["custom_id"]
+        metadata = get_memory_recipe_metadata(custom_id, mem_type)
+        print(metadata)
         print(f"====> Found {mem_type}")
         if metadata["result_type"] == "image":
             response_image = metadata["result"]
@@ -103,19 +102,21 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
         else:
             result = response_text
     else:
-        result = "No memory found"
+        result = "Sorry, no recipe or found"
+        print(result)
     return result
 
 
 if __name__ == "__main__":
-    query = "Generate a population map for Haiti at the administrative level 1"
-    history = str(
-        [
-            {
-                "inputs": {
-                    "question": "Generate a population map for Haiti at the administrative level 1"
-                }
-            },
-        ]
-    )
-    get_memory(query, history, True)
+    # query = "Generate a population map for Haiti at the administrative level 1"
+    query = "What's the total population of Mali"
+    # history = str(
+    # [
+    #    {
+    #        "inputs": {
+    #            "question": "Generate a population map for Haiti at the administrative level 1"
+    #        }
+    #    },
+    # ]
+    # )
+    get_memory(query, [], False)

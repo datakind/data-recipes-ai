@@ -1208,12 +1208,12 @@ def generate_calling_params(functions_code, calling_code):
     return params
 
 
-def generate_memory_intent(functions_code, calling_code):
+def generate_memory_intent(recipe_intent, calling_code):
     """
     Generate memory intent for the recipe.
 
     Args:
-        functions_code (str): The function code.
+        recipe_intent (str): The intent of the recipe.
         calling_code (str): The calling code.
 
     Returns:
@@ -1221,12 +1221,27 @@ def generate_memory_intent(functions_code, calling_code):
     """
     print("Generating memory intent for the recipe")
     prompt = f"""
-        Using the following function code and sample call, generate a memory intent.
-        The intent should capture detaiuls on how the recipe is being used, ie the input parameters
-        The intent should be concise, no need for phrases like "The intent of the code is ..."
+        You are an AI agent that modifies the generic intent for a function, to make a more specific intent due to
+        how the function is called.
+
+        Examples:
+
+        Generic intent: "plot a bar chart of humanitarian organizations by sector for a given region using Humanitarian Data Exchange data as an image"
+        Calling Code: create_bar_chart_of_humanitarian_organizations_in_a_given_region_disaggregated_by_sector('Wadi Fira')
+
+        Specific intent: "plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image"
+
+
+        Here is the generic intent:
+
+        ```{recipe_intent}```
+
+        Here is the calling code:
+
+        ```{calling_code}```
 
         Your response must be a JSON record with the following fields:
-        - intent: The intent of the recipe
+        - intent: The specific intent
 
         What is the exact intent of this code?
 
@@ -1237,6 +1252,7 @@ def generate_memory_intent(functions_code, calling_code):
 
     intent = call_llm("", prompt)
     intent = intent["intent"]
+    print(intent)
     return intent
 
 
@@ -1311,12 +1327,14 @@ def save_as_memory(recipe_folder):
     params = generate_calling_params(function_code, sample_call)
 
     # Generate memory intent
-    memory_intent = generate_memory_intent(function_code, sample_call)
+    recipe_intent = metadata["intent"]
+    memory_intent = generate_memory_intent(recipe_intent, sample_call)
 
     response = add_recipe_memory(
         intent=memory_intent,
         metadata={"mem_type": "memory"},
         mem_type="memory",
+        force=True,
     )
     print(response)
 
