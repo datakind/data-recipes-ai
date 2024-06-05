@@ -25,5 +25,5 @@ recipes-management/files/
 database.sqlite
 .cli_config
 recipes-management/work/
-./actions/actions_plugins/recipe-server/utils
+actions/actions_plugins/recipe-server/utils
 
