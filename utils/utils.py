@@ -6,7 +6,6 @@ import sys
 import psycopg2
 from langchain.docstore.document import Document
 from langchain.schema import HumanMessage, SystemMessage
-from langchain_community.vectorstores.pgvector import PGVector
 from langchain_openai import (
     AzureChatOpenAI,
     AzureOpenAIEmbeddings,
