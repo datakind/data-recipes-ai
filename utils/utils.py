@@ -159,7 +159,7 @@ def get_models():
             model_name=model,
             api_key=api_key,
             temperature=1,
-            max_tokens=1000,
+            max_tokens=3000,
         )
     elif api_type == "azure":
         # print("Using Azure OpenAI API in memory.py")

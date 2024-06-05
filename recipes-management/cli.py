@@ -19,6 +19,7 @@ commands_help = """
     'delete': Delete a recipe, you will be prompted to choose which one
     'checkin': Check in recipes you have completed
     'makemem': Create a memory using recipe sample output
+    'info': Get information about the data available for analysis (using LLM)
     'help': Show a list of commands
     'quit': Exit this recipes CLI
 
@@ -43,7 +44,12 @@ def _get_checkout_folders():
     if not os.path.exists(checked_out_dir):
         checked_out_folders = []
     else:
-        checked_out_folders = os.listdir(checked_out_dir)
+
+        # list directory in chronological orger
+        checked_out_folders = sorted(
+            os.listdir(checked_out_dir),
+            key=lambda x: os.path.getctime(os.path.join(checked_out_dir, x)),
+        )
         checked_out_folders = [
             folder
             for folder in checked_out_folders
@@ -266,6 +272,30 @@ def add(intent: Optional[str] = typer.Argument(None)):
     )
 
 
+def info(question: Optional[str] = typer.Argument(None)):
+    """
+    Add a question about the data and retrieve information using the recipe_sync.py script.
+
+    Args:
+        question (str, optional): The question about the data. If not provided, the user will be prompted to enter a question.
+
+    Returns:
+        None
+    """
+    if question is None:
+        question = input(
+            "Enter your question about the data (or return to get a general summary): "
+        )
+
+    if question:
+        question = f"--llm_prompt '{str(question)}'"
+    else:
+        question = ""
+
+    cmd = f"docker exec haa-recipe-manager python recipe_sync.py --info {question}"
+    os.system(cmd)
+
+
 def delete():
     """
     Deletes a recipe from the recipe management system.
@@ -361,6 +391,7 @@ def main():
     app.command()(edit)
     app.command()(delete)
     app.command()(makemem)
+    app.command()(info)
     app.command()(help)
 
     # check cli is running in folder recipes-management
@@ -401,6 +432,7 @@ def main():
             "edit",
             "delete",
             "makemem",
+            "info",
             "help",
         ]:
             typer.echo("Invalid command, type 'list' to see available options.")
