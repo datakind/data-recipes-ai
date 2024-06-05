@@ -2,6 +2,7 @@ import json
 import os
 import re
 import sys
+import warnings
 
 import psycopg2
 from langchain.schema import HumanMessage, SystemMessage
@@ -11,6 +12,10 @@ from langchain_openai import (
     ChatOpenAI,
     OpenAIEmbeddings,
 )
+from sqlalchemy import create_engine, text
+
+# Suppress all warnings
+warnings.filterwarnings("ignore")
 
 chat = None
 embedding_model = None
@@ -112,12 +117,12 @@ def call_llm(instructions, prompt):
         except json.decoder.JSONDecodeError:
             # Did the LLM provide JSON in ```json```?
             if "```json" in response:
-                print("LLM responded with JSON in ```json```")
+                # print("LLM responded with JSON in ```json```")
                 response = response.split("```json")[1]
                 response = response.replace("\n", "").split("```")[0]
                 response = json.loads(response)
             elif "```python" in response:
-                print("LLM responded with Python in ```python```")
+                # print("LLM responded with Python in ```python```")
                 all_sections = response.split("```python")[1]
                 code = all_sections.replace("\n", "").split("```")[0]
                 message = all_sections.split("```")[0]
@@ -145,9 +150,9 @@ def get_models():
     completion_model = os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME")
     model = os.getenv("RECIPES_MODEL")
 
-    print("LLM Settings ...")
-    print(f"   API type: {api_type}")
-    print(f"   Model name: {model}")
+    # print("LLM Settings ...")
+    # print(f"   API type: {api_type}")
+    # print(f"   Model name: {model}")
 
     if api_type == "openai":
         # print("Using OpenAI API in memory.py")
@@ -227,3 +232,27 @@ def execute_query(query, instance="data"):
     conn.close()
 
     return rows
+
+
+def connect_to_db(instance="recipe"):
+    """
+    Connects to the specified database instance (RECIPE or DATA) DB and returns a connection object.
+
+    Args:
+        instance (str): The name of the database instance to connect to. Defaults to "RECIPE".
+
+    Returns:
+        sqlalchemy.engine.base.Engine: The connection object for the specified database instance.
+    """
+
+    instance = instance.upper()
+
+    host = os.getenv(f"POSTGRES_{instance}_HOST")
+    port = os.getenv(f"POSTGRES_{instance}_PORT")
+    database = os.getenv(f"POSTGRES_{instance}_DB")
+    user = os.getenv(f"POSTGRES_{instance}_USER")
+    password = os.getenv(f"POSTGRES_{instance}_PASSWORD")
+    conn_str = f"postgresql://{user}:{password}@{host}:{port}/{database}"
+    # add an echo=True to see the SQL queries
+    conn = create_engine(conn_str)
+    return conn

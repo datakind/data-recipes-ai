@@ -17,7 +17,7 @@ from sqlalchemy import create_engine, text
 
 # These are copied in or mounted in docker from ../utils
 from utils.recipes import add_recipe_memory
-from utils.utils import call_llm
+from utils.utils import call_llm, connect_to_db
 
 logging.basicConfig(level=logging.INFO)
 
@@ -44,30 +44,6 @@ required_intent_fields = [
 ]
 
 environment = Environment(loader=FileSystemLoader("templates/"))
-
-
-def connect_to_db(instance="recipe"):
-    """
-    Connects to the specified database instance (RECIPE or DATA) DB and returns a connection object.
-
-    Args:
-        instance (str): The name of the database instance to connect to. Defaults to "RECIPE".
-
-    Returns:
-        sqlalchemy.engine.base.Engine: The connection object for the specified database instance.
-    """
-
-    instance = instance.upper()
-
-    host = os.getenv(f"POSTGRES_{instance}_HOST")
-    port = os.getenv(f"POSTGRES_{instance}_PORT")
-    database = os.getenv(f"POSTGRES_{instance}_DB")
-    user = os.getenv(f"POSTGRES_{instance}_USER")
-    password = os.getenv(f"POSTGRES_{instance}_PASSWORD")
-    conn_str = f"postgresql://{user}:{password}@{host}:{port}/{database}"
-    # add an echo=True to see the SQL queries
-    conn = create_engine(conn_str)
-    return conn
 
 
 def get_recipes(force_checkout=False):

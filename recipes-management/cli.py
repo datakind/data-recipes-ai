@@ -2,9 +2,21 @@ import json
 import os
 import readline
 import shutil
+import sys
 from typing import Optional
 
+import pandas as pd
 import typer
+from dotenv import load_dotenv
+from jinja2 import Environment, FileSystemLoader
+from sqlalchemy import create_engine, text
+
+from utils.utils import call_llm, connect_to_db, execute_query
+
+llm_prompt_cap = 5000
+sql_rows_cap = 100
+
+load_dotenv("../.env")
 
 user_name = None
 recipes = {}
@@ -20,6 +32,7 @@ commands_help = """
     'checkin': Check in recipes you have completed
     'makemem': Create a memory using recipe sample output
     'info': Get information about the data available for analysis (using LLM)
+    'chat': Enter data chat mode to ask questions about the data
     'help': Show a list of commands
     'quit': Exit this recipes CLI
 
@@ -30,6 +43,8 @@ commands_help = """
 to_be_deleted_file = "work/checked_out/to_be_deleted.txt"
 cli_config_file = ".cli_config"
 checked_out_dir = "work/checked_out"
+
+environment = Environment(loader=FileSystemLoader("templates/"))
 
 
 def _get_checkout_folders():
@@ -370,6 +385,140 @@ def makemem():
         os.system(cmd)
 
 
+def get_data_info():
+    """
+    Get data info from the database.
+
+    Returns:
+        str: The data info.
+    """
+
+    db = connect_to_db(instance="data")
+
+    # run this query: select table_name, summary, columns from table_metadata
+
+    query = text(
+        """
+        SELECT
+            table_name,
+            summary,
+            columns
+        FROM
+            table_metadata
+        --WHERE
+        --    countries is not null
+        """
+    )
+
+    with db.connect() as connection:
+        result = connection.execute(query)
+        result = result.fetchall()
+        result = pd.DataFrame(result)
+        data_info = result.to_json(orient="records")
+
+    data_info = json.dumps(json.loads(data_info), indent=4)
+
+    return data_info
+
+
+def gen_sql(input, stdout_output, stderr_output):
+
+    data_info = get_data_info()
+
+    gen_sql_template = environment.get_template("gen_sql_prompt.jinja2")
+    prompt = gen_sql_template.render(
+        input=input,
+        stderr_output=stderr_output,
+        stdout_output=stdout_output,
+        data_info=data_info,
+    )
+
+    response = call_llm("", prompt)
+
+    query = response["code"]
+
+    query = query.replace(";", "") + f" \nLIMIT {sql_rows_cap};"
+
+    # print(query)
+
+    return query
+
+
+def gen_summarize_results(input, sql, stdout_output, stderr_output):
+
+    if len(stdout_output) > llm_prompt_cap:
+        stdout_output = stdout_output[:llm_prompt_cap] + "..."
+
+    prompt = f"""
+        The user asked this question:
+
+        {input}
+
+        Which resulted in this SQL query:
+
+        {sql}
+
+        The query was executed and the output was:
+
+        {stdout_output}
+
+        The error message was:
+
+        {stderr_output}
+
+        Task:
+
+        Summarize the results of the query and answer the user's question
+
+    """
+
+    response = call_llm("", prompt)
+    if "content" in response:
+        response = response["content"]
+
+    print(response)
+
+
+def ask_data(input):
+
+    stdout_output = ""
+    stderr_output = ""
+
+    # Loop 3 times to retry errors
+    for i in range(3):
+        sql = gen_sql(input, stdout_output, stderr_output)
+        try:
+            stdout_output = execute_query(sql, instance="data")
+            stderr_output = ""
+            break
+        except Exception as e:
+            print(e)
+            stderr_output = e
+            stdout_output = ""
+        if i == 2:
+            print("Failed to execute query")
+            break
+
+    gen_summarize_results(input, sql, stdout_output, stderr_output)
+
+
+def chat():
+    typer.echo(
+        "Entering info data chat mode. Ask me quetions about the data! Type 'exit' to leave"
+    )
+    while True:
+        command = input("> chat > ")
+        if not command.strip():  # Check if command is empty
+            continue
+        if command.lower() in ["quit", "exit", "stop"]:
+            break
+
+        try:
+            ask_data(command)
+        except Exception as e:
+            typer.echo(f"Error: {e}")
+
+
 def main():
     """
     Entry point function for the recipes management CLI.
@@ -392,11 +541,14 @@ def main():
     app.command()(delete)
     app.command()(makemem)
     app.command()(info)
+    app.command()(chat)
     app.command()(help)
 
     # check cli is running in folder recipes-management
     current_dir = os.getcwd()
-    if not current_dir.endswith("recipes-management"):
+    if not current_dir.endswith("recipes-management") and not current_dir.endswith(
+        "app"
+    ):
         typer.echo("Please run the CLI from the recipes-management folder")
         return
 
@@ -432,6 +584,7 @@ def main():
             "edit",
             "delete",
             "makemem",
+            "chat",
             "info",
             "help",
         ]:
