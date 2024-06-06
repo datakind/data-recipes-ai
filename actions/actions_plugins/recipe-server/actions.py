@@ -236,9 +236,10 @@ def get_memory_recipe(user_input, chat_history, generate_intent=True) -> str:
 
 if __name__ == "__main__":
     # query = "Generate a population map for Haiti at the administrative level 1"
-    query = "What's the total population of AFG"
+    # query = "What's the total population of AFG"
     # query = "what's the population of Mali"
     # query = "what recipes do you have"
+    query = "Create a chart that demonstrates the number of organizations working in Sila within each sector"
     # history = str(
     # [
     #    {
