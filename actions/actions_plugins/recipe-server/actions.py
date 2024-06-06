@@ -130,6 +130,12 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
     print("Calling LLM to generate new run code ...")
     new_code = call_llm("", prompt, None)
 
+    result = {
+        "output": "",
+        "errors": "",
+        "attribution": "",
+    }
+
     if "new_calling_code" in new_code:
         calling_code = new_code["new_calling_code"]
         print("New calling code generated ...")
@@ -161,15 +167,18 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
             f.write(code)
 
         cmd = f"python {recipe_path}"
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        print(result)
-        print(result.stdout)
-        print(result.stderr)
+        run_output = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+        result["output"] = run_output.stdout
+        result["errors"] = run_output.stderr
+        result["attribution"] = "Data was sroued from HDX"
 
     # Run the recipe here
     # exec(recipe)
 
     print("Recipe executed successfully.")
+    print(result)
+    return result
 
 
 @lru_cache(maxsize=100)
