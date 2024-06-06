@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import sys
+from functools import lru_cache
 
 from dotenv import load_dotenv
 from PIL import Image
@@ -52,6 +53,7 @@ def process_image(encoded_string, recipe_id):
     return full_path
 
 
+@lru_cache(maxsize=100)
 @action()
 def get_memory_recipe(user_input, chat_history, generate_intent=True) -> str:
     """
@@ -80,11 +82,13 @@ def get_memory_recipe(user_input, chat_history, generate_intent=True) -> str:
         user_input = json.dumps(user_input)
 
     memory_found, result = check_recipe_memory(user_input, mem_type="memory")
+    print(result)
 
     if memory_found is True:
         mem_type = result["metadata"]["mem_type"]
         custom_id = result["metadata"]["custom_id"]
         metadata = get_memory_recipe_metadata(custom_id, mem_type)
+        attribution = metadata["attribution"]
         print(metadata)
         print(f"====> Found {mem_type}")
         if metadata["result_type"] == "image":
@@ -107,7 +111,7 @@ def get_memory_recipe(user_input, chat_history, generate_intent=True) -> str:
     else:
         result = "Sorry, no recipe or found"
         print(result)
-    return result
+    return result, attribution
 
 
 if __name__ == "__main__":
@@ -122,4 +126,4 @@ if __name__ == "__main__":
     #    },
     # ]
     # )
-    get_memory_recipe(query, [], False)
+    get_memory_recipe(query, "[]", False)

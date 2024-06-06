@@ -43,6 +43,10 @@ paths:
               schema:
                 title: Response Get Memory
                 description: The 3 best matches found in the memory.
+                properties:
+                  attribution:
+                    type: string
+                    description: Attribution information
         "422":
           description: Validation Error
           content:

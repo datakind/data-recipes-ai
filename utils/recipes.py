@@ -277,7 +277,12 @@ def get_memory_recipe_metadata(custom_id, mem_type):
         result = result[0]
 
     # Return the metadata
-    return {"result": result[3], "result_type": result[4], "custom_id": result[0]}
+    return {
+        "result": result[3],
+        "result_type": result[4],
+        "custom_id": result[0],
+        "attribution": result[9],
+    }
 
 
 def generate_intent_from_history(chat_history: list, remove_code: bool = True) -> dict:
