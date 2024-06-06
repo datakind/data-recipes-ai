@@ -137,6 +137,8 @@ services:
     volumes:
       - shared-data:/action-server/actions/actions_plugins/recipe-server/images
       - ./utils:/action-server/actions/actions_plugins/recipe-server/utils
+      - ./templates:/action-server/actions/actions_plugins/recipe-server/templates
+      - ./recipes-management/skills.py:/action-server/actions/actions_plugins/recipe-server/recipes/skills.py
   # Init container 
   init:
     image: busybox
@@ -200,6 +202,7 @@ services:
     volumes:
       - ./recipes-management:/app
       - ./utils:/app/utils
+      - ./templates:/app/templates
 
 volumes:
   pgdata2:

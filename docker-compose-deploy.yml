@@ -4,6 +4,7 @@ version: "3.4"
 services:
   api:
     platform: linux/amd64
+    image: data-recipes-ai-api
     container_name: haa-libre-chat
     build:
       context: .
@@ -127,6 +128,7 @@ services:
   #  env_file:
   #    - .env
   actions:
+    image: data-recipes-ai-actions
     platform: linux/amd64
     container_name: haa-robo-actions
     user: "1000:1000"
@@ -180,6 +182,7 @@ services:
   #      target: /app
   code-interpreter:
     #image: ghcr.io/iamgreggarcia/codesphera:latest
+    image: data-recipes-ai-code-interpreter
     platform: linux/amd64
     container_name: haa-code-interpreter
     build:

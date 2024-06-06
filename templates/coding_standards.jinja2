@@ -108,15 +108,15 @@ WHERE
     adm0_code ='MLI' AND 
     gender = 'all' and 
     age_range = 'all' 
-	and adm1_code is not null
-	and adm2_code is not null
+	and adm1_code is null
+	and adm2_code is null
 
 For other tables ... 
 
 WHERE 
     adm0_code ='MLI' AND 
-	and adm1_code is not null
-	and adm2_code is not null
+	and adm1_code is null
+	and adm2_code is null
 
 Conversely, if you do not exclude the aggregate data, you will get a mix of aggregated and disaggregated data.
 

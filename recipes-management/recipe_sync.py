@@ -446,6 +446,7 @@ def insert_records_in_db(df, approver):
                 intent=metadata["intent"],
                 metadata={"mem_type": "recipe"},
                 mem_type="recipe",
+                # force=True
             )
             if "already_exists" in response:
                 print(response)
@@ -768,8 +769,9 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
     # Create a DataFrame from the list of records
     records_to_check_in = pd.DataFrame(records)
 
-    # Generate openapi_json from function_code
-    records_to_check_in = generate_openapi_json(records_to_check_in)
+    # Generate openapi_json from function_code. TODO, commenting out for now
+    # records_to_check_in = generate_openapi_json(records_to_check_in)
+    records_to_check_in["openapi_json"] = "{}"
 
     # Update database
     if records_to_check_in.empty:
@@ -915,24 +917,28 @@ def check_for_missing_intent_entities(recipe_intent):
             )
 
 
-def generate_intent_long_format(recipe_intent):
+def generate_intent_long_format(user_input):
     """
     Generate an intent from the user's input in standard intent format.
 
     Args:
-        recipe_intent (str): The intent of the recipe.
+        user_input (str): The intent of the recipe.
 
     Returns:
         str: The generated intent in standard format.
     """
 
     intent_template = environment.get_template("intent_long_form_prompt.jinja2")
-    prompt = intent_template.render(user_input=recipe_intent)
+    prompt = intent_template.render(user_input=user_input)
 
     print("Calling LLM to generate long form intent ...")
     recipe_intent = call_llm("", prompt)
 
-    check_for_missing_intent_entities(recipe_intent)
+    # Skipping entity check
+    if "/nochecks" in user_input:
+        return recipe_intent
+    else:
+        check_for_missing_intent_entities(recipe_intent)
 
     return recipe_intent
 

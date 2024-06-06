@@ -8,6 +8,8 @@ CONNECTION_FILE_PATH = "postgres_data_connection.json"
 
 MAX_CHARS_TOT = 100000
 
+footnote = "\n\n*Please Note: This LLM analysis is not reviewed by a human and may contain errors or inaccuracies.*"
+
 
 class ReadOnlyConnection:
     def __init__(self, conn_params):
@@ -278,6 +280,17 @@ def execute_query(query: str) -> str:
             cursor = conn.cursor()
             cursor.execute(query)
             results = cursor.fetchall()
-            return truncate_query_results(results)
+            if len(results) == 0:
+                return "No results found."
+            else:
+                results = truncate_query_results(results)
+                results = results + footnote
+                return results
     except Exception as e:
         return f"An error occurred while executing the query: {e}"
+
+
+if __name__ == "__main__":
+    query = "select * from table_metainfo"
+    print(query)
+    execute_query(query)
