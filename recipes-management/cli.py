@@ -284,7 +284,9 @@ def add(intent: Optional[str] = typer.Argument(None)):
         None
     """
     if intent is None:
-        intent = input("Enter the intent of your new recipe: ")
+        intent = input(
+            "Enter the intent of your new recipe (add '/nochecks' to turn off validation): "
+        )
     cmd = f"docker exec haa-recipe-manager python recipe_sync.py --create_recipe --recipe_intent '{intent}' --recipe_author '{user_name}'"
     typer.echo(f"Creating new recipe with intent {intent}")
     os.system(cmd)
