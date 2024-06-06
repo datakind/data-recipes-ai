@@ -11,7 +11,7 @@ paths:
       summary: Get Memory
       description: Performs a search in the memory for a given intent and returns
         the best match found.
-      operationId: get_memory
+      operationId: get_memory_recipe
       requestBody:
         required: true
         content:

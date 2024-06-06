@@ -53,7 +53,7 @@ def process_image(encoded_string, recipe_id):
 
 
 @action()
-def get_memory(user_input, chat_history, generate_intent=True) -> str:
+def get_memory_recipe(user_input, chat_history, generate_intent=True) -> str:
     """
     Performs a search in the memory for a given intent and returns the best match found.
 
@@ -122,4 +122,4 @@ if __name__ == "__main__":
     #    },
     # ]
     # )
-    get_memory(query, [], False)
+    get_memory_recipe(query, [], False)
