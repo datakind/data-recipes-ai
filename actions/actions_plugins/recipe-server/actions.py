@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 from functools import lru_cache
+from typing import Tuple
 
 from dotenv import load_dotenv
 from PIL import Image
@@ -65,7 +66,8 @@ def get_memory_recipe(user_input, chat_history, generate_intent=True) -> str:
         generate_intent (str): A flag to indicate whether to generate the intent from the chat history.
 
     Returns:
-        str: The 3 best matches found in the memory.
+        str: Matched value
+        str: Attribution
     """
 
     logging.info("Python HTTP trigger function processed a request.")
@@ -107,13 +109,14 @@ def get_memory_recipe(user_input, chat_history, generate_intent=True) -> str:
             )
             # result = "http://localhost:9999/memory_image.png"
             result = f"{os.getenv('IMAGE_HOST')}/memory_image_{recipe_id}.png"
-
         else:
             result = response_text
     else:
         result = "Sorry, no recipe or found"
         print(result)
-    return result, attribution
+        attribution = ""
+
+    return str({"result": result, "attribution": attribution})
 
 
 if __name__ == "__main__":
