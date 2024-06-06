@@ -11,7 +11,11 @@ from PIL import Image
 from robocorp.actions import action
 
 # This directory ../utils is copied or mounted into Docker image
-from utils.recipes import check_recipe_memory, generate_intent_from_history
+from utils.recipes import (
+    check_recipe_memory,
+    generate_intent_from_history,
+    get_memory_recipe_metadata,
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -65,6 +69,8 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
     logging.info("Python HTTP trigger function processed a request.")
     # Retrieve the CSV file from the request
 
+    generate_intent = False
+
     if generate_intent is not None and generate_intent is True:
         # chat history is passed from promptflow as a string representation of a list and this has to be converted back to a list for the intent generation to work!
         history_list = ast.literal_eval(chat_history)
@@ -72,15 +78,22 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
         user_input = generate_intent_from_history(history_list)
         # turn user_input into a proper json record
         user_input = json.dumps(user_input)
+
     memory_found, result = check_recipe_memory(user_input, mem_type="memory")
+
     if memory_found is True:
-        if result["metadata"]["result_type"] == "image":
-            response_image = result["metadata"]["result"]
+        mem_type = result["metadata"]["mem_type"]
+        custom_id = result["metadata"]["custom_id"]
+        metadata = get_memory_recipe_metadata(custom_id, mem_type)
+        print(metadata)
+        print(f"====> Found {mem_type}")
+        if metadata["result_type"] == "image":
+            response_image = metadata["result"]
             response_text = ""
         else:
-            response_text = result["metadata"]["result"]
+            response_text = metadata["result"]
             response_image = ""
-        recipe_id = result["metadata"]["custom_id"]
+        recipe_id = metadata["custom_id"]
         print("Recipe ID: ", recipe_id)
         if response_image is not None and response_image != "":
             process_image(
@@ -92,15 +105,21 @@ def get_memory(user_input, chat_history, generate_intent=True) -> str:
         else:
             result = response_text
     else:
-        result = "No memory found"
+        result = "Sorry, no recipe or found"
+        print(result)
     return result
 
 
 if __name__ == "__main__":
-    query = "What is the total population of Mali?"
-    history = str(
-        [
-            {"inputs": {"question": "What is the total population of Mali?"}},
-        ]
-    )
-    get_memory(query, history, False)
+    # query = "Generate a population map for Haiti at the administrative level 1"
+    query = "What's the total population of Mali"
+    # history = str(
+    # [
+    #    {
+    #        "inputs": {
+    #            "question": "Generate a population map for Haiti at the administrative level 1"
+    #        }
+    #    },
+    # ]
+    # )
+    get_memory(query, [], False)

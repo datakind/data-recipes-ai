@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from langchain.docstore.document import Document
 from langchain_community.vectorstores.pgvector import PGVector
 
-from utils.utils import call_llm, get_models
+from utils.utils import call_llm, execute_query, get_models
 
 db = None
 
@@ -30,7 +30,7 @@ httpx_logger.setLevel(logging.WARNING)
 load_dotenv()
 
 # Lower numbers are more similar
-similarity_cutoff = {"memory": 0.1, "recipe": 0.1, "helper_function": 0.1}
+similarity_cutoff = {"memory": 0.2, "recipe": 0.2, "helper_function": 0.2}
 
 conn_params = {
     "RECIPES_OPENAI_API_TYPE": os.getenv("RECIPES_OPENAI_API_TYPE"),
@@ -100,10 +100,6 @@ prompt_map = {
     "memory": """
         You judge matches of user intent with those stored in a database to decide if they are true matches of intent.
         When asked to compare two intents, check they are the same, have the same entities and would result in the same outcome.
-        Be very strict in your judgement. If you are not sure, say no.
-        A plotting intent is different from a request for just the data.
-        A plotting intent will should have output format of plot_image_file_location.
-
 
         Answer with a JSON record ...
 
@@ -208,9 +204,7 @@ def check_recipe_memory(intent, mem_type, debug=True):
         db = initialize_vector_db()
 
     if mem_type not in ["memory", "recipe", "helper_function"]:
-        print(f"Memory type {mem_type} not recognised")
-        sys.exit()
-        return
+        raise ValueError(f"Memory type {mem_type} not recognised")
     r = {"score": None, "content": None, "metadata": None}
     result_found = False
     if debug:
@@ -227,29 +221,63 @@ def check_recipe_memory(intent, mem_type, debug=True):
         if d[1] < similarity_cutoff[mem_type]:
 
             # Here ask LLM to confirm our match
-            prompt = f"""
-                User Intent:
+            # prompt = f"""
+            #    User Intent:
+            #
+            #    {intent}
+            #
+            #    DB Intent:
+            #
+            #    {content}
+            #
+            # """
+            # response = call_llm(prompt_map[mem_type], prompt)
+            # if debug:
+            #    print("AI Judge of match: ", response)
+            # print(response)
 
-                {intent}
+            # TODO search needs refactoring, deactivating AI for now until after demos
+            response = {}
+            response["answer"] = "yes"
 
-                DB Intent:
-
-                {content}
-
-            """
-
-            response = call_llm(prompt_map[mem_type], prompt)
-
-            if debug:
-                print("AI Judge of match: ", response)
-            print(response)
             if response["answer"].lower() == "yes":
+                print("    MATCH!")
                 r["score"] = score
                 r["content"] = content
                 r["metadata"] = metadata
                 result_found = True
-                return r
+                return result_found, r
     return result_found, r
+
+
+def get_memory_recipe_metadata(custom_id, mem_type):
+    """
+    Get the metadata for a memory or recipe by Querying the database with the given custom ID.
+
+    Args:
+        custom_id (str): The custom ID of the memory or recipe document to get the metadata for.
+        mem_type (str): The type of memory store to search in. Can be 'memory', 'recipe', or 'helper_function'.
+
+    Returns:
+        dict: The metadata of the memory or recipe document with the given custom ID.
+    """
+
+    # Execute a SQL query to get the metadata for the given custom ID
+    query = f"""
+        SELECT
+            *
+        FROM
+            {mem_type}
+        WHERE
+            custom_id = '{custom_id}'
+    """
+    result = execute_query(query, "recipe")
+
+    if len(result) > 0:
+        result = result[0]
+
+    # Return the metadata
+    return {"result": result[3], "result_type": result[4], "custom_id": result[0]}
 
 
 def generate_intent_from_history(chat_history: list, remove_code: bool = True) -> dict:
@@ -263,7 +291,7 @@ def generate_intent_from_history(chat_history: list, remove_code: bool = True) -
         dict: The generated intent.
 
     """
-    chat = get_models()
+
     # Only use last few interactions
     buffer = 4
     if len(chat_history) > buffer:
@@ -279,17 +307,51 @@ def generate_intent_from_history(chat_history: list, remove_code: bool = True) -
                 c.pop("code")
         chat_history = chat_history2
 
-    prompt = f"""
-        Given the chat history below, what is the user's intent?
+    prompt = (
+        """
+        You are an intelligent assistant tasked with converting a user input into a standard intent phrase.
 
-        {chat_history}
+        Here is the user input:
+
+        """
+        + str(chat_history)
+        + """
+
+        The standard format has the following fields and possible values:
+
+        action: The specific action the user wants to perform (e.g., "plot", "generate", "export", "provide").
+        visualization_type: The type of visualization, if applicable (e.g., "bar chart", "line chart", "pie chart", "text summary"). Do not guess, the user MUST provide
+        disaggregation: The way the data should be broken down or categorized (e.g., "by state", "by company", "by year").
+        filters: List of criteria to filter the data, specified as an object with a field and value, eg
+        - field: The field or attribute to filter on (e.g., "region", "year").
+        - value: The specific value to filter by (e.g., "North America", "2023"). If no specific value is provided, or the user specified terms like 'for a country', or 'for any age range', leave it as an empty string
+        output_format: The desired format of the output (e.g., "image", "csv", "text").
+        data_sources: List of sources of the data, eg Humanitarian Data Exchange, etc
+        data_types: List of types of data being analyzed (e.g., "population", "GDP", "sales").
+        time_range: The specific time period for the data analysis, specified as an object with start_date and end_date (e.g., {"start_date": "2022-01-01", "end_date": "2022-12-31"}).
+        granularity: The time level of detail in the data (e.g., "daily", "monthly", "yearly").
+        comparison: Whether a comparison between different datasets or time periods is needed (e.g., true, or "").
+        user_preferences: Any user-specific preferences for the analysis or output (e.g., "include outliers", "show trend lines").
+
+        Where the output should use the above fields in the order they are listed.
+
+
+        Example output for the above input:
+
+        plot a bar chart of population by state for 2023 using HDX(HAPI) data, highlighting top 5 states as an image
+
+        Task:
+
+        Produce the user's intent in the standard format, answering with a JSON record ...
+
+        {
+            "intent": <user intent sentence>
+        }
 
     """
-    intent = call_llm(
-        instructions=prompt_map["instructions_intent_from_history"],
-        prompt=prompt,
-        chat=chat,
     )
+
+    intent = call_llm(instructions="", prompt=prompt)
     if not isinstance(intent, dict):
         intent = {"intent": intent}
     print(f"Generated intent: {intent}")

@@ -1,7 +1,9 @@
+import base64
 import json
 import os
 import re
 import sys
+import warnings
 
 import psycopg2
 from langchain.schema import HumanMessage, SystemMessage
@@ -11,6 +13,10 @@ from langchain_openai import (
     ChatOpenAI,
     OpenAIEmbeddings,
 )
+from sqlalchemy import create_engine
+
+# Suppress all warnings
+warnings.filterwarnings("ignore")
 
 chat = None
 embedding_model = None
@@ -74,7 +80,7 @@ def is_running_in_docker():
     return os.path.exists("/.dockerenv")
 
 
-def call_llm(instructions, prompt):
+def call_llm(instructions, prompt, image=None):
     """
     Call the LLM (Language Learning Model) API with the given instructions and prompt.
 
@@ -91,10 +97,34 @@ def call_llm(instructions, prompt):
     if chat is None or embedding_model is None:
         embedding_model, chat = get_models()
 
+    human_message = HumanMessage(content=prompt)
+
+    # Multimodal
+    if image:
+        if os.getenv("RECIPES_MODEL") == "gpt-4o":
+            print("Sending image to LLM ...")
+            with open(image, "rb") as image_file:
+                encoded_string = base64.b64encode(image_file.read()).decode()
+
+            human_message = HumanMessage(
+                content=[
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{encoded_string}"
+                        },
+                    },
+                ]
+            )
+        else:
+            print("Multimodal not supported for this model")
+            return None
+
     try:
         messages = [
             SystemMessage(content=instructions),
-            HumanMessage(content=prompt),
+            human_message,
         ]
         response = chat(messages)
 
@@ -105,6 +135,9 @@ def call_llm(instructions, prompt):
             response = json.loads(response)
             response = response["content"]
 
+        # Some silly things that sometimes happen
+        response = response.replace(",}", "}")
+
         # Different models do different things when prompted for JSON. Here we try and handle this
         try:
             # Is it already JSON?
@@ -112,12 +145,12 @@ def call_llm(instructions, prompt):
         except json.decoder.JSONDecodeError:
             # Did the LLM provide JSON in ```json```?
             if "```json" in response:
-                print("LLM responded with JSON in ```json```")
+                # print("LLM responded with JSON in ```json```")
                 response = response.split("```json")[1]
                 response = response.replace("\n", "").split("```")[0]
                 response = json.loads(response)
             elif "```python" in response:
-                print("LLM responded with Python in ```python```")
+                # print("LLM responded with Python in ```python```")
                 all_sections = response.split("```python")[1]
                 code = all_sections.replace("\n", "").split("```")[0]
                 message = all_sections.split("```")[0]
@@ -145,9 +178,9 @@ def get_models():
     completion_model = os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME")
     model = os.getenv("RECIPES_MODEL")
 
-    print("LLM Settings ...")
-    print(f"   API type: {api_type}")
-    print(f"   Model name: {model}")
+    # print("LLM Settings ...")
+    # print(f"   API type: {api_type}")
+    # print(f"   Model name: {model}")
 
     if api_type == "openai":
         # print("Using OpenAI API in memory.py")
@@ -159,7 +192,7 @@ def get_models():
             model_name=model,
             api_key=api_key,
             temperature=1,
-            max_tokens=1000,
+            max_tokens=3000,
         )
     elif api_type == "azure":
         # print("Using Azure OpenAI API in memory.py")
@@ -184,15 +217,21 @@ def get_models():
     return embedding_model, chat
 
 
-def get_connection():
+def get_connection(instance="data"):
     """
     This function gets a connection to the database
+
+    Args:
+
+        instance (str): The instance of the database to connect to, "recipe" or "data". Default is "data"
     """
-    host = os.getenv("POSTGRES_DATA_HOST")
-    port = os.getenv("POSTGRES_DATA_PORT")
-    database = os.getenv("POSTGRES_DATA_DB")
-    user = os.getenv("POSTGRES_DATA_USER")
-    password = os.getenv("POSTGRES_DATA_PASSWORD")
+    instance = instance.upper()
+
+    host = os.getenv(f"POSTGRES_{instance}_HOST")
+    port = os.getenv(f"POSTGRES_{instance}_PORT")
+    database = os.getenv(f"POSTGRES_{instance}_DB")
+    user = os.getenv(f"POSTGRES_{instance}_USER")
+    password = os.getenv(f"POSTGRES_{instance}_PASSWORD")
 
     conn = psycopg2.connect(
         dbname=database, user=user, password=password, host=host, port=port
@@ -200,14 +239,14 @@ def get_connection():
     return conn
 
 
-def execute_query(query):
+def execute_query(query, instance="data"):
     """
     This skill executes a query in the data database.
 
     To find out what tables and columns are available, you can run "select table_name, api_name, summary, columns from table_metadata"
 
     """
-    conn = get_connection()
+    conn = get_connection(instance)
     cur = conn.cursor()
 
     # Execute the query
@@ -221,3 +260,33 @@ def execute_query(query):
     conn.close()
 
     return rows
+
+
+def connect_to_db(instance="recipe"):
+    """
+    Connects to the specified database instance (RECIPE or DATA) DB and returns a connection object.
+
+    Args:
+        instance (str): The name of the database instance to connect to. Defaults to "RECIPE".
+
+    Returns:
+        sqlalchemy.engine.base.Engine: The connection object for the specified database instance.
+    """
+
+    instance = instance.upper()
+
+    # Fallback for CLI running outside of docker
+    if not is_running_in_docker():
+        os.environ[f"POSTGRES_{instance}_HOST"] = "localhost"
+        os.environ[f"POSTGRES_{instance}_PORT"] = "5433"
+
+    host = os.getenv(f"POSTGRES_{instance}_HOST")
+    port = os.getenv(f"POSTGRES_{instance}_PORT")
+    database = os.getenv(f"POSTGRES_{instance}_DB")
+    user = os.getenv(f"POSTGRES_{instance}_USER")
+    password = os.getenv(f"POSTGRES_{instance}_PASSWORD")
+    conn_str = f"postgresql://{user}:{password}@{host}:{port}/{database}"
+
+    # add an echo=True to see the SQL queries
+    conn = create_engine(conn_str)
+    return conn
