@@ -769,8 +769,9 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
     # Create a DataFrame from the list of records
     records_to_check_in = pd.DataFrame(records)
 
-    # Generate openapi_json from function_code
-    records_to_check_in = generate_openapi_json(records_to_check_in)
+    # Generate openapi_json from function_code. TODO, commenting out for now
+    # records_to_check_in = generate_openapi_json(records_to_check_in)
+    records_to_check_in["openapi_json"] = "{}"
 
     # Update database
     if records_to_check_in.empty:

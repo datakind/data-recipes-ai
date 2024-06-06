@@ -5,6 +5,7 @@ import re
 import sys
 import warnings
 
+import pandas as pd
 import psycopg2
 from langchain.schema import HumanMessage, SystemMessage
 from langchain_openai import (
@@ -241,11 +242,16 @@ def get_connection(instance="data"):
 
 def execute_query(query, instance="data"):
     """
-    This skill executes a query in the data database.
+    Executes a SQL query and returns the result as a DataFrame.
 
-    To find out what tables and columns are available, you can run "select table_name, api_name, summary, columns from table_metadata"
+    Parameters:
+        query (str): The SQL query to execute.
+        instance (str): The database instance to connect to. Default is "data".
 
+    Returns:
+        pandas.DataFrame: The result of the query as a DataFrame.
     """
+
     conn = get_connection(instance)
     cur = conn.cursor()
 
@@ -255,11 +261,17 @@ def execute_query(query, instance="data"):
     # Fetch all the returned rows
     rows = cur.fetchall()
 
+    # Get column names
+    column_names = [desc[0] for desc in cur.description]
+
     # Close the cursor and connection
     cur.close()
     conn.close()
 
-    return rows
+    # Convert rows to DataFrame
+    df = pd.DataFrame(rows, columns=column_names)
+
+    return df
 
 
 def connect_to_db(instance="recipe"):

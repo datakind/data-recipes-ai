@@ -30,7 +30,7 @@ httpx_logger.setLevel(logging.WARNING)
 load_dotenv()
 
 # Lower numbers are more similar
-similarity_cutoff = {"memory": 0.2, "recipe": 0.2, "helper_function": 0.2}
+similarity_cutoff = {"memory": 0.2, "recipe": 0.3, "helper_function": 0.2}
 
 conn_params = {
     "RECIPES_OPENAI_API_TYPE": os.getenv("RECIPES_OPENAI_API_TYPE"),
@@ -185,14 +185,15 @@ def add_recipe_memory(intent, metadata, mem_type="recipe", force=False):
     return id
 
 
-def check_recipe_memory(intent, mem_type, debug=True):
+def check_recipe_memory(intent, mem_type, debug=True, ai_check=False):
     """
     Check the memory for a given intent.
 
     Args:
         intent (str): The intent to search for in the memory.
         mem_type (str): The type of memory to search in. Can be 'memory', 'recipe', or 'helper_function'.
-        db (Database): The database object to perform the search on.
+        debug (bool, optional): If True, print debug information. Default is True.
+        ai_check (bool, optional): If True, use the AI to confirm the match. Default is False.
 
     Returns:
         dict: A dictionary containing the score, content, and metadata of the best match found in the memory.
@@ -218,27 +219,28 @@ def check_recipe_memory(intent, mem_type, debug=True):
             continue
         if debug:
             print("\n", f"Score: {score} ===> {content}")
+
         if d[1] < similarity_cutoff[mem_type]:
 
             # Here ask LLM to confirm our match
-            # prompt = f"""
-            #    User Intent:
-            #
-            #    {intent}
-            #
-            #    DB Intent:
-            #
-            #    {content}
-            #
-            # """
-            # response = call_llm(prompt_map[mem_type], prompt)
-            # if debug:
-            #    print("AI Judge of match: ", response)
-            # print(response)
+            if ai_check is True:
+                prompt = f"""
+                    User Intent:
 
-            # TODO search needs refactoring, deactivating AI for now until after demos
-            response = {}
-            response["answer"] = "yes"
+                    {intent}
+
+                    DB Intent:
+
+                    {content}
+
+                """
+                response = call_llm(prompt_map[mem_type], prompt)
+                if debug:
+                    print("AI Judge of match: ", response)
+                print(response)
+            else:
+                response = {}
+                response["answer"] = "yes"
 
             if response["answer"].lower() == "yes":
                 print("    MATCH!")
@@ -259,10 +261,10 @@ def get_memory_recipe_metadata(custom_id, mem_type):
         mem_type (str): The type of memory store to search in. Can be 'memory', 'recipe', or 'helper_function'.
 
     Returns:
-        dict: The metadata of the memory or recipe document with the given custom ID.
+        dict: The table data of the memory or recipe document with the given custom ID.
     """
 
-    # Execute a SQL query to get the metadata for the given custom ID
+    # Execute a SQL query to get the table data for the given custom ID
     query = f"""
         SELECT
             *
@@ -271,18 +273,17 @@ def get_memory_recipe_metadata(custom_id, mem_type):
         WHERE
             custom_id = '{custom_id}'
     """
+    print(query)
     result = execute_query(query, "recipe")
 
-    if len(result) > 0:
-        result = result[0]
-
-    # Return the metadata
-    return {
-        "result": result[3],
-        "result_type": result[4],
-        "custom_id": result[0],
-        "attribution": result[9],
-    }
+    if result.shape[0] > 0:
+        result = result.iloc[0]
+        result = json.loads(result.to_json())
+        return result
+    else:
+        raise ValueError(
+            f"No table data (memory/recipe) found for custom ID {custom_id}"
+        )
 
 
 def generate_intent_from_history(chat_history: list, remove_code: bool = True) -> dict:

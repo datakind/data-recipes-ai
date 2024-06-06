@@ -13,6 +13,7 @@ ENV GDAL_CONFIG=/usr/bin/gdal-config
 # Copy application files and install dependencies
 COPY ./recipes-management/ /app
 COPY ./utils/ /app/utils
+COPY ./templates /app/templates
 RUN pip install --upgrade pip
 WORKDIR /app
 RUN pip install -r requirements.txt && pip install autogenstudio
