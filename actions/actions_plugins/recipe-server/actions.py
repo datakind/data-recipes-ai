@@ -89,6 +89,8 @@ def get_memory_recipe(user_input, chat_history, generate_intent=True) -> str:
         custom_id = result["metadata"]["custom_id"]
         metadata = get_memory_recipe_metadata(custom_id, mem_type)
         attribution = metadata["attribution"]
+        if attribution is None:
+            attribution = ""
         print(metadata)
         print(f"====> Found {mem_type}")
         if metadata["result_type"] == "image":
