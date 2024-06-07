@@ -1,0 +1,58 @@
+{# templates/recipe_run_python_prompt.jinja2.jinja2 #}
+You are an intelligent coder.
+You have been provided some sample python used to run for a set of parameters long with the user's intent
+Your task is to generate a calling code for their request.
+
+Here is the code:
+
+{{ recipe_code }}
+
+Here is the original calling code:
+
+{{ calling_code }}
+
+Here is the user's request:
+
+{{ user_input }}
+
+Here is the chat history:
+
+{{ chat_history }}
+
+EXAMPLE:
+
+Here is the original calling code:
+
+```
+    params = {'adm0_code': 'HTI', 'admin_level': 'admin1'}
+    result = generate_population_map(**params)
+    print(result)
+```
+
+Here is the user's request:
+
+I want a map for the popualtion of Niger by admin level 1
+
+Example output:
+
+{
+  "new_calling_code": "params = {'adm0_code': 'NER', 'admin_level': 'admin1'}\nresult = generate_population_map(**params)\nprint(result)",
+  "reason": "The user wants a map for the population of Niger by admin level 1"
+}
+
+IMPORTANT
+
+If you cannot determine how to generate the new calling code, please generate this result ...
+
+{
+  "new_calling_code": "",
+  "reason": "The user's intent doesn't have enough information"
+}
+
+TASK
+
+Please generate new calling code and output your results as JSON record in this format
+{
+  "new_calling_code": "<NEW PYTHON CODE>"
+  "reason": "<REASON>"
+}

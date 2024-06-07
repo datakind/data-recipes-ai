@@ -29,6 +29,8 @@ RUN chmod +x /usr/local/bin/action-server
 
 COPY ./actions .
 COPY ./utils/ ./actions_plugins/recipe-server/utils
+COPY ./templates ./actions_plugins/recipe-server/templates
+COPY ./recipes-management/skills.py /action-server/actions/actions_plugins/recipe-server/recipes/skills.py
 
 RUN mkdir -p /action-server/actions/actions_plugins/recipe-server/images
 

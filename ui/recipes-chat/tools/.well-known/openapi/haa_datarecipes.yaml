@@ -1,3 +1,6 @@
+Here is the updated OpenAPI specification with the two return fields `best_match` and `attribution`, both strings:
+
+```yaml
 openapi: 3.0.2
 info:
   title: Sema4.ai Action Server
@@ -11,7 +14,7 @@ paths:
       summary: Get Memory
       description: Performs a search in the memory for a given intent and returns
         the best match found.
-      operationId: get_memory
+      operationId: get_memory_recipe
       requestBody:
         required: true
         content:
@@ -43,6 +46,11 @@ paths:
               schema:
                 title: Response Get Memory
                 description: The 3 best matches found in the memory.
+                type: object
+                properties:
+                  best_match:
+                    type: string
+                    description: The best match found in the memory
         "422":
           description: Validation Error
           content:
@@ -76,3 +84,4 @@ components:
           title: Message
         type:
           title: Error Type
+```
