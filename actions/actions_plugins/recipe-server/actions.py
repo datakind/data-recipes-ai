@@ -176,12 +176,14 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
 
         # TODO - this is terrible, just for the demo, extract JSON between "{" and "}""
         # Match { }
+        attribution = ""
         if result["output"].find("{") != -1:
             result["output"] = result["output"][result["output"].find("{") :]
             result["output"] = result["output"][: result["output"].rfind("}") + 1]
             print("Output: ", result["output"])
             j = json.loads(result["output"].replace("'", '"'))
-            attribution = j["attribution"]
+            if "attribution" in j:
+                attribution = j["attribution"]
         else:
             attribution = "Data was sourced from HDX"
 
