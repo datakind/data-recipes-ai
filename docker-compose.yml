@@ -118,27 +118,47 @@ services:
       - ./ui/recipes-chat/recipesdb:/var/lib/postgresql/data
     env_file:
       - .env
+  # actions:
+  #   platform: linux/amd64
+  #   container_name: haa-robo-actions
+  #   user: "1000:1000"
+  #   build:
+  #     context: .
+  #     dockerfile: ./actions/Dockerfile
+  #     args:
+  #       DATA_DB_CONN_STRING: ${DATA_DB_CONN_STRING}
+  #   ports:
+  #     # API
+  #     - 3001:8080
+  #     # Action server portal
+  #     - 4001:8087
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - shared-data:/action-server/actions/actions_plugins/recipe-server/images
+  #     - ./utils:/action-server/actions/actions_plugins/recipe-server/utils
+  #     - ./templates:/action-server/actions/actions_plugins/recipe-server/templates
+  #     - ./recipes-management/skills.py:/action-server/actions/actions_plugins/recipe-server/recipes/skills.py
+  # # Simple FastAPI version
   actions:
-    platform: linux/amd64
-    container_name: haa-robo-actions
-    user: "1000:1000"
-    build:
-      context: .
-      dockerfile: ./actions/Dockerfile
-      args:
-        DATA_DB_CONN_STRING: ${DATA_DB_CONN_STRING}
-    ports:
-      # API
-      - 3001:8080
-      # Action server portal
-      - 4001:8087
-    env_file:
-      - .env
-    volumes:
-      - shared-data:/action-server/actions/actions_plugins/recipe-server/images
-      - ./utils:/action-server/actions/actions_plugins/recipe-server/utils
-      - ./templates:/action-server/actions/actions_plugins/recipe-server/templates
-      - ./recipes-management/skills.py:/action-server/actions/actions_plugins/recipe-server/recipes/skills.py
+     platform: linux/amd64
+     container_name: haa-robo-actions
+     #user: "1000:1000"
+     build:
+       context: .
+       dockerfile: ./actions-fastapi/Dockerfile
+       args:
+         DATA_DB_CONN_STRING: ${DATA_DB_CONN_STRING}
+     ports:
+       # API
+       - 3001:8080
+     env_file:
+       - .env
+     volumes:
+       - shared-data:/app/images
+       - ./actions/actions_plugins/recipe-server/actions.py:/app/action.py
+       - ./templates:/app/templates
+       - ./utils:/app/utils
   # Init container 
   init:
     image: busybox

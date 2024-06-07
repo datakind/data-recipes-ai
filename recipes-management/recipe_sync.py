@@ -446,7 +446,7 @@ def insert_records_in_db(df, approver):
                 intent=metadata["intent"],
                 metadata={"mem_type": "recipe"},
                 mem_type="recipe",
-                # force=True
+                force=True,
             )
             if "already_exists" in response:
                 print(response)

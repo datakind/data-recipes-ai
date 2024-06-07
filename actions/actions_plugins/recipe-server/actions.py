@@ -191,7 +191,7 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
 
     print("Recipe executed successfully.")
     print(result)
-    return run_output + " >> ATTRIBUTION: " + attribution
+    return result["output"] + " >> ATTRIBUTION: " + attribution
 
 
 # @lru_cache(maxsize=100)
@@ -255,7 +255,7 @@ if __name__ == "__main__":
     # query = "what's the population of Mali"
     # query = "what recipes do you have"
     # query = "Create a chart that demonstrates the number of organizations working in Sila within each sector"
-    query = "plot a map showing food security in IPC Phase 3 across regions in Chad"
+    query = "plot a map showing food security IPC phase 3 across regions in Chad"
     # history = str(
     # [
     #    {

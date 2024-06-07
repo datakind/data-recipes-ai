@@ -235,9 +235,12 @@ def check_recipe_memory(intent, mem_type, debug=True, ai_check=False):
 
                 """
                 response = call_llm(prompt_map[mem_type], prompt)
+                if "content" in response:
+                    response = response["content"]
+                if isinstance(response, str):
+                    response = json.loads(response)
                 if debug:
                     print("AI Judge of match: ", response)
-                print(response)
             else:
                 response = {}
                 response["answer"] = "yes"
