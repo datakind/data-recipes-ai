@@ -192,7 +192,7 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
     return run_output + " >> ATTRIBUTION: " + attribution
 
 
-@lru_cache(maxsize=100)
+# @lru_cache(maxsize=100)
 @action()
 def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
     """
