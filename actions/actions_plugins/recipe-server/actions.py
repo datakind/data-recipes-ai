@@ -189,7 +189,7 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
 
     print("Recipe executed successfully.")
     print(result)
-    return result
+    return run_output + " >> ATTRIBUTION: " + attribution
 
 
 @lru_cache(maxsize=100)
