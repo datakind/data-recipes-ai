@@ -13,6 +13,8 @@ import numpy as np
 import psycopg2
 import requests
 from dotenv import load_dotenv
+from hdx.api.configuration import Configuration
+from hdx.data.resource import Resource
 
 # This is copied or mounted into Docker image
 from utils import *
@@ -26,6 +28,39 @@ httpx_logger = logging.getLogger("httpx")
 httpx_logger.setLevel(logging.WARNING)
 
 load_dotenv()
+
+
+def get_hdx_dataset_url(resource_id):
+    """
+    Retrieves the dataset URL based on the given resource ID.
+
+    Args:
+        resource_id (str): The ID of the resource.
+
+    Returns:
+        str: The dataset URL.
+
+    Raises:
+        Exception: If the resource cannot be fetched or the dataset ID cannot be obtained.
+    """
+
+    try:
+        Configuration.create(hdx_site='prod', user_agent='Data Recipes AI', hdx_read_only=True)
+    except Exception:
+        print('HDX already activated')
+
+    print(resource_id)
+
+    # Fetch the resource
+    resource = Resource.read_from_hdx(resource_id)
+
+    # Get the dataset ID
+    dataset_id = resource['package_id']
+
+    # Construct the dataset URL
+    dataset_url = f'https://data.humdata.org/dataset/{dataset_id}'
+
+    return dataset_url
 
 
 def get_connection():

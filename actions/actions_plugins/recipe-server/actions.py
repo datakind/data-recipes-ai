@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 from functools import lru_cache
@@ -166,24 +167,34 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
         with open(recipe_path, "w") as f:
             f.write(code)
 
-        cmd = f"python {recipe_path}"
+        os.chdir(recipes_work_dir)
+        cmd = f"python {custom_id}.py"
         run_output = subprocess.run(cmd, shell=True, capture_output=True, text=True)
 
         result["output"] = run_output.stdout
-        result["errors"] = run_output.stderr
-        result["attribution"] = "Data was sroued from HDX"
+        # result["errors"] = run_output.stderr
 
-    # Run the recipe here
-    # exec(recipe)
+        # TODO - this is terrible, just for the demo, extract JSON between "{" and "}""
+        # Match { }
+        if result["output"].find("{") != -1:
+            result["output"] = result["output"][result["output"].find("{") :]
+            result["output"] = result["output"][: result["output"].rfind("}") + 1]
+            print("Output: ", result["output"])
+            j = json.loads(result["output"].replace("'", '"'))
+            attribution = j["attribution"]
+        else:
+            attribution = "Data was sourced from HDX"
+
+        result["attribution"] = attribution
 
     print("Recipe executed successfully.")
     print(result)
-    return result
+    return run_output + " >> ATTRIBUTION: " + attribution
 
 
-@lru_cache(maxsize=100)
+# @lru_cache(maxsize=100)
 @action()
-def get_memory_recipe(user_input, chat_history, generate_intent=True) -> str:
+def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
     """
     Performs a search in the memory for a given intent and returns the best match found.
 
@@ -200,9 +211,9 @@ def get_memory_recipe(user_input, chat_history, generate_intent=True) -> str:
     logging.info("Python HTTP trigger function processed a request.")
     # Retrieve the CSV file from the request
 
-    generate_intent = False
+    generate_intent = "false"
 
-    if generate_intent is not None and generate_intent is True:
+    if generate_intent is not None and generate_intent == "true":
         # chat history is passed from promptflow as a string representation of a list and this has to be converted back to a list for the intent generation to work!
         history_list = ast.literal_eval(chat_history)
         history_list.append({"inputs": {"question": user_input}})
@@ -220,12 +231,14 @@ def get_memory_recipe(user_input, chat_history, generate_intent=True) -> str:
             # Get data from memory or recipe tables
             table_data = get_memory_recipe_metadata(custom_id, mem_type)
             if mem_type == "recipe":
-                # Run the recipe
                 result = run_recipe(custom_id, table_data, user_input, chat_history)
             else:
                 # Take the result directly from memory
                 result = process_memory_recipe_results(result, table_data)
-                print(result)
+
+            result = re.escape(str(result))
+            print(result)
+
             return str(result)
 
     result = "Sorry, no recipe or found"
@@ -239,7 +252,8 @@ if __name__ == "__main__":
     # query = "What's the total population of AFG"
     # query = "what's the population of Mali"
     # query = "what recipes do you have"
-    query = "Create a chart that demonstrates the number of organizations working in Sila within each sector"
+    # query = "Create a chart that demonstrates the number of organizations working in Sila within each sector"
+    query = "plot a map showing food security in IPC Phase 3 across regions in Chad"
     # history = str(
     # [
     #    {

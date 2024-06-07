@@ -1107,8 +1107,8 @@ def update_metadata_file_results(recipe_folder, result):
 
         # See if result.stdout is a JSON file, if so extract "file"
         try:
-            result = json.loads(str(result.stdout))
-            png_file = result["file"]
+            result_json = json.loads(str(result.stdout))
+            png_file = result_json["file"]
         except json.JSONDecodeError:
             print("Extract png file location from stdout")
             png_file = re.search(r"(\w+\.png)", result.stdout).group(1)
@@ -1140,9 +1140,9 @@ def update_metadata_file_results(recipe_folder, result):
                     "image_validation_prompt.jinja2"
                 )
                 prompt = image_validation_prompt.render(user_input=metadata["intent"])
-                result = call_llm("", prompt, image=png_file_path)
-                if "answer" in result:
-                    if result["answer"] == "yes":
+                llm_result = call_llm("", prompt, image=png_file_path)
+                if "answer" in llm_result:
+                    if llm_result["answer"] == "yes":
                         print("Image validation passed")
                     else:
                         print(
@@ -1153,6 +1153,15 @@ def update_metadata_file_results(recipe_folder, result):
     else:
         metadata["sample_result"] = result.stdout
         metadata["sample_result_type"] = "text"
+
+    # Is there an attribution
+    if "attribution" in result.stdout:
+        print(result.stdout)
+        attribution = re.search(r"'attribution': (.*)\}", result.stdout).group(1)
+        attribution = attribution.replace("'", "")
+        metadata["sample_attribution"] = attribution
+    else:
+        metadata["sample_attribution"] = ""
 
     with open(metadata_path, "w") as file:
         json.dump(metadata, file, indent=4)
@@ -1367,7 +1376,8 @@ def save_as_memory(recipe_folder):
                 source,
                 created_by,
                 updated_by,
-                last_updated
+                last_updated,
+                attribution
             )
             VALUES (
                 :custom_id,
@@ -1378,7 +1388,8 @@ def save_as_memory(recipe_folder):
                 :source,
                 :created_by,
                 :updated_by,
-                NOW()
+                NOW(),
+                :attribution
             )
             """
         )
@@ -1393,6 +1404,7 @@ def save_as_memory(recipe_folder):
             "source": "Recipe sample result",
             "created_by": metadata["created_by"],
             "updated_by": metadata["created_by"],
+            "attribution": metadata["sample_attribution"],
         }
         conn.execute(query_template, params)
 
