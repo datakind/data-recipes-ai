@@ -159,6 +159,18 @@ services:
        - ./actions/actions_plugins/recipe-server/actions.py:/app/action.py
        - ./templates:/app/templates
        - ./utils:/app/utils
+  chainlit-ui:
+     platform: linux/amd64
+     container_name: haa-robo-chainlit-ui
+     build:
+       context: .
+       dockerfile: ./ui/recipes-chat-chainlit/Dockerfile
+     ports:
+       - 8000:8000
+     env_file:
+       - .env
+     volumes:
+       - shared-data:/app/images
   # Init container 
   init:
     image: busybox

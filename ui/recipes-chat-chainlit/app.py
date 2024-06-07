@@ -22,15 +22,8 @@ def print(*tup):
 llm_prompt_cap = 5000
 sql_rows_cap = 100
 
-if os.path.exists("/.dockerenv"):
-    base_url = "http://actions:8080/api/actions/"
-else:
-    base_url = "http://localhost:3001/api/actions/"
-execute_query_url = f"{base_url}postgresql-universal-actions/execute-query/run"
-read_memory_recipe_url = f"{base_url}get-data-recipe-memory/get-memory-recipe/run"
-
-# Fast API
-base_url = "http://localhost:3001/"
+# URL for actions, assuming FastAPI instance
+base_url = "http://actions:3001/"
 execute_query_url = f"{base_url}/execute_query"
 read_memory_recipe_url = f"{base_url}/get_memory_recipe"
 
@@ -68,7 +61,21 @@ async def get_data_info():
 
 
 async def gen_sql(input, chat_history, output):
+    """
+    Generate SQL query based on input, chat history, and output.
 
+    Args:
+        input (str): The input for generating the SQL query.
+        chat_history (str): The chat history used for generating the SQL query.
+        output (str): The output of the SQL query.
+
+    Returns:
+        str: The generated SQL query.
+
+    Raises:
+        None
+
+    """
     global data_info
 
     if data_info is None:
@@ -94,7 +101,22 @@ async def gen_sql(input, chat_history, output):
 
 
 async def gen_summarize_results(input, sql, output):
+    """
+    Summarizes the results of a query and answers the user's question.
 
+    Args:
+        input (str): The user's question.
+        sql (str): The SQL query that was executed.
+        output (str): The output of the executed query.
+
+    Returns:
+        str: The summarized results of the query.
+
+    Important:
+    - If you see 'attribution' in the response with a URL, display it as a foot note like this: "Reference: [HDX](<URL>)
+    When showing results for these questions, always add a foot note: "✅ *A human approved this data recipe*"
+    - Always display images inline, do not use links
+    """
     cl.Message("    Summarizing results ...").send()
 
     if len(output) > llm_prompt_cap:
@@ -116,7 +138,7 @@ async def gen_summarize_results(input, sql, output):
         Important:
 
         - If you see 'attribution'  in the response with a URL, display it as a foot note like this: "Reference: [HDX](<URL>)
-When showing results for these questions, always add a foot note: "✅ *A human approved this data recipe*"
+        When showing results for these questions, always add a foot note: "✅ *A human approved this data recipe*"
         - Always display images inline, do not use links
 
         Task:
@@ -133,6 +155,19 @@ When showing results for these questions, always add a foot note: "✅ *A human 
 
 
 async def make_api_request(url, payload):
+    """
+    Makes an API request to the specified URL with the given payload.
+
+    Args:
+        url (str): The URL to make the API request to.
+        payload (dict): The payload to send with the API request.
+
+    Returns:
+        dict: The response from the API as a dictionary.
+
+    Raises:
+        requests.exceptions.RequestException: If an error occurs while making the API request.
+    """
     headers = {"Content-Type": "application/json"}
     print(f"API URL: {url}")
     print(f"API Payload: {payload}")
@@ -144,11 +179,30 @@ async def make_api_request(url, payload):
 
 
 async def call_execute_query_action(sql):
+    """
+    Calls the execute query action API endpoint with the given SQL query.
+
+    Args:
+        sql (str): The SQL query to execute.
+
+    Returns:
+        dict: The response from the API.
+
+    """
     data = {"query": f"{sql}"}
     return await make_api_request(execute_query_url, data)
 
 
 async def call_get_memory_recipe_action(user_input):
+    """
+    Calls the API to get a memory recipe action.
+
+    Args:
+        user_input (str): The user input.
+
+    Returns:
+        The API response from the make_api_request function.
+    """
     data = {
         "user_input": f"{user_input}",
         "chat_history": "[]",
@@ -158,6 +212,19 @@ async def call_get_memory_recipe_action(user_input):
 
 
 async def ask_data(input, chat_history):
+    """
+    Asynchronously processes the input data and chat history to generate an output.
+
+    Args:
+        input: The input data.
+        chat_history: The chat history.
+
+    Returns:
+        The generated output.
+
+    Raises:
+        Exception: If there is an error during the execution of the query.
+    """
 
     output = ""
 
@@ -181,6 +248,15 @@ async def ask_data(input, chat_history):
 
 @cl.step(type="tool")
 async def tool(message: str):
+    """
+    This function represents a tool step in the data recipe chat chainlit.
+
+    Parameters:
+        message (str): The message to be passed to the ask_data function.
+
+    Returns:
+        The result obtained from the ask_data function.
+    """
     result = await ask_data(message, [])
     return result
 

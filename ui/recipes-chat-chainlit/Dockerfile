@@ -1,11 +1,11 @@
-FROM python:3.1.4
+FROM python:3.11.4
 
-# Install any needed packages specified in requirements.txt
+COPY ui/recipes-chat-chainlit /app
+WORKDIR /app
+
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ui/recipes-chat-chainlit/ /app/
-WORKDIR /app
 
 COPY ./utils/ ./utils
 COPY ./templates ./templates
