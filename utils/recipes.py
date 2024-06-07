@@ -30,7 +30,7 @@ httpx_logger.setLevel(logging.WARNING)
 load_dotenv()
 
 # Lower numbers are more similar
-similarity_cutoff = {"memory": 0.2, "recipe": 0.3, "helper_function": 0.2}
+similarity_cutoff = {"memory": 0.3, "recipe": 0.3, "helper_function": 0.2}
 
 conn_params = {
     "RECIPES_OPENAI_API_TYPE": os.getenv("RECIPES_OPENAI_API_TYPE"),
