@@ -24,8 +24,8 @@ sql_rows_cap = 100
 
 # URL for actions, assuming FastAPI instance
 base_url = "http://actions:8080/"
-execute_query_url = f"{base_url}/execute_query"
-read_memory_recipe_url = f"{base_url}/get_memory_recipe"
+execute_query_url = f"{base_url}execute_query"
+read_memory_recipe_url = f"{base_url}get_memory_recipe"
 
 environment = Environment(loader=FileSystemLoader("./templates/"))
 
@@ -230,10 +230,11 @@ async def ask_data(input, chat_history):
 
     # Loop 3 times to retry errors
     for i in range(5):
-        sql = await gen_sql(input, chat_history, output)
+        # sql = await gen_sql(input, chat_history, output)
         try:
             output = await call_get_memory_recipe_action(input)
             # output = await call_execute_query_action(sql)
+            sql = ""
             output = await gen_summarize_results(input, sql, output)
             print(output)
             break
