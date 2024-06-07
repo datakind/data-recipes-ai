@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./utils/ ./utils
 COPY ./templates ./templates
-
+#
 RUN mkdir recepes
 RUN mkdir recepes/images
 

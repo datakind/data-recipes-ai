@@ -23,11 +23,11 @@ llm_prompt_cap = 5000
 sql_rows_cap = 100
 
 # URL for actions, assuming FastAPI instance
-base_url = "http://actions:3001/"
+base_url = "http://actions:8080/"
 execute_query_url = f"{base_url}/execute_query"
 read_memory_recipe_url = f"{base_url}/get_memory_recipe"
 
-environment = Environment(loader=FileSystemLoader("../../templates/"))
+environment = Environment(loader=FileSystemLoader("./templates/"))
 
 load_dotenv("../../.env")
 
