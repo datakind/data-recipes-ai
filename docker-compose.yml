@@ -155,7 +155,7 @@ services:
      env_file:
        - .env
      volumes:
-       - shared-data:/app/images
+       - shared-data:/app/public/images
        - ./actions/actions_plugins/recipe-server/actions.py:/app/action.py
        - ./templates:/app/templates
        - ./utils:/app/utils
@@ -170,7 +170,7 @@ services:
      env_file:
        - .env
      volumes:
-       - shared-data:/app/images
+       - shared-data:/app/public/images
        - ./templates:/app/utils/templates
   # # Init container 
   # init:

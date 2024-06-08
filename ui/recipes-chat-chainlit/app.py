@@ -137,9 +137,10 @@ async def gen_summarize_results(input, sql, output):
 
         Important:
 
-        - If you see 'attribution'  in the response with a URL, display it as a foot note like this: "Reference: [HDX](<URL>)
-        When showing results for these questions, always add a foot note: "✅ *A human approved this data recipe*"
+        - If you see 'attribution' in the response with a URL, display it as a foot note like this: "Reference: [HDX](<URL>)
+        - When showing results for these questions, always add a foot note: "✅ *A human approved this data recipe*"
         - Always display images inline, do not use links
+        - If you see an image URL, modify it so the png is in http://localhost:8000/public/images/
 
         Task:
 

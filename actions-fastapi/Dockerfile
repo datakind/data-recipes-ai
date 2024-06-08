@@ -10,7 +10,7 @@ WORKDIR /app
 # Add the current directory contents into the container at /app
 ADD ./actions-fastapi /app
 
-# Install any needed packages specified in requirements.txt
+# Install any needed packages specified in requirements.txt.
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 

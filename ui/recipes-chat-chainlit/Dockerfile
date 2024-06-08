@@ -13,4 +13,4 @@ COPY ./templates ./templates
 RUN mkdir recepes
 RUN mkdir recepes/images
 
-CMD ["chainlit", "run", "app.py", "--port", "8000"]
+CMD ["chainlit", "run", "app.py", "--port", "8000", "-w"]

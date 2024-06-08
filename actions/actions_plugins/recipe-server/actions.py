@@ -52,7 +52,7 @@ def process_image(encoded_string, recipe_id):
     image = Image.open(io.BytesIO(image_data))
 
     # Create the full path for saving the image
-    full_path = os.path.join("./images", f"memory_image_{recipe_id}.png")
+    full_path = os.path.join("./public/", f"memory_image_{recipe_id}.png")
 
     # Save the image
     image.save(full_path, "PNG")
