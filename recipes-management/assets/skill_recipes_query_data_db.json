@@ -1,8 +1,0 @@
-{
-    "title": "recipes_query_data_db",
-    "content": "\n  ## This is a skill to execute database queires in the data databse,\n  ## For answering questions about humanitarian response.\n\n\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport psycopg2\nimport os\nfrom dotenv import load_dotenv\n\nload_dotenv()\n\ndef get_connection():\n    \"\"\"\n    This function gets a connection to the database\n    \"\"\"\n    host = os.getenv(\"POSTGRES_DATA_HOST\")\n    port = os.getenv(\"POSTGRES_DATA_PORT\")\n    database = os.getenv(\"POSTGRES_DATA_DB\")\n    user = os.getenv(\"POSTGRES_DATA_USER\")\n    password = os.getenv(\"POSTGRES_DATA_PASSWORD\")\n\n    conn = psycopg2.connect(\n        dbname=database,\n        user=user,\n        password=password,\n        host=host,\n        port=port\n    )\n    return conn\n\ndef execute_query(query):\n    \"\"\"\n    This skill executes a query in the data database.\n\n    To find out what tables and columns are available, you can run \"select table_name, api_name, summary, columns from table_metadata\" \n\n    \"\"\"\n    conn = get_connection()\n    cur = conn.cursor()\n\n    # Execute the query\n    cur.execute(query)\n\n    # Fetch all the returned rows\n    rows = cur.fetchall()\n\n    # Close the cursor and connection\n    cur.close()\n    conn.close()\n\n    return rows\n",
-    "file_name": null,
-    "description": null,
-    "timestamp": "2024-05-12T14:21:38.809485",
-    "user_id": "default"
-}
