@@ -27,4 +27,4 @@ RUN echo "{\"dsn\": \"$RECIPE_DB_CONN_STRING\"}" > ./postgres_recipe_connection.
 
 
 # Run the command to start uWSGI
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]

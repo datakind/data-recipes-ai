@@ -347,6 +347,7 @@ async def call_execute_query_api(sql):
 
     """
     data = {"query": f"{sql}"}
+    print(f"Calling execute query API {execute_query_url} ...")
     return await make_api_request(execute_query_url, data)
 
 
