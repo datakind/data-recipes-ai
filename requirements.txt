@@ -16,8 +16,8 @@ geopandas==0.10.2
 seaborn==0.13.2
 hdx_python_api==6.2.4
 geoalchemy2==0.14.6
-hdx-python-country==3.6.4
-hdx-python-utilities==3.6.5
+hdx-python-country==3.6.9
+hdx-python-utilities==3.6.6
 robocorp-truststore
 robocorp
 robocorp-actions
