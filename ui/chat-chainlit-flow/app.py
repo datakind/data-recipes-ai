@@ -9,25 +9,24 @@ import requests
 from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
 
-from actions import call_execute_query_action, call_get_memory_recipe_action
-from utils.utils import call_llm
+from utils.utils import call_execute_query_api, call_get_memory_recipe_api, call_llm
+
+environment = Environment(loader=FileSystemLoader("./templates/"))
 
 logging.basicConfig(filename="output.log", level=logging.DEBUG)
 logger = logging.getLogger()
 
-
-def print(*tup):
-    logger.info(" ".join(str(x) for x in tup))
-
-
+# Caps for LLM summarization of SQL output and number of rows in the output
 llm_prompt_cap = 5000
 sql_rows_cap = 100
-
-environment = Environment(loader=FileSystemLoader("./templates/"))
 
 load_dotenv("../../.env")
 
 data_info = None
+
+
+def print(*tup):
+    logger.info(" ".join(str(x) for x in tup))
 
 
 async def get_data_info():
@@ -53,7 +52,7 @@ async def get_data_info():
         --    countries is not null
         """
 
-    data_info = await call_execute_query_action(query)
+    data_info = await call_execute_query_api(query)
 
 
 async def gen_sql(input, chat_history, output):
@@ -172,8 +171,8 @@ async def ask_data(input, chat_history):
     for i in range(5):
         # sql = await gen_sql(input, chat_history, output)
         try:
-            output = await call_get_memory_recipe_action(input)
-            # output = await call_execute_query_action(sql)
+            output = await call_get_memory_recipe_api(input)
+            # output = await call_execute_query_api(sql)
             sql = ""
             output = await gen_summarize_results(input, sql, output)
             print(output)

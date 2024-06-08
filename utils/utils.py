@@ -7,6 +7,8 @@ import warnings
 
 import pandas as pd
 import psycopg2
+import requests
+from dotenv import load_dotenv
 from langchain.schema import HumanMessage, SystemMessage
 from langchain_openai import (
     AzureChatOpenAI,
@@ -16,11 +18,16 @@ from langchain_openai import (
 )
 from sqlalchemy import create_engine
 
+load_dotenv("../.env")
+
 # Suppress all warnings
 warnings.filterwarnings("ignore")
 
 chat = None
 embedding_model = None
+
+execute_query_url = os.getenv("EXECUTE_QUERY_URL")
+read_memory_recipe_url = os.getenv("READ_MEMORY_RECIPE_URL")
 
 
 def replace_env_variables(value):
@@ -302,3 +309,60 @@ def connect_to_db(instance="recipe"):
     # add an echo=True to see the SQL queries
     conn = create_engine(conn_str)
     return conn
+
+
+async def make_api_request(url, payload):
+    """
+    Makes an API request to the specified URL with the given payload.
+
+    Args:
+        url (str): The URL to make the API request to.
+        payload (dict): The payload to send with the API request.
+
+    Returns:
+        dict: The response from the API as a dictionary.
+
+    Raises:
+        requests.exceptions.RequestException: If an error occurs while making the API request.
+    """
+    headers = {"Content-Type": "application/json"}
+    print(f"API URL: {url}")
+    print(f"API Payload: {payload}")
+    response = requests.post(url, headers=headers, json=payload)
+    print(f"API Response Status Code: {response.status_code}")
+    response = response.json()
+    print(f"API Response {response}")
+    return response
+
+
+async def call_execute_query_api(sql):
+    """
+    Calls the execute query action API endpoint with the given SQL query.
+
+    Args:
+        sql (str): The SQL query to execute.
+
+    Returns:
+        dict: The response from the API.
+
+    """
+    data = {"query": f"{sql}"}
+    return await make_api_request(execute_query_url, data)
+
+
+async def call_get_memory_recipe_api(user_input):
+    """
+    Calls the API to get a memory recipe action.
+
+    Args:
+        user_input (str): The user input.
+
+    Returns:
+        The API response from the make_api_request function.
+    """
+    data = {
+        "user_input": f"{user_input}",
+        "chat_history": "[]",
+        "generate_intent": "false",
+    }
+    return await make_api_request(read_memory_recipe_url, data)
