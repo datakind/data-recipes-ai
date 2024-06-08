@@ -28,11 +28,11 @@ Some more discussion on design decisions can also be found [here](https://www.lo
 
 This repo contains a docker-compose environment that will run the following components:
 
-- A [LibreChat](https://docs.librechat.ai/) platform with configured examples of using data recipes in plugins or assistants 
+- A [Chainlit](https://docs.chainlit.io/get-started/overview) chat app
 - A Data Recipes AI server powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme) and a basic code execution environment to run recipes
 - Data ingestion pipeline, with simple configuration that can add new sources if they have an 'openapi.json' file 
 - Postgres Databases for storing recipes and data with extensions for [PGVector](https://github.com/pgvector/pgvector) (for vector search) and [Postgis](https://postgis.net/) (for supporting the storage of Geospatial Shape files)
-- A recipes management environment for people approving/improving/creating recipes using the favorite IDE (eg VS Code + GitHub Copilot)
+- A recipes command line interface (CLI) for people approving/improving/creating recipes using the favorite IDE (eg VS Code + GitHub Copilot)
 - (Azure) Open AI Assistant creation tools to create assistants that are aware of the data sources available in the data recipes ai environment 
 - Autogen studio agent team for helping creating recipes [ In progress ]
 
@@ -40,63 +40,15 @@ This repo contains a docker-compose environment that will run the following comp
 
 The following sets you up with data recipes, as provided using the OpenAI plugin architecture. The plugin calls the recipe server, which extracts recipes and memories of data analysis tasks, and presents them back to the user.
 
-## One-time Setup 
-
-:warning: *This is very much a work in progress, much of the following will be automated*
-
-You can find a video of the quick start [here](https://www.loom.com/share/9e63bc1efe244dc6ad52b29a698bc3af?sid=0204a95b-aae6-40b7-9ea1-46fbffbb09d5), running through the steps below.
-
-First, start the environment ...
 
 1. Copy `.env.example` to `.env` and set variables according to instructions in the file
-
-The majority of variables in the `.env.example` can be left as they are. The key variables to set in order to get started quickly are:
-
-HAPI_API_TOKEN - The new HDX API token, see .env.example for instructions
-OPENAI_API_KEY - if you are using OpenAI
-AZURE_API_KEY_ENV - If you are using Azure
-
-Then the following ...
-
-RECIPES_OPENAI_API_TYPE - one of 'azure' or 'openai' depending on which you are using
-RECIPES_OPENAI_API_KEY  - The API key
-RECIPES_OPENAI_API_ENDPOINT - If using Azure you will need to set this endpoint see .env.example for instructions
-
-Later, you can configure keys for other models and assistant creation, but the above should get you started.
-
-
 2. `docker compose up -d --build`
+3. Go to [http://localhost:8000/]
 
-Then configure the chat platform ...
-
-1. Go to  [chat app](http://localhost:3080/) and register a user on the login page
-2. Select "Plugins" endpoint at top, then in the plugin box go to store and activate 
-   - Humanitarian Data Assistant
-   - Humanitarian Data Recipes
-   - Code Sherpa, when asked enter URL http://code-interpreter:3333
-3. Import the presets ...
-   - In the top row of the chat window, there is a small icon with two squares, click it
-   - Click the import button
-   - Navigate to the preset files in './assistants/plugin_assistants' 
-   - Import file 'IN_PROGRESS! Recipes Plugin.json'
-   - Click the two squares icon again and select the preset
-
-Note: If you reset your docker environment you will need to run the above steps again.
 
 ## Using Recipes
 
-We are in a phase of research to identify and improve recipes, but for now the system comes with some basic examples to illustrate. To see these, try asking one of the following questions ...
-
-- "*What is the hazard exposure risk for Mali?*"
-- "*Retrieve full details for Tombouctou region*"
-- "*Request a situation report for Mali*"
-- "*plot bar chart for food insecurity by state in Cameroon*"
-- "*plot bar chart for food insecurity by state in Cameroon*"
-- "*plot population pyramids all on one page for Nigeria, Sudan, Chad, Niger*"
-- "*Generate an administrative level 2 map of food security in Chad*"
-- "*Plot a world map of overall risk by country with light gray outlines for all countries*"
-
-The first time you run a recipe it will be slow as it spins up a process, but should be a bit faster thereafter. We are working on making this even faster in the coming months.
+We are in a phase of research to identify and improve recipes, but for now the system comes with some basic examples to illustrate. To find out the list, enter "Get me all recipes" in the chat interface.
 
 ## Additional Features 
 
@@ -123,13 +75,6 @@ The above will provide basic data recipes via the plugins architecture. If you w
 
 # To start the environment
 
-To configure your environment the first time, see 'One Time Setup' below. Once done, anytime after that all you need is ...
-
-1. `docker compose up`
-2. Got to [chat app](http://localhost:3080/) 
-3. Log in
-4. Choose your preset and start chatting!
-
 You can also access the recipe server monitoring endpoint (Robocorp actions server):
 
 - Recipes server (Robocorp AI Actions): [http://localhost:4001/](http://localhost:4001/)
@@ -147,17 +92,6 @@ If running locally, you can reset your environment - removing any data for your 
 2. To test the SQL query action, run `curl -X POST -H "Content-Type: application/json"  -d '{"query": "select 1"}' "http://actions:8080/api/actions/postgresql-universal-actions/execute-query/run"`
 3. To get get-memory action, run ... `curl -X POST -H "Content-Type: application/json"  -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}'  "http://actions:8080/api/actions/get-data-recipe-memory/get-memory-recipe/run"`
 
-## LibreChat Plugins
-
-With a defined set of functionalities, [plugins](https://docs.librechat.ai/features/plugins/introduction.html) act as tools for the LLM application to use and extend their capabilities.
-
-To create an additional plugin, perform the following steps:
-
-1. Create a new robocorp action in a new folder under [actions_plugins](./actions/actions_plugins/). You can reference the [recipe-server](./actions/actions_plugins/recipe-server/) action to see the relevant files, etc. 
-2. Create OpenAPI specification to describe your endpoint. The openapi.json file of the robocorps actions (available on localhost:3001 when the containers are up and running) should contain all necessary information of the endpoint and can be easily converted into a openapi.yaml file. For local development, the open api spec file has to be added to the [openapi directory](./ui/recipes-chat/tools/.well-known/openapi/) and can then be referenced as the url in the manifest. You can use the [haa_datarecipes.yaml](./ui/recipes-chat/tools/.well-known/openapi/haa_datarecipes.yaml) as a template. Please note that robocorp expects inputs to the actions in the body of the API call. For the docker setup, the url can be set to http://actions:8080 as all containers are running in the same network, but this has to be adjusted for the production environment. 
-3. Create plugin manigest to describe the plugin for the LLM to determine when and how to use it. You can use [haa_datarecipes.json](./ui/recipes-chat/tools/haa_datarecipes.json) as a template 
-
-As the robocorp actions might differ slightly, this can lead to differing requirements in the openapi spec, and manifest files. The [LibraChat documentation](https://docs.librechat.ai/features/plugins/chatgpt_plugins_openapi.html) provides tips and examples to form the files correctly. 
 
 ## Managing recipes
 
