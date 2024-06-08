@@ -23,5 +23,5 @@ database.sqlite
 .cli_config
 management/work/
 server/robocorp/actions_plugins/recipe-server/utils
-./data
+data
 
