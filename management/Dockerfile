@@ -18,7 +18,8 @@ COPY requirements.txt /app
 RUN pip install --upgrade pip
 WORKDIR /app
 RUN pip install -r requirements.txt 
-RUN pip install autogenstudio
+
+#RUN pip install autogenstudio
 
 # Set the path
 ENV PATH="/home/app/.local/bin:${PATH}"

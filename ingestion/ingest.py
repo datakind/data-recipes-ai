@@ -14,7 +14,7 @@ from shapefiles import download_hdx_boundaries
 from sqlalchemy import create_engine, text
 
 # This is copied into Docker env
-from utils.utils import is_running_in_docker, read_integration_config
+from utils.general import is_running_in_docker, read_integration_config
 
 INTEGRATION_CONFIG = "ingestion.config"
 

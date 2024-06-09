@@ -65,8 +65,8 @@ services:
      env_file:
        - .env
      volumes:
+       - ./server/fastapi:/app
        - shared-data:/app/recipes/public
-       - ./server/robocorp/actions_plugins/recipe-server/actions.py:/app/actions.py
        - ./templates:/app/templates
        - ./utils:/app/utils
        - ./management/skills.py:/action-server/actions-robocorp/actions_plugins/recipes-server/recipes/skills.py
@@ -81,8 +81,10 @@ services:
      env_file:
        - .env
      volumes:
+       - ./ui/chat-chainlit-flow:/app
        - shared-data:/app/public/images
-       - ./templates:/app/utils/templates
+       - ./templates:/app/templates
+       - ./utils:/app/utils
        - ./server/robocorp/actions_plugins/recipe-server/actions.py:/app/actions.py
   # # Init container 
   # init:
@@ -122,6 +124,7 @@ services:
   #   volumes:
   #     - shared-data:/app/static
   #   #command: python3 -c "import localserver.main; localserver.main.start()"
+
   manager:
     container_name: recipes-ai-manager
     build:
