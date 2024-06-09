@@ -75,7 +75,7 @@ CREATE TABLE public.memory (
   created_by varchar NOT NULL,
   updated_by varchar NOT NULL,
   last_updated timestamp NOT NULL,
-  attribution varchar NULL,
+  metadata varchar NULL,
   CONSTRAINT langchain_pg_embedding_pkey3 PRIMARY KEY (custom_id),
   CONSTRAINT result_type_fkey FOREIGN KEY (result_type) REFERENCES result_type(name),
   CONSTRAINT custom_id_fkey FOREIGN KEY (custom_id) REFERENCES langchain_pg_embedding(custom_id) ON DELETE CASCADE
