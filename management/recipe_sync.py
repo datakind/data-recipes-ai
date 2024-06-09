@@ -1154,8 +1154,9 @@ def update_metadata_file_results(recipe_folder, result):
         metadata["sample_result"] = result.stdout
         metadata["sample_result_type"] = "text"
 
-    # Is there an attribution
+    # Is there an attribution. TODO: Tamle call_llm to generate proper JSON for all models
     if "'attribution':" in result.stdout:
+        print("Attribution found in result")
         print(result.stdout)
         attribution = re.search(r"'attribution': (.*)\}", result.stdout).group(1)
         attribution = attribution.replace("'", "")
