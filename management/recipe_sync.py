@@ -15,9 +15,9 @@ from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
 from sqlalchemy import create_engine, text
 
-# These are copied in or mounted in docker from ../utils
+from utils.general import connect_to_db
+from utils.llm import call_llm
 from utils.recipes import add_recipe_memory
-from utils.utils import call_llm, connect_to_db
 
 logging.basicConfig(level=logging.INFO)
 
@@ -1155,7 +1155,7 @@ def update_metadata_file_results(recipe_folder, result):
         metadata["sample_result_type"] = "text"
 
     # Is there an attribution
-    if "attribution" in result.stdout:
+    if "'attribution':" in result.stdout:
         print(result.stdout)
         attribution = re.search(r"'attribution': (.*)\}", result.stdout).group(1)
         attribution = attribution.replace("'", "")
