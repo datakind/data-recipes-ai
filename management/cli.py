@@ -36,6 +36,7 @@ commands_help = """
        'checkin': Check in recipes you have completed
        'makemem': Create a memory using recipe sample output
        'rebuild': Removes database data, runs all local recipes and checks them in
+       'dumpdb': Dump embedding, recipe and memory tables to DB upgrade files so included in build
        'help': Show a list of commands
        'quit': Exit this recipes CLI
 
@@ -574,6 +575,26 @@ def rebuild():
     os.system(cmd)
 
 
+def dumpdb():
+    """
+    Dumps the embedding, recipe, and memory tables to DB upgrade files.
+
+    This function executes a Docker command to dump the embedding, recipe, and memory tables to DB upgrade files.
+    It also displays a message to the user indicating that the tables are being dumped.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    cmd = f"{env_cmd} recipe_sync.py --dump_db"
+    typer.echo(
+        "Dumping the embedding, recipe, and memory tables to DB upgrade files ..."
+    )
+    os.system(cmd)
+
+
 def main():
     """
     Entry point function for the recipes management CLI.
@@ -596,6 +617,7 @@ def main():
     app.command()(delete)
     app.command()(makemem)
     app.command()(rebuild)
+    app.command()(dumpdb)
     app.command()(info)
     app.command()(chat)
     app.command()(help)
@@ -639,6 +661,7 @@ def main():
             "delete",
             "makemem",
             "rebuild",
+            "dumpdb",
             "chat",
             "info",
             "help",

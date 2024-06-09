@@ -1,5 +1,6 @@
 import argparse
 import base64
+import datetime
 import json
 import logging
 import os
@@ -7,8 +8,7 @@ import re
 import shutil
 import subprocess
 import sys
-from datetime import datetime
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -227,7 +227,7 @@ def lock_records(df, locker_name):
 
     # Get the current timestamp
     current_time = (
-        datetime.now().isoformat()
+        datetime.datetime.now().isoformat()
     )  # Use 'now' to get the current timestamp in SQL
 
     # Prepare the SQL query
@@ -1080,7 +1080,7 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
         metadata = json.load(file)
 
     metadata["updated_by"] = recipe_author
-    metadata["last_updated"] = datetime.now().isoformat()
+    metadata["last_updated"] = datetime.datetime.now().isoformat()
 
     with open(metadata_path, "w", encoding="utf-8") as metadata_file:
         json.dump(metadata, metadata_file, indent=4)
@@ -1197,6 +1197,63 @@ def delete_all_db_records():
         query = text(query)
         conn.execute(query)
         trans.commit()
+
+
+def dump_db():
+    """
+    Dump all tables in the recipe database as inserts.
+
+    Returns:
+        None
+    """
+
+    tables_to_dump = [
+        {
+            "table": "langchain_pg_embedding",
+            "file": "./db/3-demo-data-langchain-embedding.sql",
+        },
+        {"table": "recipe", "file": "./db/4-demo-data-recipes.sql"},
+        {"table": "memory", "file": "./db/5-demo-data-memories.sql"},
+    ]
+
+    engine = connect_to_db(instance="recipe")
+    conn = engine.connect()
+
+    for t in tables_to_dump:
+        table_name = t["table"]
+        file_name = t["file"]
+        query = f"SELECT * FROM public.{table_name}"
+        result = conn.execute(text(query))
+        result = result.fetchall()
+        df = pd.DataFrame(result)
+
+        with open(file_name, "w") as f:
+            print(f"Dumping {table_name} to {file_name}")
+            for index, row in df.iterrows():
+
+                # Replace ' with '' in any cols with 'code' in their name
+                for col in df.columns:
+                    if "code" in col or "_call" in col or "result" in col:
+                        row[col] = str(row[col]).replace("'", "''")
+
+                cols = ", ".join([f'"{col}"' for col in df.columns])
+                vals = ", ".join(
+                    [
+                        (
+                            "'%s'" % json.dumps(val)
+                            if isinstance(val, dict)
+                            else (
+                                "'%s'" % val
+                                if isinstance(
+                                    val, (str, UUID, datetime.date, datetime.datetime)
+                                )
+                                else ("NULL" if val is None else str(val))
+                            )
+                        )
+                        for val in row
+                    ]
+                )
+                f.write(f"INSERT INTO {table_name} ({cols}) VALUES ({vals});\n")
 
 
 def rebuild(recipe_author):
@@ -1468,7 +1525,7 @@ def save_as_memory(recipe_folder):
                 :source,
                 :created_by,
                 :updated_by,
-                NOW(),
+                NOW()
             )
             """
         )
@@ -1509,6 +1566,8 @@ def main():
         --create_recipe --recipe_intent <recipe_intent>: Create a new blank recipe
         --delete_recipe --recipe_custom_id <recipe_custom_id>: Delete a recipe by custom_id
         --save_as_memory --recipe_path <recipe_path>: Save a memory from recipe sample outputs
+        --rebuild --recipe_author <recipe_author>: Rebuild the recipes in the checked_out folder
+        --dump_db: Dump embedding, recipe and memoty tables intoupgrade script folder as inserts
         --run_recipe --recipe_path <recipe_path>: Run recipe and update its metadata results
 
     <recipe author>: The name of the recipe author, used for locking recipes for editing.
@@ -1554,6 +1613,11 @@ def main():
         action="store_true",
         help="CAUTION: WIll remove database memories/recipes and push local data",
     )
+    group.add_argument(
+        "--dump_db",
+        action="store_true",
+        help="Dump embedding, recipe and memory tables to DB upgrade script folder",
+    )
 
     parser.add_argument("--recipe_author", type=str, help="Name of the recipe checker")
     parser.add_argument("--recipe_intent", type=str, help="Intent of the new recipe")
@@ -1577,8 +1641,6 @@ def main():
         check_out(args.recipe_author, force_checkout=args.force_checkout)
     elif args.check_in:
         check_in(args.recipe_author)
-        # Check out to refresh metadata file. TODO, do this as part fo check in
-        check_out(args.recipe_author, force_checkout=True)
     elif args.create_recipe:
         recipe_intent = args.recipe_intent.lower().replace(" ", "_")
         create_new_recipe(recipe_intent, args.recipe_author)
@@ -1592,6 +1654,8 @@ def main():
         llm_edit_recipe(args.recipe_path, args.llm_prompt, args.recipe_author)
     elif args.rebuild:
         rebuild(args.recipe_author)
+    elif args.dump_db:
+        dump_db()
     elif args.info:
         get_data_info_summary(args.recipe_author)
 

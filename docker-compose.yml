@@ -150,6 +150,7 @@ services:
       - ./management:/app
       - ./utils:/app/utils
       - ./templates:/app/templates
+      - ./db/recipedb:/app/db
 
 volumes:
   pgdata2:

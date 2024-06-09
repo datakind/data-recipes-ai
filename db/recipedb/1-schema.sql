@@ -90,7 +90,7 @@ FROM
 	langchain_pg_embedding lpe,
 	recipe r
 WHERE
-	lpe.custom_id = r.custom_id
+	lpe.custom_id = r.custom_id;
 
 CREATE VIEW memory_view AS
 SELECT
@@ -100,4 +100,4 @@ FROM
 	langchain_pg_embedding lpe,
 	memory m
 WHERE
-	lpe.custom_id = m.custom_id
+	lpe.custom_id = m.custom_id;
