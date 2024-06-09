@@ -57,14 +57,14 @@ async def ask_data(input, chat_history, active_message):
                     mode = "execute_query"
                 sql = ""
 
-            # if mode == 'execute_query':
-            # active_message.content = "Hmm. I didn't find any recipes, let me query the database  ..."
-            # await active_message.update()
-            # await active_message.send()
+            if mode == "execute_query":
+                # active_message.content = "Hmm. I didn't find any recipes, let me query the database  ..."
+                # await active_message.update()
+                # await active_message.send()
 
-            # sql = await gen_sql(input, str(chat_history), output)
-            # print(sql )
-            # output = await call_execute_query_api(sql)
+                sql = await gen_sql(input, str(chat_history), output)
+                print(sql)
+                output = await call_execute_query_api(sql)
 
             # Hack for the demo
             if "error" in str(output):
