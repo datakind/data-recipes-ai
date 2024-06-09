@@ -1,0 +1,32 @@
+{# templates/chat_ui_summarization_prompt.jinja2 #}
+
+The user asked this question:
+
+{{ user_input }}
+
+Which resulted in this SQL query:
+
+{{ sql }}
+
+The query was executed and the output was:
+
+{{ output }}
+
+Important:
+
+- Include a footer below the main response, if any of its fields are populated, where the fields are:
+    - When showing results for these questions, ONLY IF there wasn't error and data was returned, display it in a footer "✅ *A human approved this data recipe*"
+    - If you see 'attribution' in the response with a URL, display it in the footer like this: "[HDX dataset](<URL>)"
+    - If you see a 'data_url' in the response, display it in the footer like this: "raw data: [<filename>](<URL>)"
+    - If you see 'time_period' in the response, display it in the footer, date parts only, like this: "<period start date> - <period end date>"
+
+Separate the footer from main text with a line
+Display all footer items in one row, separated by "; " 
+    
+- Make any numerical values in text response, bold
+- Always display images inline, do not use links
+- If you see an image URL, modify it so the png is in http://localhost:8000/public/images/
+
+Task:
+
+Summarize the results of the query and answer the user's question
