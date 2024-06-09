@@ -4,8 +4,8 @@ import sys
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from utils.db import execute_query as utils_execute_query
 from utils.recipes import get_memory_recipe
-from utils.utils import execute_query as utils_execute_query
 
 
 class MemoryRecipeInput(BaseModel):

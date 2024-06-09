@@ -22,7 +22,8 @@ from langchain.docstore.document import Document
 from langchain_community.vectorstores.pgvector import PGVector
 from PIL import Image
 
-from utils.utils import call_llm, execute_query, get_models, make_api_request
+from utils.db import execute_query
+from utils.llm import call_llm, get_models
 
 environment = Environment(loader=FileSystemLoader("./templates/"))
 
@@ -41,7 +42,11 @@ load_dotenv()
 recipes_work_dir = "./recipes"
 
 # Lower numbers are more similar
-similarity_cutoff = {"memory": 0.4, "recipe": 0.3, "helper_function": 0.2}
+similarity_cutoff = {
+    "memory": os.getenv("MEMORY_SIMILARITY_CUTOFF", 0.2),
+    "recipe": os.getenv("RECIPE_SIMILARITY_CUTOFF", 0.3),
+    "helper_function": os.getenv("HELPER_FUNCTION_SIMILARITY_CUTOFF", 0.1),
+}
 
 conn_params = {
     "RECIPES_OPENAI_API_TYPE": os.getenv("RECIPES_OPENAI_API_TYPE"),
@@ -95,17 +100,6 @@ def initialize_vector_db():
 
     return db
 
-
-response_formats = [
-    "csv",
-    "dataframe",
-    "json",
-    "plot_image_file_location",
-    "shape_file_location",
-    "integer",
-    "float",
-    "string",
-]
 
 prompt_map = {
     "memory": """
@@ -581,6 +575,7 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
         )
         if memory_found is True:
             custom_id = result["metadata"]["custom_id"]
+            matched_doc = result["content"]
             # Get data from memory or recipe tables
             table_data = get_memory_recipe_metadata(custom_id, mem_type)
             if mem_type == "recipe":
@@ -592,7 +587,9 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
             result = re.escape(str(result))
             print(result)
 
-            return str(result)
+            result = f"match_type: {mem_type};\n matched_doc: {matched_doc};\n result: {str(result)}"
+
+            return result
 
     result = "Sorry, no recipe or found"
     print(result)

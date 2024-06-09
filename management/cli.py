@@ -14,7 +14,8 @@ from sqlalchemy import text
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )  # noqa: E402
-from utils.utils import call_llm, connect_to_db, execute_query  # noqa: E402
+from db import connect_to_db, execute_query  # noqa: E402
+from utils.llm import call_llm  # noqa: E402
 
 llm_prompt_cap = 5000
 sql_rows_cap = 100
@@ -48,6 +49,7 @@ commands_help = """
 to_be_deleted_file = "work/checked_out/to_be_deleted.txt"
 cli_config_file = ".cli_config"
 checked_out_dir = "work/checked_out"
+env_cmd = "docker exec recipes-ai-manager python "
 
 environment = Environment(loader=FileSystemLoader("templates/"))
 
@@ -151,7 +153,7 @@ def checkout():
         checkout()
 
     """
-    cmd = f"docker exec haa-recipe-manager python recipe_sync.py --check_out --recipe_author {user_name} --force_checkout"
+    cmd = f"{env_cmd} recipe_sync.py --check_out --recipe_author {user_name} --force_checkout"
     typer.echo(f"Checking out as user {user_name}")
     os.system(cmd)
     list()
@@ -199,7 +201,7 @@ def run(recipe_index: Optional[int] = typer.Argument(None)):
         return
 
     recipe = recipes[int(recipe_index) - 1]
-    cmd = f"docker exec haa-recipe-manager python recipe_sync.py --run_recipe --recipe_path work/checked_out/{recipe}/recipe.py"
+    cmd = f"{env_cmd} recipe_sync.py --run_recipe --recipe_path work/checked_out/{recipe}/recipe.py"
     typer.echo(f"Running recipe {recipe} ...\n\n")
     os.system(cmd)
 
@@ -234,7 +236,7 @@ def edit():
 
     prompt = input("Enter how you would like to adjust/change the recipe: ")
 
-    cmd = f'docker exec haa-recipe-manager python recipe_sync.py --edit_recipe --recipe_path work/checked_out/{recipe}/recipe.py --llm_prompt "{prompt}"    '
+    cmd = f'{env_cmd} recipe_sync.py --edit_recipe --recipe_path work/checked_out/{recipe}/recipe.py --llm_prompt "{prompt}"    '
     typer.echo(f"Running recipe {recipe}")
     os.system(cmd)
 
@@ -259,7 +261,7 @@ def checkin():
     Returns:
         None
     """
-    cmd = f"docker exec haa-recipe-manager python recipe_sync.py --check_in --recipe_author {user_name}"
+    cmd = f"{env_cmd} recipe_sync.py --check_in --recipe_author {user_name}"
     typer.echo(f"Checking in as user {user_name}")
     os.system(cmd)
 
@@ -268,7 +270,7 @@ def checkin():
         with open(to_be_deleted_file, "r") as f:
             custom_ids = f.readlines()
             for custom_id in custom_ids:
-                cmd = f"docker exec haa-recipe-manager python recipe_sync.py --delete_recipe --recipe_custom_id {custom_id}"
+                cmd = f"{env_cmd} recipe_sync.py --delete_recipe --recipe_custom_id {custom_id}"
                 os.system(cmd)
         os.remove(to_be_deleted_file)
 
@@ -287,7 +289,7 @@ def add(intent: Optional[str] = typer.Argument(None)):
         intent = input(
             "Enter the intent of your new recipe (add '/nochecks' to turn off validation): "
         )
-    cmd = f"docker exec haa-recipe-manager python recipe_sync.py --create_recipe --recipe_intent '{intent}' --recipe_author '{user_name}'"
+    cmd = f"{env_cmd} recipe_sync.py --create_recipe --recipe_intent '{intent}' --recipe_author '{user_name}'"
     typer.echo(f"Creating new recipe with intent {intent}")
     os.system(cmd)
     list()
@@ -316,7 +318,7 @@ def info(question: Optional[str] = typer.Argument(None)):
     else:
         question = ""
 
-    cmd = f"docker exec haa-recipe-manager python recipe_sync.py --info {question}"
+    cmd = f"{env_cmd} recipe_sync.py --info {question}"
     os.system(cmd)
 
 
@@ -390,7 +392,7 @@ def makemem():
     if os.path.exists(recipe_folder):
         typer.echo(f"Saving memory for recipe: {recipe}")
         typer.echo(f"Saving memory for recipe: {recipe_folder}")
-        cmd = f"docker exec haa-recipe-manager python recipe_sync.py --save_as_memory --recipe_path {recipe_folder}"
+        cmd = f"{env_cmd} recipe_sync.py --save_as_memory --recipe_path {recipe_folder}"
         os.system(cmd)
 
 
