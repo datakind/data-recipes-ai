@@ -69,7 +69,7 @@ services:
        - shared-data:/app/recipes/public
        - ./templates:/app/templates
        - ./utils:/app/utils
-       - ./management/skills.py:/action-server/actions-robocorp/actions_plugins/recipes-server/recipes/skills.py
+       - ./management/skills.py:/app/recipes/skills.py
   chat:
      platform: linux/amd64
      container_name: recipes-ai-chat

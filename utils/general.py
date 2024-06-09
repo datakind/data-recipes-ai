@@ -131,7 +131,7 @@ async def call_get_memory_recipe_api(user_input):
     data = {
         "user_input": f"{user_input}",
         "chat_history": "[]",
-        "generate_intent": "false",
+        "generate_intent": "true",
     }
     print(f"Calling execute query API {get_memory_recipe_url} with {data} ...")
     return await make_api_request(get_memory_recipe_url, data)

@@ -105,6 +105,7 @@ prompt_map = {
     "memory": """
         You judge matches of user intent with those stored in a database to decide if they are true matches of intent.
         When asked to compare two intents, check they are the same, have the same entities and would result in the same outcome.
+        If the user doesn't specify data source, but everything else matches, it's a match
 
         Answer with a JSON record ...
 
@@ -118,6 +119,7 @@ prompt_map = {
         The requested output format of the user's intent MUST be the same as the output format of the generic DB intent.
         For exmaple, if the user's intent is to get a plot, the generic DB intent MUST also be to get a plot.
         The level of data aggregation is important, if the user's request differs from the DB intent, then reject it.
+        If the user doesn't specify data source, but everything else matches, it's a match
 
         Answer with a JSON record ...
 
@@ -161,9 +163,7 @@ def add_recipe_memory(intent, metadata, mem_type="recipe", force=False):
 
     # First see if we already have something in our memory
     if force is False:
-        result_found, result = check_recipe_memory(
-            intent, mem_type=mem_type, debug=False
-        )
+        result_found, result = check_recipe_memory(intent, debug=False)
         if result_found is True:
             if (
                 result["score"] is not None
@@ -194,15 +194,13 @@ def add_recipe_memory(intent, metadata, mem_type="recipe", force=False):
     return id
 
 
-def check_recipe_memory(intent, mem_type, debug=True, ai_check=False):
+def check_recipe_memory(intent, debug=True):
     """
     Check the memory for a given intent.
 
     Args:
         intent (str): The intent to search for in the memory.
-        mem_type (str): The type of memory to search in. Can be 'memory', 'recipe', or 'helper_function'.
         debug (bool, optional): If True, print debug information. Default is True.
-        ai_check (bool, optional): If True, use the AI to confirm the match. Default is False.
 
     Returns:
         dict: A dictionary containing the score, content, and metadata of the best match found in the memory.
@@ -213,54 +211,61 @@ def check_recipe_memory(intent, mem_type, debug=True, ai_check=False):
     if db is None:
         db = initialize_vector_db()
 
-    if mem_type not in ["memory", "recipe", "helper_function"]:
-        raise ValueError(f"Memory type {mem_type} not recognised")
-    r = {"score": None, "content": None, "metadata": None}
+    # First do semantic search across memories and recipies
+    matches = []
     result_found = False
-    if debug:
-        print(f"======= Checking {mem_type} for intent: {intent}")
-    docs = db[mem_type].similarity_search_with_score(intent, k=10)
-    for d in docs:
+    for mem_type in ["memory", "recipe"]:
+        if debug:
+            print(f"======= Checking {mem_type} for intent: {intent}")
+        docs = db[mem_type].similarity_search_with_score(intent, k=3)
+        for d in docs:
+            score = d[1]
+            content = d[0].page_content
+            metadata = d[0].metadata
+            if debug:
+                print("\n", f"Score: {score} ===> {content}")
+
+            if d[1] < similarity_cutoff[mem_type]:
+                matches.append(d)
+
+    # Now run them through an AI check
+    for d in matches:
+        r = {"score": None, "content": None, "metadata": None}
+        result_found = False
         score = d[1]
         content = d[0].page_content
         metadata = d[0].metadata
-        if metadata["mem_type"] != mem_type:
-            continue
+        mem_type = metadata["mem_type"]
         if debug:
-            print("\n", f"Score: {score} ===> {content}")
+            print(
+                f"======= AI Checking {mem_type} for intent: {intent} \nContent: {content}"
+            )
+        prompt = f"""
+            User Intent:
 
-        if d[1] < similarity_cutoff[mem_type]:
+            {intent}
 
-            # Here ask LLM to confirm our match
-            if ai_check is True:
-                prompt = f"""
-                    User Intent:
+            DB Intent:
 
-                    {intent}
+            {content}
 
-                    DB Intent:
+        """
+        response = call_llm(prompt_map[mem_type], prompt)
+        if "content" in response:
+            response = response["content"]
+        if isinstance(response, str):
+            response = json.loads(response)
+        if debug:
+            print("AI Judge of match: ", response, "\n")
 
-                    {content}
+        if response["answer"].lower() == "yes":
+            print("    MATCH!")
+            r["score"] = score
+            r["content"] = content
+            r["metadata"] = metadata
+            result_found = True
+            return result_found, r
 
-                """
-                response = call_llm(prompt_map[mem_type], prompt)
-                if "content" in response:
-                    response = response["content"]
-                if isinstance(response, str):
-                    response = json.loads(response)
-                if debug:
-                    print("AI Judge of match: ", response)
-            else:
-                response = {}
-                response["answer"] = "yes"
-
-            if response["answer"].lower() == "yes":
-                print("    MATCH!")
-                r["score"] = score
-                r["content"] = content
-                r["metadata"] = metadata
-                result_found = True
-                return result_found, r
     return result_found, r
 
 
@@ -477,6 +482,7 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
     )
     print("Calling LLM to generate new run code ...")
     new_code = call_llm("", prompt, None)
+    print(new_code)
 
     result = {
         "output": "",
@@ -512,6 +518,7 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
 
         recipe_path = f"{recipes_work_dir}/{custom_id}.py"
         with open(recipe_path, "w") as f:
+            print(f"Writing recipe to file ... {recipe_path}")
             f.write(code)
 
         os.chdir(recipes_work_dir)
@@ -568,32 +575,26 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
         # turn user_input into a proper json record
         user_input = json.dumps(user_input)
 
-    for mem_type in ["memory", "recipe"]:
-        print(f"Checking {mem_type}")
-        if mem_type == "memory":
-            ai_check = False
+    print("Checking my memories ...")
+    memory_found, result = check_recipe_memory(user_input, debug=True)
+    if memory_found is True:
+        custom_id = result["metadata"]["custom_id"]
+        mem_type = result["metadata"]["mem_type"]
+        matched_doc = result["content"]
+        # Get data from memory or recipe tables
+        table_data = get_memory_recipe_metadata(custom_id, mem_type)
+        if mem_type == "recipe":
+            result = run_recipe(custom_id, table_data, user_input, chat_history)
         else:
-            ai_check = True
-        memory_found, result = check_recipe_memory(
-            user_input, mem_type=mem_type, ai_check=ai_check
-        )
-        if memory_found is True:
-            custom_id = result["metadata"]["custom_id"]
-            matched_doc = result["content"]
-            # Get data from memory or recipe tables
-            table_data = get_memory_recipe_metadata(custom_id, mem_type)
-            if mem_type == "recipe":
-                result = run_recipe(custom_id, table_data, user_input, chat_history)
-            else:
-                # Take the result directly from memory
-                result = process_memory_recipe_results(result, table_data)
+            # Take the result directly from memory
+            result = process_memory_recipe_results(result, table_data)
 
-            result = re.escape(str(result))
-            print(result)
+        result = re.escape(str(result))
+        print(result)
 
-            result = f"match_type: {mem_type};\n matched_doc: {matched_doc};\n result: {str(result)}"
+        result = f"match_type: {mem_type};\n matched_doc: {matched_doc};\n result: {str(result)}"
 
-            return result
+        return result
 
     result = "Sorry, no recipe or found"
     print(result)
