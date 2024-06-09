@@ -228,45 +228,77 @@ def check_recipe_memory(intent, debug=True):
             if d[1] < similarity_cutoff[mem_type]:
                 matches.append(d)
 
-    # Now run them through an AI check
     r = {"score": None, "content": None, "metadata": None}
-    for d in matches:
-        result_found = False
+
+    # Build a list for the AI judge to review
+    match_list = ""
+    for i, d in enumerate(matches):
+        match_list += f"{i+1}. {d[0].page_content}\n"
+
+    ai_memory_judge_prompt = environment.get_template("ai_memory_judge_prompt.jinja2")
+    prompt = ai_memory_judge_prompt.render(
+        user_input=intent, possible_matches=match_list
+    )
+    print(prompt)
+    response = call_llm(prompt_map[mem_type], prompt)
+    if "content" in response:
+        response = response["content"]
+    if isinstance(response, str):
+        response = json.loads(response)
+    if debug:
+        print("AI Judge of match: ", response, "\n")
+    if response["answer"].lower() == "yes":
+        print("    MATCH!")
+        match_id = response["match_id"]
+        d = matches[int(match_id) - 1]
         score = d[1]
         content = d[0].page_content
         metadata = d[0].metadata
-        mem_type = metadata["mem_type"]
-        if debug:
-            print(
-                f"======= AI Checking {mem_type} for intent: {intent} \nContent: {content}"
-            )
-        prompt = f"""
-            User Intent:
-
-            {intent}
-
-            DB Intent:
-
-            {content}
-
-        """
-        response = call_llm(prompt_map[mem_type], prompt)
-        if "content" in response:
-            response = response["content"]
-        if isinstance(response, str):
-            response = json.loads(response)
-        if debug:
-            print("AI Judge of match: ", response, "\n")
-
-        if response["answer"].lower() == "yes":
-            print("    MATCH!")
-            r["score"] = score
-            r["content"] = content
-            r["metadata"] = metadata
-            result_found = True
-            return result_found, r
-
+        r["score"] = score
+        r["content"] = content
+        r["metadata"] = metadata
+        result_found = True
     return result_found, r
+
+    # # Now run them through an AI check
+    # r = {"score": None, "content": None, "metadata": None}
+    # for d in matches:
+    #     result_found = False
+    #     score = d[1]
+    #     content = d[0].page_content
+    #     metadata = d[0].metadata
+    #     mem_type = metadata["mem_type"]
+    #     if debug:
+    #         print(
+    #             f"======= AI Checking {mem_type} for intent: {intent} \nContent: {content}"
+    #         )
+    #     prompt = f"""
+    #         User Intent:
+
+    #         {intent}
+
+    #         DB Intent:
+
+    #         {content}
+
+    #     """
+    #     response = call_llm(prompt_map[mem_type], prompt)
+    #     if "content" in response:
+    #         response = response["content"]
+    #     if isinstance(response, str):
+    #         response = json.loads(response)
+    #     if debug:
+    #         print("AI Judge of match: ", response, "\n")
+
+    #     if response["answer"].lower() == "yes":
+    #         print("    MATCH!")
+    #         r["score"] = score
+    #         r["content"] = content
+    #         r["metadata"] = metadata
+    #         result_found = True
+    #         return result_found, r
+
+    # return result_found, r
 
 
 def get_memory_recipe_metadata(custom_id, mem_type):
@@ -428,7 +460,10 @@ def process_memory_recipe_results(result: dict, table_data: dict) -> str:
     print(result)
     content = result["content"]
     table_data = get_memory_recipe_metadata(custom_id, mem_type)
-    metadata = table_data["metadata"]
+    if "result_metadata" in table_data:
+        metadata = table_data["result_metadata"]
+    else:
+        metadata = table_data["sample_result_metadata"]
     if metadata is None:
         metadata = ""
     print(f"====> Found {mem_type}")

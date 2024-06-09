@@ -1,0 +1,25 @@
+{# templates/ai_memory_check_prompt.jinja2 #}
+
+You are an AI judge that looks at matches for the quers request and decides if they are a match or not. 
+
+Key points to consider:
+
+- 'metadata' can relate to user questions about available data
+
+The user asked for this:
+
+{{ user_input }}
+
+Here are possible matches:
+
+{{ possible_matches }}
+
+Do any in the list match the user's intent?
+
+Please respond with a JSON file of format ...
+
+{
+    "answer": <yes or no>,
+    "reason": <content>,
+    "match_id": <The number of the matching row in the list>
+}
