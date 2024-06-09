@@ -28,6 +28,9 @@ if not os.path.exists(template_dir):
 
 environment = Environment(loader=FileSystemLoader(template_dir))
 sql_prompt_template = environment.get_template("gen_sql_prompt.jinja2")
+chat_ui_summarization_prompt = environment.get_template(
+    "chat_ui_summarization_prompt.jinja2"
+)
 
 chat = None
 embedding_model = None
@@ -227,40 +230,15 @@ async def gen_summarize_results(input, sql, output):
     Returns:
         str: The summarized results of the query.
 
-    Important:
-    - If you see 'attribution' in the response with a URL, display it as a foot note like this: "Reference: [HDX](<URL>)
-    - When showing results for these questions, add a foot note: "✅ *A human approved this data recipe*", but only IF the request was succsessful
-    - Always display images inline, do not use links
     """
 
     if len(output) > llm_prompt_cap:
         output = output[:llm_prompt_cap] + "..."
 
-    prompt = f"""
-        The user asked this question:
-
-        {input}
-
-        Which resulted in this SQL query:
-
-        {sql}
-
-        The query was executed and the output was:
-
-        {output}
-
-        Important:
-
-        - If you see 'attribution' in the response with a URL, display it as a foot note like this: "Reference: [HDX](<URL>)
-        - When showing results for these questions, always add a foot note: "✅ *A human approved this data recipe*"
-        - Always display images inline, do not use links
-        - If you see an image URL, modify it so the png is in http://localhost:8000/public/images/
-
-        Task:
-
-        Summarize the results of the query and answer the user's question
-
-    """
+    prompt = chat_ui_summarization_prompt.render(
+        user_input=input, sql=sql, output=output
+    )
+    print(prompt)
 
     response = call_llm("", prompt)
     if "content" in response:

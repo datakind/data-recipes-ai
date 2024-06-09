@@ -2,3 +2,11 @@ a[href*='https://github.com/Chainlit/chainlit'] {
     visibility: hidden;
 }
 
+a.MuiLink-root {
+    color: blue !important;
+}
+
+a.MuiTypography-root.MuiTypography-inherit.MuiLink-root.MuiLink-underlineAlways {
+    color: blue !important;
+}
+

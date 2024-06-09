@@ -90,4 +90,6 @@ async def main(message: cl.Message):
     # Call the tool
     final_answer.content = await tool(message.content)
 
+    print(final_answer.content)
+
     await final_answer.update()

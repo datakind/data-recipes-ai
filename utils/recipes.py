@@ -170,7 +170,11 @@ def add_recipe_memory(intent, metadata, mem_type="recipe", force=False):
                 and result["score"] < similarity_cutoff[mem_type]
             ):
                 message = f"{mem_type} already exists: {result['content']}"
-                response = {"already_exists": "true", "message": message}
+                response = {
+                    "already_exists": "true",
+                    "message": message,
+                    "custom_id": result["metadata"]["custom_id"],
+                }
                 return response
 
     print(f"Adding new document to {mem_type} store ...")
@@ -405,7 +409,7 @@ def process_image(encoded_string, recipe_id):
 
 def process_memory_recipe_results(result: dict, table_data: dict) -> str:
     """
-    Processes the results of a memory recipe search and returns the response text and attribution.
+    Processes the results of a memory recipe search and returns the response text and metadata.
 
     Args:
         result (dict): The result of the memory recipe search.
@@ -419,9 +423,9 @@ def process_memory_recipe_results(result: dict, table_data: dict) -> str:
     print(result)
     content = result["content"]
     table_data = get_memory_recipe_metadata(custom_id, mem_type)
-    attribution = table_data["attribution"]
-    if attribution is None:
-        attribution = ""
+    metadata = table_data["metadata"]
+    if metadata is None:
+        metadata = ""
     print(f"====> Found {mem_type}")
     if table_data["result_type"] == "image":
         response_image = table_data["result"]
@@ -438,7 +442,7 @@ def process_memory_recipe_results(result: dict, table_data: dict) -> str:
     else:
         result = response_text
 
-    return {"result": result, "attribution": attribution}
+    return {"result": result, "metadata": metadata}
 
 
 def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
@@ -477,7 +481,7 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
     result = {
         "output": "",
         "errors": "",
-        "attribution": "",
+        "metadata": "",
     }
 
     if "new_calling_code" in new_code:
@@ -519,22 +523,22 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
 
         # TODO - this is terrible, just for the demo, extract JSON between "{" and "}""
         # Match { }
-        attribution = ""
+        metadata = ""
         if result["output"].find("{") != -1:
             result["output"] = result["output"][result["output"].find("{") :]
             result["output"] = result["output"][: result["output"].rfind("}") + 1]
             print("Output: ", result["output"])
             j = json.loads(result["output"].replace("'", '"'))
-            if "attribution" in j:
-                attribution = j["attribution"]
+            if "metadata" in j:
+                metadata = j["metadata"]
         else:
-            attribution = "Data was sourced from HDX"
+            metadata = "Data was sourced from HDX"
 
-        result["attribution"] = attribution
+        result["metadata"] = metadata
 
     print("Recipe executed successfully.")
     print(result)
-    return result["output"] + " >> ATTRIBUTION: " + attribution
+    return result["output"] + " >> metadata: " + metadata
 
 
 def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
@@ -548,7 +552,7 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
 
     Returns:
         str: Matched value
-        str: Attribution
+        str: metadata
     """
 
     logging.info("Python HTTP trigger function processed a request.")

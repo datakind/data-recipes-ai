@@ -446,7 +446,7 @@ def insert_records_in_db(df, approver):
                 intent=metadata["intent"],
                 metadata={"mem_type": "recipe"},
                 mem_type="recipe",
-                force=True,
+                # force=True,
             )
             if "already_exists" in response:
                 print(response)
@@ -1154,15 +1154,15 @@ def update_metadata_file_results(recipe_folder, result):
         metadata["sample_result"] = result.stdout
         metadata["sample_result_type"] = "text"
 
-    # Is there an attribution. TODO: Tamle call_llm to generate proper JSON for all models
-    if "'attribution':" in result.stdout:
-        print("Attribution found in result")
+    # Is there metadata. TODO: Tamle call_llm to generate proper JSON for all models
+    if "'metadata':" in result.stdout:
+        print("Metadata found in result")
         print(result.stdout)
-        attribution = re.search(r"'attribution': (.*)\}", result.stdout).group(1)
-        attribution = attribution.replace("'", "")
-        metadata["sample_attribution"] = attribution
+        m = re.search(r"'metadata': (.*)\}", result.stdout).group(1)
+        m = m.replace("'", "")
+        metadata["sample_metadata"] = m
     else:
-        metadata["sample_attribution"] = ""
+        metadata["sample_metadata"] = ""
 
     with open(metadata_path, "w") as file:
         json.dump(metadata, file, indent=4)
@@ -1378,7 +1378,7 @@ def save_as_memory(recipe_folder):
                 created_by,
                 updated_by,
                 last_updated,
-                attribution
+                metadata
             )
             VALUES (
                 :custom_id,
@@ -1390,7 +1390,7 @@ def save_as_memory(recipe_folder):
                 :created_by,
                 :updated_by,
                 NOW(),
-                :attribution
+                :metadata
             )
             """
         )
@@ -1405,7 +1405,7 @@ def save_as_memory(recipe_folder):
             "source": "Recipe sample result",
             "created_by": metadata["created_by"],
             "updated_by": metadata["created_by"],
-            "attribution": metadata["sample_attribution"],
+            "metadata": metadata["sample_metadata"],
         }
         conn.execute(query_template, params)
 

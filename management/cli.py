@@ -364,7 +364,7 @@ def delete():
         typer.echo("Run 'checkin' to update recipes DB, or checkout to undelete")
 
 
-def makemem():
+def makemem(recipe_index: Optional[int] = typer.Argument(None)):
     """
     Saves memory for a specific recipe.
 
@@ -372,14 +372,15 @@ def makemem():
     It checks if the recipe number is valid, and if so, it creates a recipe folder and executes a command to save memory for the recipe.
 
     Args:
-        None
+        recipe_index (Optional[int]): The index of the recipe to save memory for. If not provided, the user will be prompted to enter the recipe number.
 
     Returns:
         None
     """
     list()
     # Ask which one to run
-    recipe_index = input("Enter the recipe number to save memory for: ")
+    if recipe_index is None:
+        recipe_index = input("Enter the recipe number to save memory for: ")
     if int(recipe_index) - 1 not in recipes:
         typer.echo(
             "Invalid recipe number. Please try again. Type 'list' to see recipes."

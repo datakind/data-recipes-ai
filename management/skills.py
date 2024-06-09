@@ -32,13 +32,15 @@ load_dotenv()
 
 def get_hdx_dataset_url(resource_id):
     """
-    Retrieves the dataset URL based on the given resource ID.
+    Retrieves the dataset URL based on the given resource ID. Also returns
+    the resource download URL
 
     Args:
         resource_id (str): The ID of the resource.
 
     Returns:
         str: The dataset URL.
+        str: The resource download URL.
 
     Raises:
         Exception: If the resource cannot be fetched or the dataset ID cannot be obtained.
@@ -54,13 +56,16 @@ def get_hdx_dataset_url(resource_id):
     # Fetch the resource
     resource = Resource.read_from_hdx(resource_id)
 
+    # Get the link to download the raw data
+    resource_url = resource["download_url"]
+
     # Get the dataset ID
     dataset_id = resource['package_id']
 
     # Construct the dataset URL
     dataset_url = f'https://data.humdata.org/dataset/{dataset_id}'
 
-    return dataset_url
+    return dataset_url, resource_url
 
 
 def get_connection():
