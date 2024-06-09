@@ -13,7 +13,7 @@ from langchain_openai import (
     OpenAIEmbeddings,
 )
 
-from utils.general import get_data_info
+from utils.db import get_data_info
 
 load_dotenv()
 
