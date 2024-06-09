@@ -14,7 +14,7 @@ from sqlalchemy import text
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )  # noqa: E402
-from db import connect_to_db, execute_query  # noqa: E402
+from utils.db import connect_to_db, execute_query  # noqa: E402
 from utils.llm import call_llm  # noqa: E402
 
 llm_prompt_cap = 5000
@@ -29,9 +29,9 @@ commands_help = """
 
        'checkout': Check out recipes for you to work on
        'list': List all recipes that are checked out
-       'run': Run a recipe, you will be prompted to choose which one
+       'run': Run a recipe, you will be prompted to choose which one. You can also use 'run 5' to run 5.
        'add': Add a new recipe (using LLM)
-       'edit': Edit a new recipe (using LLM)
+       'edit': Edit a new recipe (using LLM). You will be prompted to choose which one, oe use 'edit 5' to edit 5
        'delete': Delete a recipe, you will be prompted to choose which one
        'checkin': Check in recipes you have completed
        'makemem': Create a memory using recipe sample output
@@ -51,7 +51,7 @@ cli_config_file = ".cli_config"
 checked_out_dir = "work/checked_out"
 env_cmd = "docker exec recipes-ai-manager python "
 
-environment = Environment(loader=FileSystemLoader("templates/"))
+environment = Environment(loader=FileSystemLoader("../templates/"))
 
 last_bot_response = ""
 
@@ -206,7 +206,7 @@ def run(recipe_index: Optional[int] = typer.Argument(None)):
     os.system(cmd)
 
 
-def edit():
+def edit(recipe_index: Optional[int] = typer.Argument(None)):
     """
     Edit a recipe by interacting with the user and running a command.
 
@@ -219,13 +219,14 @@ def edit():
     Note: This function assumes the existence of a `recipes` dictionary and a `typer` module.
 
     Args:
-        None
+        recipe_index (Optional[int]): The index of the recipe to edit. If not provided, the user will be prompted to enter the recipe number.
 
     Returns:
         None
     """
     list()
-    recipe_index = input("Enter the recipe number to edit: ")
+    if recipe_index is None:
+        recipe_index = input("Enter the recipe number to edit: ")
 
     if int(recipe_index) - 1 not in recipes:
         typer.echo(

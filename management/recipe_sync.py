@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
 from sqlalchemy import create_engine, text
 
-from utils.general import connect_to_db
+from utils.db import connect_to_db
 from utils.llm import call_llm
 from utils.recipes import add_recipe_memory
 

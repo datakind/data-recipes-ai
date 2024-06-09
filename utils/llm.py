@@ -21,11 +21,67 @@ load_dotenv()
 llm_prompt_cap = 5000
 sql_rows_cap = 100
 
-environment = Environment(loader=FileSystemLoader("./templates/"))
+# Because CLI runs on host. TODO, make this more elegant.
+template_dir = "../templates"
+if not os.path.exists(template_dir):
+    template_dir = "./templates"
+
+environment = Environment(loader=FileSystemLoader(template_dir))
 sql_prompt_template = environment.get_template("gen_sql_prompt.jinja2")
 
 chat = None
 embedding_model = None
+
+
+def get_models():
+    """
+    Retrieves the embedding model and chat model based on the specified API type.
+
+    Returns:
+        embedding_model: The embedding model used for text embeddings.
+        chat: The chat model used for generating responses.
+
+    Raises:
+        SystemExit: If the specified API type is not supported.
+    """
+    api_key = os.getenv("RECIPES_OPENAI_API_KEY")
+    base_url = os.getenv("RECIPES_BASE_URL")
+    api_version = os.getenv("RECIPES_OPENAI_API_VERSION")
+    api_type = os.getenv("RECIPES_OPENAI_API_TYPE")
+    completion_model = os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME")
+    model = os.getenv("RECIPES_MODEL")
+    temp = os.getenv("RECIPES_MODEL_TEMP")
+    max_tokens = os.getenv("RECIPES_MODEL_MAX_TOKENS")
+
+    if api_type == "openai":
+        embedding_model = OpenAIEmbeddings(
+            api_key=api_key,
+        )
+        chat = ChatOpenAI(
+            model_name=model,
+            api_key=api_key,
+            temperature=temp,
+            max_tokens=max_tokens,
+        )
+    elif api_type == "azure":
+        embedding_model = AzureOpenAIEmbeddings(
+            api_key=api_key,
+            deployment=completion_model,
+            azure_endpoint=base_url,
+            chunk_size=16,
+        )
+        chat = AzureChatOpenAI(
+            api_key=api_key,
+            api_version=api_version,
+            azure_endpoint=base_url,
+            model_name=model,
+            temperature=temp,
+            max_tokens=max_tokens,
+        )
+    else:
+        print("OPENAI API type not supported")
+        sys.exit(1)
+    return embedding_model, chat
 
 
 def call_llm(instructions, prompt, image=None):
@@ -116,55 +172,6 @@ def call_llm(instructions, prompt, image=None):
         print(response)
         print("Error calling LLM: ", e)
         response = None
-
-
-def get_models():
-    """
-    Retrieves the embedding model and chat model based on the specified API type.
-
-    Returns:
-        embedding_model: The embedding model used for text embeddings.
-        chat: The chat model used for generating responses.
-
-    Raises:
-        SystemExit: If the specified API type is not supported.
-    """
-    api_key = os.getenv("RECIPES_OPENAI_API_KEY")
-    base_url = os.getenv("RECIPES_BASE_URL")
-    api_version = os.getenv("RECIPES_OPENAI_API_VERSION")
-    api_type = os.getenv("RECIPES_OPENAI_API_TYPE")
-    completion_model = os.getenv("RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME")
-    model = os.getenv("RECIPES_MODEL")
-
-    if api_type == "openai":
-        embedding_model = OpenAIEmbeddings(
-            api_key=api_key,
-        )
-        chat = ChatOpenAI(
-            model_name=model,
-            api_key=api_key,
-            temperature=1,
-            max_tokens=3000,
-        )
-    elif api_type == "azure":
-        embedding_model = AzureOpenAIEmbeddings(
-            api_key=api_key,
-            deployment=completion_model,
-            azure_endpoint=base_url,
-            chunk_size=16,
-        )
-        chat = AzureChatOpenAI(
-            api_key=api_key,
-            api_version=api_version,
-            azure_endpoint=base_url,
-            model_name=model,
-            temperature=1,
-            max_tokens=1000,
-        )
-    else:
-        print("OPENAI API type not supported")
-        sys.exit(1)
-    return embedding_model, chat
 
 
 async def gen_sql(input, chat_history, output):
