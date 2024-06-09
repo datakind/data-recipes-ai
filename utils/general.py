@@ -118,19 +118,23 @@ async def call_execute_query_api(sql):
     return await make_api_request(execute_query_url, data)
 
 
-async def call_get_memory_recipe_api(user_input):
+async def call_get_memory_recipe_api(user_input, history, generate_intent="true"):
     """
     Calls the API to get a memory recipe action.
 
     Args:
         user_input (str): The user input.
+        history (str): The chat history.
+        generate_intent (str): Whether to generate the intent.
+
 
     Returns:
         The API response from the make_api_request function.
     """
+
     data = {
         "user_input": f"{user_input}",
-        "chat_history": "[]",
+        "chat_history": history,
         "generate_intent": "true",
     }
     print(f"Calling execute query API {get_memory_recipe_url} with {data} ...")

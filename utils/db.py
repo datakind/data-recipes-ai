@@ -50,11 +50,15 @@ def execute_query(query, instance="data"):
     # Set to read-only mode
     cur.execute("SET TRANSACTION READ ONLY;")
 
+    print(f"Executing query: {query}")
+
     # Execute the query
     cur.execute(query)
 
     # Fetch all the returned rows
     rows = cur.fetchall()
+
+    print(f"Query returned {len(rows)} rows")
 
     # Get column names
     column_names = [desc[0] for desc in cur.description]
@@ -123,3 +127,5 @@ async def get_data_info():
         """
 
     data_info = await call_execute_query_api(query)
+
+    return data_info

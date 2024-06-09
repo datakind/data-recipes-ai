@@ -35,6 +35,8 @@ chat_ui_summarization_prompt = environment.get_template(
 chat = None
 embedding_model = None
 
+data_info = None
+
 
 def get_models():
     """
@@ -205,7 +207,6 @@ async def gen_sql(input, chat_history, output):
         data_info=data_info,
         chat_history=chat_history,
     )
-    print(prompt)
 
     response = call_llm("", prompt)
 
@@ -238,7 +239,6 @@ async def gen_summarize_results(input, sql, output):
     prompt = chat_ui_summarization_prompt.render(
         user_input=input, sql=sql, output=output
     )
-    print(prompt)
 
     response = call_llm("", prompt)
     if "content" in response:

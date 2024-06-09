@@ -213,7 +213,6 @@ def check_recipe_memory(intent, debug=True):
 
     # First do semantic search across memories and recipies
     matches = []
-    result_found = False
     for mem_type in ["memory", "recipe"]:
         if debug:
             print(f"======= Checking {mem_type} for intent: {intent}")
@@ -229,6 +228,7 @@ def check_recipe_memory(intent, debug=True):
                 matches.append(d)
 
     r = {"score": None, "content": None, "metadata": None}
+    result_found = False
 
     # Build a list for the AI judge to review
     match_list = ""
@@ -335,7 +335,7 @@ def get_memory_recipe_metadata(custom_id, mem_type):
         )
 
 
-def generate_intent_from_history(chat_history: list, remove_code: bool = True) -> dict:
+def generate_intent_from_history(chat_history: str) -> dict:
     """
     Generate the intent from the user query and chat history.
 
@@ -347,70 +347,19 @@ def generate_intent_from_history(chat_history: list, remove_code: bool = True) -
 
     """
 
-    # Only use last few interactions
-    buffer = 4
-    if len(chat_history) > buffer:
-        chat_history = chat_history[-buffer:]
-
-    # Remove any code nodes
-    if remove_code is True:
-        chat_history2 = []
-        for c in chat_history:
-            chat_history2.append(c)
-            if "code" in c:
-                # remove 'code' from dictionary c
-                c.pop("code")
-        chat_history = chat_history2
-
-    prompt = (
-        """
-        You are an intelligent assistant tasked with converting a user input into a standard intent phrase.
-
-        Here is the user input:
-
-        """
-        + str(chat_history)
-        + """
-
-        The standard format has the following fields and possible values:
-
-        action: The specific action the user wants to perform (e.g., "plot", "generate", "export", "provide").
-        visualization_type: The type of visualization, if applicable (e.g., "bar chart", "line chart", "pie chart", "text summary"). Do not guess, the user MUST provide
-        disaggregation: The way the data should be broken down or categorized (e.g., "by state", "by company", "by year").
-        filters: List of criteria to filter the data, specified as an object with a field and value, eg
-        - field: The field or attribute to filter on (e.g., "region", "year").
-        - value: The specific value to filter by (e.g., "North America", "2023"). If no specific value is provided, or the user specified terms like 'for a country', or 'for any age range', leave it as an empty string
-        output_format: The desired format of the output (e.g., "image", "csv", "text").
-        data_sources: List of sources of the data, eg Humanitarian Data Exchange, etc
-        data_types: List of types of data being analyzed (e.g., "population", "GDP", "sales").
-        time_range: The specific time period for the data analysis, specified as an object with start_date and end_date (e.g., {"start_date": "2022-01-01", "end_date": "2022-12-31"}).
-        granularity: The time level of detail in the data (e.g., "daily", "monthly", "yearly").
-        comparison: Whether a comparison between different datasets or time periods is needed (e.g., true, or "").
-        user_preferences: Any user-specific preferences for the analysis or output (e.g., "include outliers", "show trend lines").
-
-        Where the output should use the above fields in the order they are listed.
-
-
-        Example output for the above input:
-
-        plot a bar chart of population by state for 2023 using HDX(HAPI) data, highlighting top 5 states as an image
-
-        Task:
-
-        Produce the user's intent in the standard format, answering with a JSON record ...
-
-        {
-            "intent": <user intent sentence>
-        }
-
-    """
+    # Load ninja template
+    generate_intent_from_history_prompt = environment.get_template(
+        "generate_intent_from_history_prompt.jinja2"
     )
 
+    # Generate the intent from the chat history
+    prompt = generate_intent_from_history_prompt.render(chat_history=chat_history)
+
     intent = call_llm(instructions="", prompt=prompt)
-    if not isinstance(intent, dict):
-        intent = {"intent": intent}
+    # if not isinstance(intent, dict):
+    #    intent = {"intent": intent}
     print(f"Generated intent: {intent}")
-    return intent["intent"]
+    return intent
 
 
 def process_image(encoded_string, recipe_id):
@@ -600,15 +549,13 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
     logging.info("Python HTTP trigger function processed a request.")
     # Retrieve the CSV file from the request
 
-    generate_intent = "false"
-
+    # TODO Deactivating, under analysis
+    generate_intent = "fasle"
     if generate_intent is not None and generate_intent == "true":
-        # chat history is passed from promptflow as a string representation of a list and this has to be converted back to a list for the intent generation to work!
-        history_list = ast.literal_eval(chat_history)
-        history_list.append({"inputs": {"question": user_input}})
-        user_input = generate_intent_from_history(history_list)
-        # turn user_input into a proper json record
-        user_input = json.dumps(user_input)
+        print("********* Generating intent from chat history ...")
+        user_input = generate_intent_from_history(chat_history)
+        print("Generated intent: ", user_input)
+        user_input = user_input["intent"]
 
     print("Checking my memories ...")
     memory_found, result = check_recipe_memory(user_input, debug=True)
@@ -624,12 +571,10 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
             # Take the result directly from memory
             result = process_memory_recipe_results(result, table_data)
 
-        result = re.escape(str(result))
+        # result = re.escape(str(result))
+        result = f"matchtype: {mem_type};\n matched_doc: {matched_doc};\n result: {str(result)}"
         print(result)
-
-        result = f"match_type: {mem_type};\n matched_doc: {matched_doc};\n result: {str(result)}"
-
-        return result
+        return str(result)
 
     result = "Sorry, no recipe or found"
     print(result)
