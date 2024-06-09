@@ -229,8 +229,8 @@ def check_recipe_memory(intent, debug=True):
                 matches.append(d)
 
     # Now run them through an AI check
+    r = {"score": None, "content": None, "metadata": None}
     for d in matches:
-        r = {"score": None, "content": None, "metadata": None}
         result_found = False
         score = d[1]
         content = d[0].page_content

@@ -408,6 +408,7 @@ def insert_records_in_db(df, approver):
                 sample_call,
                 sample_result,
                 sample_result_type,
+                sample_metadata,
                 source,
                 created_by,
                 updated_by,
@@ -427,6 +428,7 @@ def insert_records_in_db(df, approver):
             :sample_call,
             :sample_result,
             :sample_result_type,
+            :sample_metadata,
             :source,
             :created_by,
             :updated_by,
@@ -469,6 +471,7 @@ def insert_records_in_db(df, approver):
                 "sample_call": metadata["sample_call"],
                 "sample_result": metadata["sample_result"],
                 "sample_result_type": metadata["sample_result_type"],
+                "sample_metadata": metadata["sample_metadata"],
                 "source": metadata["source"],
                 "created_by": approver,
                 "updated_by": approver,
@@ -507,6 +510,7 @@ def update_records_in_db(df, approver):
             sample_call = :sample_call,
             sample_result = :sample_result,
             sample_result_type = :sample_result_type,
+            sample_metadata = :sample_metadata,
             source = :source,
             updated_by = :updated_by,
             last_updated = NOW(),
@@ -533,6 +537,7 @@ def update_records_in_db(df, approver):
                 "sample_call": metadata["sample_call"],
                 "sample_result": metadata["sample_result"],
                 "sample_result_type": metadata["sample_result_type"],
+                "sample_metadata": metadata["sample_metadata"],
                 "source": metadata["source"],
                 "updated_by": approver,
                 "custom_id": row["custom_id"],
@@ -598,7 +603,7 @@ def update_database(df: pd.DataFrame, approver: str):
         insert_records_in_db(insert_df, approver)
 
 
-def check_out(recipe_author="Mysterious Recipe Checker", force_checkout=False):
+def check_out(recipe_author, force_checkout=False):
     """
     Checks out recipes for editing.
 
@@ -737,9 +742,13 @@ def unlock_records(recipe_author):
             print(f"Locked records cleared for recipe checker {recipe_author}.")
 
 
-def check_in(recipe_author="Mysterious Recipe Checker"):
+def check_in(recipe_author="Mysterious Recipe Checker", force=False):
     """
-    Check in function to process each subdirectory in the checked_out directory.
+    Checks in the modified recipe files to the repository.
+
+    Args:
+        recipe_author (str, optional): The author of the recipe. Defaults to "Mysterious Recipe Checker".
+        force (bool, optional): If True, forces the check-in even if the checksums match. Defaults to False.
     """
 
     # delete pycache if it exists
@@ -759,8 +768,9 @@ def check_in(recipe_author="Mysterious Recipe Checker"):
         if os.path.isdir(subdir_path):
 
             # Skip if the checksums match
-            if compare_cksums(subdir_path):
-                continue
+            if force is not True:
+                if compare_cksums(subdir_path):
+                    continue
 
             record = update_metadata_file(subdir_path)
             records.append(record)
@@ -1168,6 +1178,74 @@ def update_metadata_file_results(recipe_folder, result):
         json.dump(metadata, file, indent=4)
 
 
+def delete_all_db_records():
+    """
+    Delete all records in the recipe table. We only need delete from langchain_pg_embedding,
+    DB contraints will remove from ther tabels (memory/recipe).
+
+    Returns:
+        None
+    """
+    engine = connect_to_db(instance="recipe")
+    with engine.connect() as conn:
+        trans = conn.begin()
+        query = """
+        DELETE FROM
+            public.langchain_pg_embedding
+        """
+        print(query)
+        query = text(query)
+        conn.execute(query)
+        trans.commit()
+
+
+def rebuild(recipe_author):
+    """
+    Rebuild the recipes in the checked_out folder.
+
+    Returns:
+        None
+    """
+
+    recipes = os.listdir(checked_out_folder_name)
+
+    delete_all_db_records()
+
+    for r in recipes:
+        recipe_folder = os.path.join(checked_out_folder_name, r)
+        recipe_path = os.path.join(recipe_folder, "recipe.py")
+        metadata_path = os.path.join(recipe_folder, "metadata.json")
+        # Do any recipe recipes at the end
+        if "recipes" in recipe_path:
+            continue
+        with open(metadata_path, "r") as file:
+            metadata = json.load(file)
+        custom_id = metadata["custom_id"]
+        print(f"Running recipe {recipe_folder} : {custom_id}")
+        run_recipe(recipe_path)
+        break
+
+    # Now do recipe recipes
+    for r in recipes:
+        recipe_folder = os.path.join(checked_out_folder_name, r)
+        recipe_path = os.path.join(recipe_folder, "recipe.py")
+        metadata_path = os.path.join(recipe_folder, "metadata.json")
+        if "recipes" not in recipe_path:
+            continue
+        with open(metadata_path, "r") as file:
+            metadata = json.load(file)
+        custom_id = metadata["custom_id"]
+        print(f"Running recipe {recipe_folder} : {custom_id}")
+        run_recipe(recipe_path)
+
+    check_in(recipe_author, force=True)
+
+    for r in recipes:
+        recipe_folder = os.path.join(checked_out_folder_name, r)
+        print("   Saving memory ...")
+        save_as_memory(recipe_folder)
+
+
 def run_recipe(recipe_path):
     """
     Run recipe and update its metadata results
@@ -1374,11 +1452,11 @@ def save_as_memory(recipe_folder):
                 recipe_params,
                 result,
                 result_type,
+                result_metadata,
                 source,
                 created_by,
                 updated_by,
-                last_updated,
-                metadata
+                last_updated
             )
             VALUES (
                 :custom_id,
@@ -1386,11 +1464,11 @@ def save_as_memory(recipe_folder):
                 :recipe_params,
                 :result,
                 :result_type,
+                :result_metadata,
                 :source,
                 :created_by,
                 :updated_by,
                 NOW(),
-                :metadata
             )
             """
         )
@@ -1402,10 +1480,10 @@ def save_as_memory(recipe_folder):
             "recipe_params": params,
             "result": metadata["sample_result"],
             "result_type": metadata["sample_result_type"],
+            "result_metadata": metadata["sample_metadata"],
             "source": "Recipe sample result",
             "created_by": metadata["created_by"],
             "updated_by": metadata["created_by"],
-            "metadata": metadata["sample_metadata"],
         }
         conn.execute(query_template, params)
 
@@ -1471,6 +1549,11 @@ def main():
     group.add_argument(
         "--info", action="store_true", help="Get information about the data available"
     )
+    group.add_argument(
+        "--rebuild",
+        action="store_true",
+        help="CAUTION: WIll remove database memories/recipes and push local data",
+    )
 
     parser.add_argument("--recipe_author", type=str, help="Name of the recipe checker")
     parser.add_argument("--recipe_intent", type=str, help="Intent of the new recipe")
@@ -1507,8 +1590,10 @@ def main():
         save_as_memory(args.recipe_path)
     elif args.edit_recipe:
         llm_edit_recipe(args.recipe_path, args.llm_prompt, args.recipe_author)
+    elif args.rebuild:
+        rebuild(args.recipe_author)
     elif args.info:
-        get_data_info_summary()
+        get_data_info_summary(args.recipe_author)
 
 
 if __name__ == "__main__":

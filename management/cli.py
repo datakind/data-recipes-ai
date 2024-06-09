@@ -29,12 +29,13 @@ commands_help = """
 
        'checkout': Check out recipes for you to work on
        'list': List all recipes that are checked out
-       'run': Run a recipe, you will be prompted to choose which one. You can also use 'run 5' to run 5.
+       'run': Run a recipe, you'll be prompted, or use 'run 5' to run 5.
        'add': Add a new recipe (using LLM)
-       'edit': Edit a new recipe (using LLM). You will be prompted to choose which one, oe use 'edit 5' to edit 5
+       'edit': Edit a recipe (using LLM). You'll be prompted, or use 'edit 5' to edit 5.
        'delete': Delete a recipe, you will be prompted to choose which one
        'checkin': Check in recipes you have completed
        'makemem': Create a memory using recipe sample output
+       'rebuild': Removes database data, runs all local recipes and checks them in
        'help': Show a list of commands
        'quit': Exit this recipes CLI
 
@@ -547,6 +548,32 @@ def chat():
             typer.echo(f"Error: {e}")
 
 
+def rebuild():
+    """
+    Rebuilds the database and checks in all local recipes.
+
+    This function executes a Docker command to rebuild the database and checks in all local recipes.
+    It also displays a message to the user indicating that the database is being rebuilt.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    check = input("CAUTION!! Are you sure you want to rebuild the database [Y/n]? ")
+    if check != "Y":
+        typer.echo("Rebuilding the database aborted.")
+        return
+
+    cmd = f"{env_cmd} recipe_sync.py --rebuild --recipe_author {user_name}"
+    typer.echo(
+        "Rebuilding the database recipes/memories and checking in all local recipes ..."
+    )
+    print(cmd)
+    os.system(cmd)
+
+
 def main():
     """
     Entry point function for the recipes management CLI.
@@ -568,6 +595,7 @@ def main():
     app.command()(edit)
     app.command()(delete)
     app.command()(makemem)
+    app.command()(rebuild)
     app.command()(info)
     app.command()(chat)
     app.command()(help)
@@ -610,6 +638,7 @@ def main():
             "edit",
             "delete",
             "makemem",
+            "rebuild",
             "chat",
             "info",
             "help",
