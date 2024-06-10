@@ -46,7 +46,7 @@ async def ask_data(input, chat_history, active_message):
         chat_history = chat_history[-3:]
 
     # Loop 3 times to retry errors
-    for i in range(5):
+    for i in range(10):
         try:
             if mode == "memory_recipe":
                 output = await call_get_memory_recipe_api(
@@ -73,7 +73,7 @@ async def ask_data(input, chat_history, active_message):
                 output = await gen_summarize_results(input, sql, output)
 
             # print(output)
-            break
+            # break
         except Exception as e:
             print(e)
         if i == 2:
@@ -151,6 +151,6 @@ async def main(message: cl.Message):
 
     # print(final_answer.content)
 
-    # await add_message_to_history(final_answer.content, "bot")
+    await add_message_to_history(final_answer.content[0:1000], "bot")
 
     await final_answer.update()
