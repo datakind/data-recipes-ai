@@ -28,9 +28,6 @@ if not os.path.exists(template_dir):
 
 environment = Environment(loader=FileSystemLoader(template_dir))
 sql_prompt_template = environment.get_template("gen_sql_prompt.jinja2")
-chat_ui_summarization_prompt = environment.get_template(
-    "chat_ui_summarization_prompt.jinja2"
-)
 
 chat = None
 embedding_model = None
@@ -215,33 +212,3 @@ async def gen_sql(input, chat_history, output):
     query = query.replace(";", "") + f" \nLIMIT {sql_rows_cap};"
 
     return query
-
-
-async def gen_summarize_results(input, sql, output):
-    """
-    Summarizes the results of a query and answers the user's question.
-
-    IMPORTANT: You ONLY respond with answers related to the output provided.
-
-    Args:
-        input (str): The user's question.
-        sql (str): The SQL query that was executed.
-        output (str): The output of the executed query
-
-    Returns:
-        str: The summarized results of the query.
-
-    """
-
-    if len(output) > llm_prompt_cap:
-        output = output[:llm_prompt_cap] + "..."
-
-    prompt = chat_ui_summarization_prompt.render(
-        user_input=input, sql=sql, output=output
-    )
-
-    response = call_llm("", prompt)
-    if "content" in response:
-        response = response["content"]
-
-    return response

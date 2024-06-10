@@ -27,14 +27,35 @@ def function2(<params):
 def function3(<params>):
     function1(<params>)
     function2(<params>)
-    <CODE TO CALCULATES ANSWER, HANDLING ERRORS>
-    <PRINT ANSWER>
-    return <ANSWER>
+    <CODE TO CALCULATES RESULT, HANDLING ERRORS>
+
+    result = {
+        'result': {
+            'type': '<TYPE, image, text, csv, etc>',
+            'file': '<FILE PATH IF APPROPRIATE>',
+            'value': '<TEXT IF APPROPRIATE>'
+        },
+        'metadata': {
+            'params': {
+                'param1': <PARAM1>,
+                'param2': <PARAM2>,
+                'param3': <PARAM3>
+            },
+            'attribution': <ATTRIBUTION INFO>,
+            'data_url': <DATA LINK>,
+            'time_period': {
+                'start': <START PERIOD>,
+                'end': <END PERIOD>
+            }
+        }
+    }
+    print(json.dumps(result, indent=4))
+    return result
 
 
 
 if __name__ == "__main__":
-    <ANSWER> = function3(<params>):
+    result = function3(<params>):
 ```
 
 

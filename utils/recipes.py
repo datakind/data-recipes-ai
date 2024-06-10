@@ -258,6 +258,7 @@ def check_recipe_memory(intent, debug=True):
         r["content"] = content
         r["metadata"] = metadata
         result_found = True
+    print(r)
     return result_found, r
 
     # # Now run them through an AI check
@@ -427,9 +428,12 @@ def process_memory_recipe_results(result: dict, table_data: dict) -> str:
     if response_image is not None and response_image != "":
         process_image(response_image.replace("data:image/png;base64,", ""), recipe_id)
         # result = "http://localhost:9999/memory_image.png"
-        result = f"{os.getenv('IMAGE_HOST')}/memory_image_{recipe_id}.png"
+        result = {"answer": f"{os.getenv('IMAGE_HOST')}/memory_image_{recipe_id}.png"}
     else:
         result = response_text
+
+    if "answer" not in result:
+        result = {"answer": result}
 
     return {"result": result, "metadata": metadata}
 
@@ -510,26 +514,19 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
         run_output = subprocess.run(cmd, shell=True, capture_output=True, text=True)
 
         result["output"] = run_output.stdout
-        # result["errors"] = run_output.stderr
+        result["errors"] = run_output.stderr
 
-        # TODO - this is terrible, just for the demo, extract JSON between "{" and "}""
-        # Match { }
-        metadata = ""
-        if result["output"].find("{") != -1:
-            result["output"] = result["output"][result["output"].find("{") :]
-            result["output"] = result["output"][: result["output"].rfind("}") + 1]
-            print("Output: ", result["output"])
-            j = json.loads(result["output"].replace("'", '"'))
-            if "metadata" in j:
-                metadata = j["metadata"]
-        else:
-            metadata = "Data was sourced from HDX"
-
-        result["metadata"] = metadata
+        # Extract the JSON record from output and save to result
+        # TODO This is awful. Recipes to be registered as functions, no need to parse stdout
+        if "{" in run_output.stdout:
+            print("Extracting JSON record from output ...")
+            print(run_output.stdout)
+            # result["result"] = re.search(r'\{.*\}', run_output.stdout).group(0)
+            result["result"] = run_output.stdout.split("{")[1]
 
     print("Recipe executed successfully.")
     print(result)
-    return result["output"] + " >> metadata: " + metadata
+    return result
 
 
 def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
@@ -571,12 +568,20 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
             # Take the result directly from memory
             result = process_memory_recipe_results(result, table_data)
 
-        # result = re.escape(str(result))
-        result = f"matchtype: {mem_type};\n matched_doc: {matched_doc};\n result: {str(result)}"
         print(result)
-        return str(result)
+        result["memory_type"] = mem_type
+        result["memory"] = matched_doc
 
-    result = "Sorry, no recipe or found"
+        # Clean up result, only include parts between { and }
+        if "{" in result["result"]:
+            result["result"] = re.search(r"\{.*\}", result["result"]).group(0)
+
+        result_string = json.dumps(result, indent=4)
+
+        print(result_string)
+        return result_string
+
+    result = {"result": "Sorry, no recipe or memory found"}
     print(result)
 
-    return str(result)
+    return result
