@@ -149,33 +149,33 @@ services:
     user: "root"
     depends_on:
       - actions
-  ingestion:
-    container_name: haa-ingestion
-    build:
-      context: .
-      dockerfile: ./ingestion/Dockerfile
-    depends_on:
-      - datadb
-    restart: always
-    env_file:
-      - .env
-    volumes:
-      - type: bind
-        source: ./ingestion
-        target: /app
-      - type: bind
-        source: ./utils
-        target: /app/utils
-  code-interpreter:
-    # image: ghcr.io/iamgreggarcia/codesphera:latest
-    container_name: haa-code-interpreter
-    build:
-      context: .
-      dockerfile: ./code-interpreter/Dockerfile
-    ports:
-      - "3333:3333"
-    volumes:
-      - shared-data:/app/static
+  # ingestion:
+  #  container_name: haa-ingestion
+  #  build:
+  #    context: .
+  #    dockerfile: ./ingestion/Dockerfile
+  #  depends_on:
+  #    - datadb
+  #  restart: always
+  #  env_file:
+  #    - .env
+  #  volumes:
+  #    - type: bind
+  #      source: ./ingestion
+  #      target: /app
+  #    - type: bind
+  #      source: ./utils
+  #      target: /app/utils
+  #code-interpreter:
+  #  # image: ghcr.io/iamgreggarcia/codesphera:latest
+  #  container_name: haa-code-interpreter
+  #  build:
+  #    context: .
+  #    dockerfile: ./code-interpreter/Dockerfile
+  #  ports:
+  #    - "3333:3333"
+  #  volumes:
+  #    - shared-data:/app/static
     #command: python3 -c "import localserver.main; localserver.main.start()"
   recipe-manager:
     container_name: haa-recipe-manager

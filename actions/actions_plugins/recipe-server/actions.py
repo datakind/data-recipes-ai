@@ -211,7 +211,7 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
     logging.info("Python HTTP trigger function processed a request.")
     # Retrieve the CSV file from the request
 
-    generate_intent = "false"
+    #generate_intent = "false"
 
     if generate_intent is not None and generate_intent == "true":
         # chat history is passed from promptflow as a string representation of a list and this has to be converted back to a list for the intent generation to work!
