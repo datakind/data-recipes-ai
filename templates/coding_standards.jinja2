@@ -204,15 +204,30 @@ def get_attributions(<params>):
 def function3(<params>):
     function1(<params>)
     function2(<params>)
-    <CODE TO CALCULATES ANSWER, HANDLING ERRORS>
-    response = {
-        'answer': <ANSWER>
+    <CODE TO CALCULATES RESULT, HANDLING ERRORS>
+
+    result = {
+        'result': {
+            'type': '<TYPE, image, text, csv, etc>',
+            'file': '<FILE PATH IF APPROPRIATE>',
+            'value': '<TEXT IF APPROPRIATE>'
+        },
         'metadata': {
-            'attribution': get_attributions(<params>)
+            'params': {
+                'param1': <PARAM1>,
+                'param2': <PARAM2>,
+                'param3': <PARAM3>
+            },
+            'attribution': <ATTRIBUTION INFO>,
+            'data_url': <DATA LINK>,
+            'time_period': {
+                'start': <START PERIOD>,
+                'end': <END PERIOD>
+            }
         }
     }
-    <PRINT response>
-    return response
+    print(json.dumps(result, indent=4))
+    return result
 
 
 

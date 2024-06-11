@@ -1,4 +1,5 @@
 import ast
+import asyncio
 import json
 import logging
 import os
@@ -8,12 +9,19 @@ from pathlib import Path
 from typing import List
 
 import chainlit as cl
+from chainlit import make_async, run_sync
 from chainlit.config import config
 from chainlit.element import Element
 from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
 from literalai.helper import utc_now
-from openai import AsyncAssistantEventHandler, AsyncOpenAI, OpenAI
+from openai import (
+    AssistantEventHandler,
+    AsyncAssistantEventHandler,
+    AsyncOpenAI,
+    OpenAI,
+)
+from typing_extensions import override
 
 from utils.general import call_execute_query_api, call_get_memory_recipe_api
 
@@ -32,11 +40,15 @@ images_loc = "./public/images/"
 async_openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 sync_openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
+cl.instrument_openai()  # Instrument the OpenAI API client
+
 assistant = sync_openai_client.beta.assistants.retrieve(
     os.environ.get("OPENAI_ASSISTANT_ID")
 )
 
-config.ui.name = assistant.name
+# config.ui.name = assistant.name
+bot_name = os.getenv("ASSISTANTS_BOT_NAME")
+config.ui.name = bot_name
 
 
 class EventHandler(AsyncAssistantEventHandler):
@@ -120,6 +132,7 @@ class EventHandler(AsyncAssistantEventHandler):
         Returns:
             None
         """
+        print(f"Tool call delta: {delta.type}")
         if snapshot.id != self.current_tool_call:
             self.current_tool_call = snapshot.id
             self.current_step = cl.Step(name=delta.type, type="tool")
@@ -175,6 +188,67 @@ class EventHandler(AsyncAssistantEventHandler):
         self.current_message.elements.append(image_element)
         await self.current_message.update()
 
+    @override
+    async def on_event(self, event):
+        # Retrieve events that are denoted with 'requires_action'
+        # since these will have our tool_calls
+        print(event.event)
+        if event.event == "thread.run.requires_action":
+            for tool in event.data.required_action.submit_tool_outputs.tool_calls:
+                print(tool)
+
+                function_name = tool.function.name
+                function_args = tool.function.arguments
+
+                function_output = asyncio.run(
+                    run_function(function_name, function_args)
+                )
+
+                with sync_openai_client.beta.threads.runs.submit_tool_outputs_stream(
+                    thread_id=self.current_run.thread_id,
+                    run_id=self.current_run.id,
+                    tool_outputs=[{"tool_call_id": tool.id, "output": function_output}],
+                    event_handler=AssistantEventHandler(),
+                ) as stream:
+                    msg = await cl.Message(
+                        author=self.assistant_name, content=""
+                    ).send()
+                    for text in stream.text_deltas:
+                        # print(text)
+                        await msg.stream_token(text)
+                    await msg.update()
+
+
+async def run_function(function_name, function_args):
+    """
+    Run a function with the given name and arguments.
+
+    Args:
+        function_name (str): The name of the function to run.
+        function_args (dict): The arguments to pass to the function.
+
+    Returns:
+        Any: The output of the function
+    """
+    if not hasattr(sys.modules[__name__], function_name):
+        raise Exception(f"Function {function_name} not found")
+
+    try:
+        eval_str = f"{function_name}(**{function_args})"
+        print(f"Running function: {eval_str}")
+        task = asyncio.create_task(eval(eval_str))
+        output = await task
+
+        if isinstance(output, bytes):
+            output = output.decode("utf-8")
+        print(output)
+
+    except Exception as e:
+        print(f"Error running function {function_name}: {e}")
+        output = f"{e}"
+
+    return output
+
 
 def print(*tup):
     """
@@ -187,6 +261,28 @@ def print(*tup):
         None
     """
     logger.info(" ".join(str(x) for x in tup))
+
+
+async def cleanup():
+    """
+    Clean up the user session.
+
+    Returns:
+        None
+    """
+    await cl.user_session.clear()
+    thread = cl.user_session.get("thread")
+    run_id = cl.user_session.get("run_id")
+    if run_id is not None:
+        await async_openai_client.beta.threads.runs.cancel(
+            thread_id=thread.id, run_id=cl.user_session.get("run_id")
+        )
+    print("Stopped the run")
+
+
+# @cl.on_stop
+# async def on_stop():
+#    await cleanup()
 
 
 @cl.step(type="tool")
@@ -209,84 +305,6 @@ async def speech_to_text(audio_file):
     )
 
     return response.text
-
-
-async def check_memories_recipes(user_input: str, history=[]) -> str:
-    """
-    Check memories and recipes for a given message, and will display the results.
-    The answer is passed back to called, so it can be added as an assistant message
-    so it knows what it did!
-
-    Args:
-        user_input (str): The user input message.
-        history (list): The chat history.
-
-    Returns:
-        bool: Whether a memory or recipe was found.
-        str: The content of the memory or recipe.
-
-    """
-
-    found_memory = False
-    memory_content = None
-
-    memory = await call_get_memory_recipe_api(
-        user_input, history=str(history), generate_intent="true"
-    )
-    print(memory)
-    memory = memory.decode("utf-8")
-
-    if "memory_type" in memory:
-
-        found_memory = True
-        elements = []
-        msg_text = ""
-
-        # TODO SHouldn't need two json.loads, fix this
-        memory = json.loads(json.loads(memory))
-
-        # TODO Fix this in the recipe server
-        try:
-            memory["result"] = ast.literal_eval(memory["result"])
-        except Exception as e:
-            print(e)
-            print("Error converting memory result to dict")
-            print(memory["result"]["answer"])
-
-        # Fix image paths
-        if ".png" in memory["result"]["answer"]:
-            print(memory)
-            png_file = memory["result"]["answer"].split("/")[-1]
-            memory["result"]["answer"] = f"{os.getenv('IMAGE_HOST')}/{png_file}"
-            # TODO Testing, remove this line
-            memory["result"][
-                "answer"
-            ] = f"http://localhost:8000/public/images/{png_file}"
-
-            image = cl.Image(
-                path=f"{images_loc}{png_file}", display="inline", size="large"
-            )
-            elements.append(image)
-        else:
-            msg_text = memory["result"]["answer"]
-
-        memory_content = f"""
-
-            The answer is:
-            {memory['result']['answer']}
-
-            ***
-
-            Metadata for the answer:
-            {memory['metadata']}
-        """
-        print(memory_content)
-        await cl.Message(
-            content=msg_text,
-            elements=elements,
-        ).send()
-
-    return found_memory, memory_content
 
 
 async def upload_files(files: List[Element]):
@@ -347,10 +365,124 @@ async def start_chat():
     thread = await async_openai_client.beta.threads.create()
     # Store thread ID in user session for later use
     cl.user_session.set("thread_id", thread.id)
-    await cl.Avatar(name=assistant.name, path="./public/logo.png").send()
-    await cl.Message(
-        content=f"Hello, I'm {assistant.name}!", disable_feedback=True
-    ).send()
+    # await cl.Avatar(name=assistant.name, path="./public/logo.png").send()
+    # await cl.Message(
+    #    content=f"Hi. I'm your humanitarian AI assistant.", disable_feedback=True
+    # ).send()
+
+
+async def check_memories_recipes(user_input: str, history=[]) -> str:
+    """
+    Check memories and recipes for a given message, and will display the results.
+    The answer is passed back to called, so it can be added as an assistant message
+    so it knows what it did!
+
+    Args:
+        user_input (str): The user input message.
+        history (list): The chat history.
+
+    Returns:
+        bool: Whether a memory or recipe was found.
+        str: The content of the memory or recipe.
+
+    """
+
+    found_memory = False
+    memory_content = None
+
+    memory = await call_get_memory_recipe_api(
+        user_input, history=str(history), generate_intent="true"
+    )
+    print(memory)
+    memory = memory.decode("utf-8")
+
+    if "memory_type" in memory:
+
+        found_memory = True
+        elements = []
+        msg_text = ""
+
+        # TODO Shouldn't need two json.loads, fix this
+        memory = json.loads(json.loads(memory))
+
+        print("kkkkkk")
+        print(memory)
+        print("xxxx")
+
+        # TODO All these are tactical for demo, go away after response JSON is fixed
+        try:
+            memory = json.loads(memory)
+        except Exception:
+            print("Memory not in JSON format")
+
+        try:
+            memory = json.loads(memory["result"])
+        except Exception:
+            print("Memory not in JSON format")
+
+        if "output" in memory:
+            memory = memory["output"]
+
+        try:
+            memory = json.loads(memory["result"])
+        except Exception:
+            print("Memory not in JSON format")
+
+        # TODO END
+
+        # Fix image paths
+        print(memory["result"]["type"] == "image")
+        if ".png" in memory["result"]["file"]:
+            png_file = memory["result"]["file"].split("/")[-1]
+            memory["result"]["file"] = f"{os.getenv('IMAGE_HOST')}/{png_file}"
+            # TODO Testing, remove this line
+            memory["result"]["file"] = f"http://localhost:8000/public/images/{png_file}"
+
+            image = cl.Image(
+                path=f"{images_loc}{png_file}", display="inline", size="large"
+            )
+            elements.append(image)
+        else:
+
+            if memory["result"]["type"] == "table":
+                msg_text = f"Here is the table for {user_input}"
+                elements.append(
+                    cl.Table(
+                        data=memory["result"]["value"],
+                        caption=f"Table for {user_input}",
+                    )
+                )
+            else:
+                if memory["result"]["type"] == "number":
+                    msg_text = "{:,}".format(memory["result"]["value"])
+                    msg_text = f"The answer is: **{msg_text}**"
+                else:
+                    msg_text = str(memory["result"]["value"])
+
+        memory_content = f"""
+
+            The answer is:
+
+            {memory['result']['file']}
+            {msg_text}
+
+            ***
+
+            Metadata for the answer:
+            {memory['metadata']}
+        """
+        print(memory_content)
+
+        meta_data_msg = """-------------------------
+        ✅ *A human approved this data recipe*
+        """
+
+        await cl.Message(
+            content=msg_text + meta_data_msg,
+            elements=elements,
+        ).send()
+
+    return found_memory, memory_content
 
 
 @cl.on_message
@@ -376,10 +508,16 @@ async def main(message: cl.Message):
         attachments=attachments,
     )
 
+    msg = await cl.Message(
+        "Checking to see if I have a memory for this", disable_feedback=True
+    ).send()
     found_memory, memory_content = await check_memories_recipes(message.content)
+
+    # found_memory=False
 
     # Message to the thread. If a memory add it as the assistant
     if found_memory is True:
+        print("Adding memory to thread")
         await async_openai_client.beta.threads.messages.create(
             thread_id=thread_id,
             role="user",
@@ -390,7 +528,11 @@ async def main(message: cl.Message):
         # No need to send anything
         return
 
+    msg.content = "Can't find anything in my memories, let me do some analysis ..."
+    await msg.update()
+
     # Create and Stream a Run
+    print(f"Creating and streaming a run {assistant.id}")
     async with async_openai_client.beta.threads.runs.stream(
         thread_id=thread_id,
         assistant_id=assistant.id,

@@ -427,13 +427,17 @@ def process_memory_recipe_results(result: dict, table_data: dict) -> str:
     print("Recipe ID: ", recipe_id, "Intent: ", content)
     if response_image is not None and response_image != "":
         process_image(response_image.replace("data:image/png;base64,", ""), recipe_id)
-        # result = "http://localhost:9999/memory_image.png"
-        result = {"answer": f"{os.getenv('IMAGE_HOST')}/memory_image_{recipe_id}.png"}
+        file = f"{os.getenv('IMAGE_HOST')}/memory_image_{recipe_id}.png"
+        result = {"type": "image", "file": file, "value": ""}
     else:
         result = response_text
 
-    if "answer" not in result:
-        result = {"answer": result}
+        # TODO tactical fix, remove after demo
+        # Extract JSON record from result
+        if "{" in result:
+            print("Extracting JSON record from result ...")
+            print(result)
+            result = re.search(r"\{.*\}", result, re.DOTALL).group(0)
 
     return {"result": result, "metadata": metadata}
 
@@ -572,8 +576,8 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
         result["memory_type"] = mem_type
         result["memory"] = matched_doc
 
-        # Clean up result, only include parts between { and }
-        if "{" in result["result"]:
+        # TODO Tactical for demo. Clean up result, only include parts between { and }
+        if "{" in result["result"] and "SQL" in result:
             result["result"] = re.search(r"\{.*\}", result["result"]).group(0)
 
         result_string = json.dumps(result, indent=4)
