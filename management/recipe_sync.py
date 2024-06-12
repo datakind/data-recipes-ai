@@ -43,6 +43,12 @@ required_intent_fields = [
     "data_sources",
 ]
 
+# String to indicate start of output
+output_start_string = "OUTPUT:"
+
+# Non-optional Fields that must exist in recipe json output
+required_output_json_fields = ["result"]
+
 environment = Environment(loader=FileSystemLoader("templates/"))
 
 
@@ -459,6 +465,9 @@ def insert_records_in_db(df, approver):
 
             custom_id = response[0]
 
+            metadata["sample_result"] = json.dumps(metadata["sample_result"])
+            metadata["sample_metadata"] = json.dumps(metadata["sample_metadata"])
+
             # Now insert into recipe table
             params = {
                 "custom_id": custom_id,
@@ -469,7 +478,7 @@ def insert_records_in_db(df, approver):
                 "python_packages": metadata["python_packages"],
                 "used_recipes_list": metadata["used_recipes_list"],
                 "sample_call": metadata["sample_call"],
-                "sample_result": metadata["sample_result"],
+                "sample_result": str(metadata["sample_result"]),
                 "sample_result_type": metadata["sample_result_type"],
                 "sample_metadata": metadata["sample_metadata"],
                 "source": metadata["source"],
@@ -1093,13 +1102,13 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
     print("\n\nRecipe editing done")
 
 
-def update_metadata_file_results(recipe_folder, result):
+def update_metadata_file_results(recipe_folder, output):
     """
     Update the metadata file for a given recipe folder with the provided result.
 
     Args:
         recipe_folder (str): The path to the recipe folder.
-        result (subprocess.CompletedProcess): The result of a subprocess command.
+        output JSON: The result of the recipe call.
 
     Returns:
         None
@@ -1110,18 +1119,9 @@ def update_metadata_file_results(recipe_folder, result):
     with open(metadata_path, "r") as file:
         metadata = json.load(file)
 
-    # Remove any lines starting with DEBUG
-    result.stdout = re.sub(r"DEBUG.*\n", "", result.stdout)
+    if output["result"]["type"] == "image":
 
-    if ".png" in result.stdout:
-
-        # See if result.stdout is a JSON file, if so extract "file"
-        try:
-            result_json = json.loads(str(result.stdout))
-            png_file = result_json["file"]
-        except json.JSONDecodeError:
-            print("Extract png file location from stdout")
-            png_file = re.search(r"(\w+\.png)", result.stdout).group(1)
+        png_file = output["result"]["file"]
 
         # does png exist?
         if not os.path.exists(png_file):
@@ -1158,19 +1158,15 @@ def update_metadata_file_results(recipe_folder, result):
                         print(
                             "\n\n     !!!!! Image validation failed, skipping metadata update\n"
                         )
-                        print(f"     {result['message']}\n\n")
+                        print(f"     {llm_result['message']}\n\n")
 
     else:
-        metadata["sample_result"] = result.stdout
+        metadata["sample_result"] = output
         metadata["sample_result_type"] = "text"
 
     # Is there metadata. TODO: Tamle call_llm to generate proper JSON for all models
-    if "'metadata':" in result.stdout:
-        print("Metadata found in result")
-        print(result.stdout)
-        m = re.search(r"'metadata': (.*)\}", result.stdout).group(1)
-        m = m.replace("'", "")
-        metadata["sample_metadata"] = m
+    if "metadata" in output:
+        metadata["sample_metadata"] = output["metadata"]
     else:
         metadata["sample_metadata"] = ""
 
@@ -1303,6 +1299,34 @@ def rebuild(recipe_author):
         save_as_memory(recipe_folder)
 
 
+def validate_output(output):
+    """
+    Validate output from recipe.
+
+    Args:
+        output (str): The output from the recipe.
+
+    Returns:
+        None
+    """
+
+    # Remove any lines with DEBUG in them
+    output = re.sub(r"DEBUG.*\n", "", output)
+
+    try:
+        output = json.loads(output)
+        print("JSON output parsed successfully")
+    except json.JSONDecodeError:
+        print("Output: \n\n")
+        print(output)
+        raise ValueError("Output of recipe must be JSON")
+
+    # Now check for required fields
+    for f in required_output_json_fields:
+        if f not in output:
+            raise ValueError(f"Output of recipe must contain field {f}")
+
+
 def run_recipe(recipe_path):
     """
     Run recipe and update its metadata results
@@ -1314,15 +1338,26 @@ def run_recipe(recipe_path):
     Returns:
         None
     """
+
     cmd = f"python {recipe_path}"
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     print(result.stdout)
     print(result.stderr)
 
+    # Extract output
+    if output_start_string in result.stdout:
+        output = result.stdout.split(output_start_string)[1]
+    else:
+        raise ValueError("Output of recipe must contain 'OUTPUT:'")
+
+    # output is JSON
+    validate_output(output)
+    output = json.loads(output)
+
     recipe_folder = os.path.dirname(recipe_path)
 
-    if result.returncode == 0 and len(result.stdout) > 0:
-        update_metadata_file_results(recipe_folder, result)
+    if result.returncode == 0 and len(output) > 0:
+        update_metadata_file_results(recipe_folder, output)
     else:
         if len(result.stderr) > 0:
             print("Error running recipe, skipping metadata update")
@@ -1529,6 +1564,9 @@ def save_as_memory(recipe_folder):
             )
             """
         )
+
+        metadata["sample_result"] = json.dumps(metadata["sample_result"])
+        metadata["sample_metadata"] = json.dumps(metadata["sample_metadata"])
 
         # Now insert into recipe table
         params = {
