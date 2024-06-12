@@ -230,6 +230,10 @@ def check_recipe_memory(intent, debug=True):
     r = {"score": None, "content": None, "metadata": None}
     result_found = False
 
+    # No matches, no point calling the AI
+    if len(matches) == 0:
+        return result_found, r
+
     # Build a list for the AI judge to review
     match_list = ""
     for i, d in enumerate(matches):
@@ -241,6 +245,7 @@ def check_recipe_memory(intent, debug=True):
     )
     print(prompt)
     response = call_llm(prompt_map[mem_type], prompt)
+    print(response)
     if "content" in response:
         response = response["content"]
     if isinstance(response, str):
@@ -260,46 +265,6 @@ def check_recipe_memory(intent, debug=True):
         result_found = True
     print(r)
     return result_found, r
-
-    # # Now run them through an AI check
-    # r = {"score": None, "content": None, "metadata": None}
-    # for d in matches:
-    #     result_found = False
-    #     score = d[1]
-    #     content = d[0].page_content
-    #     metadata = d[0].metadata
-    #     mem_type = metadata["mem_type"]
-    #     if debug:
-    #         print(
-    #             f"======= AI Checking {mem_type} for intent: {intent} \nContent: {content}"
-    #         )
-    #     prompt = f"""
-    #         User Intent:
-
-    #         {intent}
-
-    #         DB Intent:
-
-    #         {content}
-
-    #     """
-    #     response = call_llm(prompt_map[mem_type], prompt)
-    #     if "content" in response:
-    #         response = response["content"]
-    #     if isinstance(response, str):
-    #         response = json.loads(response)
-    #     if debug:
-    #         print("AI Judge of match: ", response, "\n")
-
-    #     if response["answer"].lower() == "yes":
-    #         print("    MATCH!")
-    #         r["score"] = score
-    #         r["content"] = content
-    #         r["metadata"] = metadata
-    #         result_found = True
-    #         return result_found, r
-
-    # return result_found, r
 
 
 def get_memory_recipe_metadata(custom_id, mem_type):
@@ -394,6 +359,8 @@ def process_image(encoded_string, recipe_id):
     return full_path
 
 
+# TODO recfactor all these functions into simpler single function. Tech debt left
+# over from Robocorp rapid prototype
 def process_memory_recipe_results(result: dict, table_data: dict) -> str:
     """
     Processes the results of a memory recipe search and returns the response text and metadata.
@@ -410,34 +377,25 @@ def process_memory_recipe_results(result: dict, table_data: dict) -> str:
     print(result)
     content = result["content"]
     table_data = get_memory_recipe_metadata(custom_id, mem_type)
+    recipe_id = table_data["custom_id"]
     if "result_metadata" in table_data:
         metadata = table_data["result_metadata"]
     else:
         metadata = table_data["sample_result_metadata"]
     if metadata is None:
         metadata = ""
+
     print(f"====> Found {mem_type}")
     if table_data["result_type"] == "image":
-        response_image = table_data["result"]
-        response_text = ""
-    else:
-        response_text = table_data["result"]
-        response_image = ""
-    recipe_id = table_data["custom_id"]
-    print("Recipe ID: ", recipe_id, "Intent: ", content)
-    if response_image is not None and response_image != "":
-        process_image(response_image.replace("data:image/png;base64,", ""), recipe_id)
+        image = table_data["result"]
+        process_image(image.replace("data:image/png;base64,", ""), recipe_id)
         file = f"{os.getenv('IMAGE_HOST')}/memory_image_{recipe_id}.png"
         result = {"type": "image", "file": file, "value": ""}
     else:
-        result = response_text
+        result = json.loads(table_data["result"])
+        result = result["result"]
 
-        # TODO tactical fix, remove after demo
-        # Extract JSON record from result
-        if "{" in result:
-            print("Extracting JSON record from result ...")
-            print(result)
-            result = re.search(r"\{.*\}", result, re.DOTALL).group(0)
+    print("Recipe ID: ", recipe_id, "Intent: ", content)
 
     return {"result": result, "metadata": metadata}
 
@@ -575,10 +533,6 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
         print(result)
         result["memory_type"] = mem_type
         result["memory"] = matched_doc
-
-        # TODO Tactical for demo. Clean up result, only include parts between { and }
-        if "{" in result["result"] and "SQL" in result:
-            result["result"] = re.search(r"\{.*\}", result["result"]).group(0)
 
         result_string = json.dumps(result, indent=4)
 

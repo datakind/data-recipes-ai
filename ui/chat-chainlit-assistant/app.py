@@ -226,10 +226,12 @@ class EventHandler(AsyncAssistantEventHandler):
             ) as stream:
                 print("Tool output submitted successfully")
                 msg = await cl.Message(author=self.assistant_name, content="").send()
+                response = ""
                 for text in stream.text_deltas:
-                    # print(text)
+                    response += text
                     await msg.stream_token(text)
-                await msg.stream_token(llm_footer)
+                if len(response) > 5:
+                    await msg.stream_token(llm_footer)
                 await msg.update()
 
 
@@ -398,16 +400,24 @@ def get_metadata_footer(metadata):
         str: The metadata footer.
     """
 
+    time_period_str = ""
+    if "time_period" in metadata:
+        if "start" in metadata["time_period"]:
+            time_period_str += f"{metadata['time_period']['start']}"
+        if "end" in metadata["time_period"]:
+            time_period_str += f" to {metadata['time_period']['end']}"
+        time_period_str = time_period_str.replace("T00:00:00", "")
+
     label_map = {
-        "time_period": {"value": metadata["time_period"].replace("T00:00:00", "")},
-        "data_url": {
-            "label": "Data URL",
-            "value": f"[Raw data]({metadata['data_url']})",
-        },
         "attribution": {
             "label": "Attribution",
             "value": f"[Source]({metadata['attribution']})",
         },
+        "data_url": {
+            "label": "Data URL",
+            "value": f"[Raw data]({metadata['data_url']})",
+        },
+        "time_period": {"label": "Time Period", "value": time_period_str},
     }
 
     footer = f"""
@@ -415,12 +425,13 @@ def get_metadata_footer(metadata):
 
     for label in label_map:
         if label in metadata:
-            footer += f"; {label_map[label]['value']}"
+            if label_map[label]["value"] != "":
+                footer += f"; {label_map[label]['value']}"
 
     return footer
 
 
-async def check_memories_recipes(user_input: str, history=[]) -> str:
+def check_memories_recipes(user_input: str, history=[]) -> str:
     """
     Check memories and recipes for a given message, and will display the results.
     The answer is passed back to called, so it can be added as an assistant message
@@ -440,11 +451,13 @@ async def check_memories_recipes(user_input: str, history=[]) -> str:
     memory_content = None
     memory_response = None
 
-    memory = await call_get_memory_recipe_api(
+    memory = call_get_memory_recipe_api(
         user_input, history=str(history), generate_intent="true"
     )
+    print("RAW memory:")
     print(memory)
-    memory = memory.decode("utf-8")
+    result = memory["result"]
+    metadata = json.loads(memory["metadata"])
 
     if "memory_type" in memory:
 
@@ -452,60 +465,45 @@ async def check_memories_recipes(user_input: str, history=[]) -> str:
         elements = []
         msg_text = ""
 
-        memory = json.loads(memory)
-        print(memory["result"])
-
-        if isinstance(memory["result"], str):
-            try:
-                memory["result"] = json.loads(memory["result"])
-            except Exception as e:
-                print(f"Error loading memory: {e}")
-
-        if "metadata" in memory:
-            print()
-            print(memory)
-            print()
-            metadata_str = memory["metadata"]
-            print(metadata_str)
-            # metadata_str = re.escape(metadata_str)
-            # print("KKKKKK", metadata_str)
-            # memory['metadata'] = ast.literal_eval(metadata_str)
-
-        print("oooooooo")
-        print(memory)
-        print("oooo22")
-
         # Fix image paths
-        print(memory["result"]["type"] == "image")
-        if ".png" in memory["result"]["file"]:
-            png_file = memory["result"]["file"].split("/")[-1]
-            memory["result"]["file"] = f"{os.getenv('IMAGE_HOST')}/{png_file}"
+        print(result["type"] == "image")
+        if ".png" in result["file"]:
+            png_file = result["file"].split("/")[-1]
+            result["file"] = f"{os.getenv('IMAGE_HOST')}/{png_file}"
             image = cl.Image(
                 path=f"{images_loc}{png_file}", display="inline", size="large"
             )
             elements.append(image)
         else:
-
-            if memory["result"]["type"] == "table":
+            if result["type"] == "text":
+                msg_text = result["value"]
+                elements.append(cl.Text(name="", content=msg_text, display="inline"))
+            elif result["type"] == "number":
+                result["value"] = "{:,}".format(result["value"])
+                msg_text = f"The answer is: **{result['value']}**"
+                elements.append(
+                    cl.Text(
+                        name="",
+                        content=f"The answer is: **{result['value']}**",
+                        display="inline",
+                    )
+                )
+            elif result["type"] == "table":
                 msg_text = f"Here is the table for {user_input}"
                 elements.append(
                     cl.Table(
-                        data=memory["result"]["value"],
+                        data=result["value"],
                         caption=f"Table for {user_input}",
                     )
                 )
             else:
-                if memory["result"]["type"] == "number":
-                    msg_text = "{:,}".format(memory["result"]["value"])
-                    msg_text = f"The answer is: **{msg_text}**"
-                else:
-                    msg_text = str(memory["result"]["value"])
+                raise Exception(f"Unknown result type: {result['type']}")
 
         memory_content = f"""
 
             The answer is:
 
-            {memory['result']['file']}
+            {result['file']}
             {msg_text}
 
             Metadata for the answer:
@@ -513,13 +511,17 @@ async def check_memories_recipes(user_input: str, history=[]) -> str:
         """
         print(memory_content)
 
-        meta_data_msg = get_metadata_footer(memory["metadata"])
+        meta_data_msg = get_metadata_footer(metadata)
+        elements.append(cl.Text(name="", content=meta_data_msg, display="inline"))
 
         memory_response = {}
-        memory_response["content"] = msg_text + meta_data_msg
+        memory_response["content"] = ""
         memory_response["elements"] = elements
 
-    return found_memory, memory_content, memory_response
+    return found_memory, memory_content, memory_response, meta_data_msg
+
+
+async_check_memories_recipes = make_async(check_memories_recipes)
 
 
 @cl.on_message
@@ -551,8 +553,8 @@ async def main(message: cl.Message):
     cl.user_session.set("chat_history", chat_history)
 
     msg = await cl.Message("").send()
-    found_memory, memory_content, memory_response = await check_memories_recipes(
-        message.content, chat_history
+    found_memory, memory_content, memory_response, meta_data_msg = (
+        await async_check_memories_recipes(message.content, chat_history)
     )
 
     # found_memory=False
@@ -570,6 +572,9 @@ async def main(message: cl.Message):
         msg.content = memory_response["content"]
         msg.elements = memory_response["elements"]
         await msg.update()
+
+        # msg.content = meta_data_msg
+        # await msg.update()
 
         # No need to send anything
         return

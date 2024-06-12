@@ -78,7 +78,7 @@ def is_running_in_docker():
     return os.path.exists("/.dockerenv")
 
 
-async def make_api_request(url, payload):
+def make_api_request(url, payload):
     """
     Makes an API request to the specified URL with the given payload.
 
@@ -102,7 +102,7 @@ async def make_api_request(url, payload):
     return response
 
 
-async def call_execute_query_api(sql):
+def call_execute_query_api(sql):
     """
     Calls the execute query action API endpoint with the given SQL query.
 
@@ -115,10 +115,10 @@ async def call_execute_query_api(sql):
     """
     data = {"query": f"{sql}"}
     print(f"Calling execute query API {execute_query_url} with {sql} ...")
-    return await make_api_request(execute_query_url, data)
+    return make_api_request(execute_query_url, data)
 
 
-async def call_get_memory_recipe_api(user_input, history, generate_intent="true"):
+def call_get_memory_recipe_api(user_input, history, generate_intent="true"):
     """
     Calls the API to get a memory recipe action.
 
@@ -138,4 +138,12 @@ async def call_get_memory_recipe_api(user_input, history, generate_intent="true"
         "generate_intent": "true",
     }
     print(f"Calling execute query API {get_memory_recipe_url} with {data} ...")
-    return await make_api_request(get_memory_recipe_url, data)
+    result = make_api_request(get_memory_recipe_url, data)
+
+    if isinstance(result, bytes):
+        result = result.decode("utf-8")
+
+    print("IN API CALL", result)
+    result = json.loads(result)
+
+    return result
