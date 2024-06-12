@@ -42,6 +42,9 @@ load_dotenv("../../.env")
 
 images_loc = "./public/images/"
 
+user = os.environ.get("USER_LOGIN")
+password = os.environ.get("USER_PWD")
+
 async_openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 sync_openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
@@ -498,14 +501,19 @@ def check_memories_recipes(user_input: str, history=[]) -> str:
                         display="inline",
                     )
                 )
-            elif result["type"] == "table":
-                msg_text = f"Here is the table for {user_input}"
-                elements.append(
-                    cl.Table(
-                        data=result["value"],
-                        caption=f"Table for {user_input}",
-                    )
-                )
+            elif result["type"] == "csv":
+                data = result["value"]
+
+                # Convert the CSV string to a list of lists
+                data = [row.split(",") for row in data.split("\n") if row]
+
+                # TODO, we should present a file download here too
+                if len(data) > 50:
+                    data = data[:50]
+                    data.append(["..."])
+
+                elements.append(cl.Text(name="", content=data, display="inline"))
+
             else:
                 raise Exception(f"Unknown result type: {result['type']}")
 
@@ -659,3 +667,23 @@ async def on_audio_end(elements: list[Element]):
     msg = cl.Message(author="You", content=transcription, elements=elements)
 
     await main(message=msg)
+
+
+@cl.password_auth_callback
+def auth_callback(username: str, password: str):
+    """
+    Authenticates a user based on the provided username and password.
+
+    Args:
+        username (str): The username of the user.
+        password (str): The password of the user.
+
+    Returns:
+        cl.User or None: If the authentication is successful, returns a User object with the user's identifier, role, and provider. Otherwise, returns None.
+    """
+    if (username, password) == (user, password):
+        return cl.User(
+            identifier=user, metadata={"role": "admin", "provider": "credentials"}
+        )
+    else:
+        return None
