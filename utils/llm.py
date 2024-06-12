@@ -81,7 +81,7 @@ def get_models():
             max_tokens=max_tokens,
         )
     else:
-        print("OPENAI API type not supported")
+        print(f"OPENAI API type: {api_type} not supported")
         sys.exit(1)
     return embedding_model, chat
 
