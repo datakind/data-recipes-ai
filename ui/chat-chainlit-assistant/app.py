@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -29,6 +30,10 @@ environment = Environment(loader=FileSystemLoader("./templates/"))
 chat_ui_assistant_prompt_template = environment.get_template(
     "chat_ui_assistant_prompt.jinja2"
 )
+
+footer = "\n***\n"
+llm_footer = footer + "🤖 *Caution: LLM Analysis*"
+human_footer = footer + "✅ *A human approved this data recipe*"
 
 logging.basicConfig(filename="output.log", level=logging.DEBUG)
 logger = logging.getLogger()
@@ -94,7 +99,8 @@ class EventHandler(AsyncAssistantEventHandler):
         Returns:
         - None
         """
-        await self.current_message.stream_token(delta.value)
+        if delta.value is not None:
+            await self.current_message.stream_token(delta.value)
 
     async def on_text_done(self, text):
         """
@@ -165,8 +171,10 @@ class EventHandler(AsyncAssistantEventHandler):
         Returns:
             None
         """
-        self.current_step.end = utc_now()
-        await self.current_step.update()
+        print("Tool call done!")
+        # Turning this off, analysis would stop suddenly
+        # self.current_step.end = utc_now()
+        # await self.current_step.update()
 
     async def on_image_file_done(self, image_file):
         """
@@ -194,6 +202,7 @@ class EventHandler(AsyncAssistantEventHandler):
         # since these will have our tool_calls
         print(event.event)
         if event.event == "thread.run.requires_action":
+            tool_outputs = []
             for tool in event.data.required_action.submit_tool_outputs.tool_calls:
                 print(tool)
 
@@ -204,19 +213,24 @@ class EventHandler(AsyncAssistantEventHandler):
                     run_function(function_name, function_args)
                 )
 
-                with sync_openai_client.beta.threads.runs.submit_tool_outputs_stream(
-                    thread_id=self.current_run.thread_id,
-                    run_id=self.current_run.id,
-                    tool_outputs=[{"tool_call_id": tool.id, "output": function_output}],
-                    event_handler=AssistantEventHandler(),
-                ) as stream:
-                    msg = await cl.Message(
-                        author=self.assistant_name, content=""
-                    ).send()
-                    for text in stream.text_deltas:
-                        # print(text)
-                        await msg.stream_token(text)
-                    await msg.update()
+                tool_outputs.append(
+                    {"tool_call_id": tool.id, "output": function_output}
+                )
+
+            # Streaming
+            with sync_openai_client.beta.threads.runs.submit_tool_outputs_stream(
+                thread_id=self.current_run.thread_id,
+                run_id=self.current_run.id,
+                tool_outputs=[{"tool_call_id": tool.id, "output": function_output}],
+                event_handler=AssistantEventHandler(),
+            ) as stream:
+                print("Tool output submitted successfully")
+                msg = await cl.Message(author=self.assistant_name, content="").send()
+                for text in stream.text_deltas:
+                    # print(text)
+                    await msg.stream_token(text)
+                await msg.stream_token(llm_footer)
+                await msg.update()
 
 
 async def run_function(function_name, function_args):
@@ -370,6 +384,41 @@ async def start_chat():
     #    content=f"Hi. I'm your humanitarian AI assistant.", disable_feedback=True
     # ).send()
 
+    cl.user_session.set("chat_history", [])
+
+
+def get_metadata_footer(metadata):
+    """
+    Set the metadata footer for the response.
+
+    Args:
+        metadata (dict): The metadata dictionary.
+
+    Returns:
+        str: The metadata footer.
+    """
+
+    label_map = {
+        "time_period": {"value": metadata["time_period"].replace("T00:00:00", "")},
+        "data_url": {
+            "label": "Data URL",
+            "value": f"[Raw data]({metadata['data_url']})",
+        },
+        "attribution": {
+            "label": "Attribution",
+            "value": f"[Source]({metadata['attribution']})",
+        },
+    }
+
+    footer = f"""
+        {human_footer}"""
+
+    for label in label_map:
+        if label in metadata:
+            footer += f"; {label_map[label]['value']}"
+
+    return footer
+
 
 async def check_memories_recipes(user_input: str, history=[]) -> str:
     """
@@ -389,6 +438,7 @@ async def check_memories_recipes(user_input: str, history=[]) -> str:
 
     found_memory = False
     memory_content = None
+    memory_response = None
 
     memory = await call_get_memory_recipe_api(
         user_input, history=str(history), generate_intent="true"
@@ -402,42 +452,34 @@ async def check_memories_recipes(user_input: str, history=[]) -> str:
         elements = []
         msg_text = ""
 
-        # TODO Shouldn't need two json.loads, fix this
-        memory = json.loads(json.loads(memory))
+        memory = json.loads(memory)
+        print(memory["result"])
 
-        print("kkkkkk")
+        if isinstance(memory["result"], str):
+            try:
+                memory["result"] = json.loads(memory["result"])
+            except Exception as e:
+                print(f"Error loading memory: {e}")
+
+        if "metadata" in memory:
+            print()
+            print(memory)
+            print()
+            metadata_str = memory["metadata"]
+            print(metadata_str)
+            # metadata_str = re.escape(metadata_str)
+            # print("KKKKKK", metadata_str)
+            # memory['metadata'] = ast.literal_eval(metadata_str)
+
+        print("oooooooo")
         print(memory)
-        print("xxxx")
-
-        # TODO All these are tactical for demo, go away after response JSON is fixed
-        try:
-            memory = json.loads(memory)
-        except Exception:
-            print("Memory not in JSON format")
-
-        try:
-            memory = json.loads(memory["result"])
-        except Exception:
-            print("Memory not in JSON format")
-
-        if "output" in memory:
-            memory = memory["output"]
-
-        try:
-            memory = json.loads(memory["result"])
-        except Exception:
-            print("Memory not in JSON format")
-
-        # TODO END
+        print("oooo22")
 
         # Fix image paths
         print(memory["result"]["type"] == "image")
         if ".png" in memory["result"]["file"]:
             png_file = memory["result"]["file"].split("/")[-1]
             memory["result"]["file"] = f"{os.getenv('IMAGE_HOST')}/{png_file}"
-            # TODO Testing, remove this line
-            memory["result"]["file"] = f"http://localhost:8000/public/images/{png_file}"
-
             image = cl.Image(
                 path=f"{images_loc}{png_file}", display="inline", size="large"
             )
@@ -466,23 +508,18 @@ async def check_memories_recipes(user_input: str, history=[]) -> str:
             {memory['result']['file']}
             {msg_text}
 
-            ***
-
             Metadata for the answer:
             {memory['metadata']}
         """
         print(memory_content)
 
-        meta_data_msg = """-------------------------
-        ✅ *A human approved this data recipe*
-        """
+        meta_data_msg = get_metadata_footer(memory["metadata"])
 
-        await cl.Message(
-            content=msg_text + meta_data_msg,
-            elements=elements,
-        ).send()
+        memory_response = {}
+        memory_response["content"] = msg_text + meta_data_msg
+        memory_response["elements"] = elements
 
-    return found_memory, memory_content
+    return found_memory, memory_content, memory_response
 
 
 @cl.on_message
@@ -508,10 +545,15 @@ async def main(message: cl.Message):
         attachments=attachments,
     )
 
-    msg = await cl.Message(
-        "Checking to see if I have a memory for this", disable_feedback=True
-    ).send()
-    found_memory, memory_content = await check_memories_recipes(message.content)
+    # Append to chat history
+    chat_history = cl.user_session.get("chat_history")
+    chat_history.append({"role": "user", "content": message.content})
+    cl.user_session.set("chat_history", chat_history)
+
+    msg = await cl.Message("").send()
+    found_memory, memory_content, memory_response = await check_memories_recipes(
+        message.content, chat_history
+    )
 
     # found_memory=False
 
@@ -525,10 +567,15 @@ async def main(message: cl.Message):
             # attachments=attachments,
         )
 
+        msg.content = memory_response["content"]
+        msg.elements = memory_response["elements"]
+        await msg.update()
+
         # No need to send anything
         return
 
-    msg.content = "Can't find anything in my memories, let me do some analysis ..."
+    # msg.content = "Can't find anything in my memories, let me do some analysis ..."
+    msg.content = ""
     await msg.update()
 
     # Create and Stream a Run

@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 
@@ -49,7 +50,10 @@ def memory_recipe_route(data: MemoryRecipeInput):
     Returns:
         The memory recipe generated based on the input data.
     """
-    return get_memory_recipe(data.user_input, data.chat_history, data.generate_intent)
+    result = get_memory_recipe(data.user_input, data.chat_history, data.generate_intent)
+
+    result = json.loads(result)
+    return result
 
 
 @app.post("/execute_query")
