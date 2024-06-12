@@ -173,8 +173,8 @@ class EventHandler(AsyncAssistantEventHandler):
         """
         print("Tool call done!")
         # Turning this off, analysis would stop suddenly
-        # self.current_step.end = utc_now()
-        # await self.current_step.update()
+        self.current_step.end = utc_now()
+        await self.current_step.update()
 
     async def on_image_file_done(self, image_file):
         """
@@ -447,21 +447,31 @@ def check_memories_recipes(user_input: str, history=[]) -> str:
 
     """
 
-    found_memory = False
+    memory_found = False
     memory_content = None
     memory_response = None
+    meta_data_msg = ""
 
     memory = call_get_memory_recipe_api(
         user_input, history=str(history), generate_intent="true"
     )
     print("RAW memory:")
     print(memory)
-    result = memory["result"]
-    metadata = json.loads(memory["metadata"])
 
-    if "memory_type" in memory:
+    memory_found_api = memory["memory_found"]
+    if memory_found_api == "true":
+        memory_found = True
 
-        found_memory = True
+    if memory_found is True:
+
+        result = memory["result"]
+        try:
+            metadata = json.loads(memory["metadata"])
+        except Exception:
+            print("metadata already dictionary")
+            metadata = memory["metadata"]
+
+        memory_found = True
         elements = []
         msg_text = ""
 
@@ -512,13 +522,13 @@ def check_memories_recipes(user_input: str, history=[]) -> str:
         print(memory_content)
 
         meta_data_msg = get_metadata_footer(metadata)
-        elements.append(cl.Text(name="", content=meta_data_msg, display="inline"))
+        # elements.append(cl.Text(name="", content=meta_data_msg, display="inline"))
 
         memory_response = {}
         memory_response["content"] = ""
         memory_response["elements"] = elements
 
-    return found_memory, memory_content, memory_response, meta_data_msg
+    return memory_found, memory_content, memory_response, meta_data_msg
 
 
 async_check_memories_recipes = make_async(check_memories_recipes)
@@ -553,14 +563,14 @@ async def main(message: cl.Message):
     cl.user_session.set("chat_history", chat_history)
 
     msg = await cl.Message("").send()
-    found_memory, memory_content, memory_response, meta_data_msg = (
+    memory_found, memory_content, memory_response, meta_data_msg = (
         await async_check_memories_recipes(message.content, chat_history)
     )
 
-    # found_memory=False
+    # memory_foundy=False
 
     # Message to the thread. If a memory add it as the assistant
-    if found_memory is True:
+    if memory_found is True:
         print("Adding memory to thread")
         await async_openai_client.beta.threads.messages.create(
             thread_id=thread_id,
@@ -573,8 +583,8 @@ async def main(message: cl.Message):
         msg.elements = memory_response["elements"]
         await msg.update()
 
-        # msg.content = meta_data_msg
-        # await msg.update()
+        # TODO really should be part of message above so feedback can apply
+        await cl.Message(meta_data_msg).send()
 
         # No need to send anything
         return

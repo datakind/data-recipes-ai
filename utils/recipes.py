@@ -478,13 +478,13 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
         result["output"] = run_output.stdout
         result["errors"] = run_output.stderr
 
-        # Extract the JSON record from output and save to result
-        # TODO This is awful. Recipes to be registered as functions, no need to parse stdout
-        if "{" in run_output.stdout:
-            print("Extracting JSON record from output ...")
-            print(run_output.stdout)
-            # result["result"] = re.search(r'\{.*\}', run_output.stdout).group(0)
-            result["result"] = run_output.stdout.split("{")[1]
+        # TODO this exists here as well as in cli recipes_sync.py, merge
+        if "OUTPUT:" in result["output"]:
+            result["output"] = result["output"].split("OUTPUT:")[1]
+            print(result["output"])
+            result = json.loads(result["output"])
+        else:
+            raise ValueError("No 'OUTPUT:' found in recipe output")
 
     print("Recipe executed successfully.")
     print(result)
@@ -509,7 +509,7 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
     # Retrieve the CSV file from the request
 
     # TODO Deactivating, under analysis
-    generate_intent = "fasle"
+    generate_intent = "false"
     if generate_intent is not None and generate_intent == "true":
         print("********* Generating intent from chat history ...")
         user_input = generate_intent_from_history(chat_history)
@@ -533,13 +533,15 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
         print(result)
         result["memory_type"] = mem_type
         result["memory"] = matched_doc
+        result["memory_found"] = "true"
 
         result_string = json.dumps(result, indent=4)
 
         print(result_string)
         return result_string
 
-    result = {"result": "Sorry, no recipe or memory found"}
+    result = {"result": "Sorry, no recipe or memory found", "memory_found": "false"}
+    result = json.dumps(result, indent=4)
     print(result)
 
     return result

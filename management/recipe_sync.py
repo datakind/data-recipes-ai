@@ -536,6 +536,8 @@ def update_records_in_db(df, approver):
         trans = conn.begin()
         for index, row in df.iterrows():
             metadata = row
+            metadata["sample_result"] = json.dumps(metadata["sample_result"])
+            metadata["sample_metadata"] = json.dumps(metadata["sample_metadata"])
             params = {
                 "function_code": metadata["function_code"],
                 "description": metadata["description"],
@@ -584,31 +586,29 @@ def update_database(df: pd.DataFrame, approver: str):
         result = result.fetchall()
         result = pd.DataFrame(result)
         if not result.empty:
-            custom_ids = result["custom_id"].tolist()
-            custom_ids = [str(custom_id) for custom_id in custom_ids]
+            existing_custom_ids = result["custom_id"].tolist()
+            existing_custom_ids = [str(custom_id) for custom_id in existing_custom_ids]
         else:
-            custom_ids = []
+            existing_custom_ids = []
+
+    incoming_custom_ids = df["custom_id"].tolist()
 
     update_ids = []
     insert_ids = []
-    for index, row in df.iterrows():
-        if "custom_id" not in row:
-            insert_ids.append(index)
+    for custom_id in incoming_custom_ids:
+        if custom_id in existing_custom_ids:
+            update_ids.append(custom_id)
         else:
-            custom_id = str(row["custom_id"])
-            if custom_id in custom_ids:
-                update_ids.append(index)
-            else:
-                insert_ids.append(index)
+            insert_ids.append(custom_id)
 
     if len(update_ids) > 0:
         print(f"Proceeding with update of {len(update_ids)} records in the database")
-        update_df = df.iloc[update_ids]
+        update_df = df[df["custom_id"].isin(update_ids)]
         update_records_in_db(update_df, approver)
 
     if len(insert_ids) > 0:
         print(f"Proceeding with insert of {len(insert_ids)} records in the database")
-        insert_df = df.iloc[insert_ids]
+        insert_df = df[df["custom_id"].isin(insert_ids)]
         insert_records_in_db(insert_df, approver)
 
 
@@ -1297,6 +1297,9 @@ def rebuild(recipe_author):
         recipe_folder = os.path.join(checked_out_folder_name, r)
         print("   Saving memory ...")
         save_as_memory(recipe_folder)
+
+    # Now do checkout to align all ids
+    check_out(recipe_author, force_checkout=True)
 
 
 def validate_output(output):

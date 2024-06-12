@@ -26,7 +26,6 @@ Here is the original calling code:
 ```
     params = {'adm0_code': 'HTI', 'admin_level': 'admin1'}
     result = generate_population_map(**params)
-    print(result)
 ```
 
 Here is the user's request:
@@ -36,7 +35,7 @@ I want a map for the popualtion of Niger by admin level 1
 Example output:
 
 {
-  "new_calling_code": "params = {'adm0_code': 'NER', 'admin_level': 'admin1'}\nresult = generate_population_map(**params)\nprint(result)",
+  "new_calling_code": "params = {'adm0_code': 'NER', 'admin_level': 'admin1'}\nresult = generate_population_map(**params)",
   "reason": "The user wants a map for the population of Niger by admin level 1"
 }
 
