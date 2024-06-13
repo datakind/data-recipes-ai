@@ -393,7 +393,13 @@ def process_memory_recipe_results(result: dict, table_data: dict) -> str:
         result = {"type": "image", "file": file, "value": ""}
     else:
         result = json.loads(table_data["result"])
-        result = result["result"]
+        print(result)
+        result = json.loads(result)
+        try:
+            result = result["result"]
+        except Exception:
+            result = json.loads(result)
+            result = result["result"]
 
     print("Recipe ID: ", recipe_id, "Intent: ", content)
 

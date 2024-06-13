@@ -408,7 +408,8 @@ def get_metadata_footer(metadata):
         if "start" in metadata["time_period"]:
             time_period_str += f"{metadata['time_period']['start']}"
         if "end" in metadata["time_period"]:
-            time_period_str += f" to {metadata['time_period']['end']}"
+            time = metadata["time_period"]["end"].split("T")[0]
+            time_period_str += f" to {time}"
         time_period_str = time_period_str.replace("T00:00:00", "")
 
     label_map = {
@@ -513,6 +514,7 @@ def check_memories_recipes(user_input: str, history=[]) -> str:
                 if len(data) > 50:
                     data = data[:50]
                     data.append(["..."])
+                data = str(data)
 
                 elements.append(cl.Text(name="", content=data, display="inline"))
 
