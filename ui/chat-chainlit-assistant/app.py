@@ -429,8 +429,9 @@ def get_metadata_footer(metadata):
     for label in label_map:
         if label in metadata:
             if label_map[label]["value"] != "":
-                print("LLLLLLLLL ", label_map[label]["value"])
-                footer += f"; {label_map[label]['value']}"
+                val = label_map[label]["value"]
+                if "()" not in val:
+                    footer += f"; {val}"
 
     return footer
 
