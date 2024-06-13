@@ -78,13 +78,11 @@ def execute_query_route(data: ExecuteQueryInput):
     # TODO: Add code to send back a link, in case results are too large
     if results.shape[0] > 500:
         print("Results are too large to send back")
-        results = ["Too many rows in the SQL query results."]
+        rowcount = results.shape[0]
+        results = str(results[0:50])
+        results += "... etc"
+        results += f"\n\nToo many rows ({rowcount}) in the SQL query results. Please try again with a different query."
     else:
         results = str(results)
-        # Convert DataFrame to dict and numpy.int64 to int
-        # results = results.to_dict()
-        # for key, value in results.items():
-        #    if isinstance(value, np.int64):
-        #        results[key] = int(value)
 
     return str(results)

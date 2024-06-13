@@ -21,4 +21,5 @@ hdx-python-utilities==3.6.6
 robocorp-truststore
 robocorp
 robocorp-actions
+literalai==0.0.601
 

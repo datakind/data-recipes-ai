@@ -484,6 +484,8 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
             print(result["output"])
             result = json.loads(result["output"])
         else:
+            print(result["output"])
+            print(result["errors"])
             raise ValueError("No 'OUTPUT:' found in recipe output")
 
     print("Recipe executed successfully.")
