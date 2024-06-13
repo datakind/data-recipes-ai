@@ -1270,21 +1270,8 @@ def rebuild(recipe_author):
         recipe_folder = os.path.join(checked_out_folder_name, r)
         recipe_path = os.path.join(recipe_folder, "recipe.py")
         metadata_path = os.path.join(recipe_folder, "metadata.json")
-        # Do any recipe recipes at the end
+        # Skip any recipe recipes at the end
         if "recipes" in recipe_path:
-            continue
-        with open(metadata_path, "r") as file:
-            metadata = json.load(file)
-        custom_id = metadata["custom_id"]
-        print(f"Running recipe {recipe_folder} : {custom_id}")
-        run_recipe(recipe_path)
-
-    # Now do recipe recipes
-    for r in recipes:
-        recipe_folder = os.path.join(checked_out_folder_name, r)
-        recipe_path = os.path.join(recipe_folder, "recipe.py")
-        metadata_path = os.path.join(recipe_folder, "metadata.json")
-        if "recipes" not in recipe_path:
             continue
         with open(metadata_path, "r") as file:
             metadata = json.load(file)
