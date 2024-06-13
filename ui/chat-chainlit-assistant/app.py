@@ -491,7 +491,7 @@ def check_memories_recipes(user_input: str, history=[]) -> str:
             elements.append(image)
         else:
             if result["type"] == "text":
-                msg_text = result["value"]
+                msg_text = str(result["value"])
                 elements.append(cl.Text(name="", content=msg_text, display="inline"))
             elif result["type"] == "number":
                 result["value"] = "{:,}".format(result["value"])
