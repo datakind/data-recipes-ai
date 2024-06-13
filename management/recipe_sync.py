@@ -151,7 +151,7 @@ def save_data(df):
 
     # Iterate through each row in the DataFrame
     for index, row in df.iterrows():
-        folder_name = row["document"].replace(" ", "_").lower()[:100]
+        folder_name = row["document"].replace(" ", "_").lower()
         # Folder path for this row
         folder_path = os.path.join(checked_out_folder_name, folder_name)
 
@@ -186,10 +186,14 @@ def save_data(df):
         # Add intent to metadata, useful later on
         metadata["intent"] = document
 
-        # Save the metadata; assuming it's a JSON string, we write it directly
-        with open(metadata_path, "w", encoding="utf-8") as file:
-            json_data = json.dumps(metadata, indent=4)
-            file.write(json_data)
+        # If metadata is a dict. TODO SHouldn't need this
+        if isinstance(metadata, dict):
+            with open(metadata_path, "w") as file:
+                json.dump(metadata, file, indent=4)
+        else:
+            with open(metadata_path, "w", encoding="utf-8") as file:
+                json_data = json.dumps(metadata, indent=4)
+                file.write(json_data)
 
         # Save the checksum of the files
         save_cksum(folder_path)
@@ -454,7 +458,7 @@ def insert_records_in_db(df, approver):
                 intent=metadata["intent"],
                 metadata={"mem_type": "recipe"},
                 mem_type="recipe",
-                # force=True,
+                force=True,
             )
             if "already_exists" in response:
                 print(response)
@@ -1279,7 +1283,6 @@ def rebuild(recipe_author):
         custom_id = metadata["custom_id"]
         print(f"Running recipe {recipe_folder} : {custom_id}")
         run_recipe(recipe_path)
-        break
 
     # Now do recipe recipes
     for r in recipes:
@@ -1294,6 +1297,7 @@ def rebuild(recipe_author):
         print(f"Running recipe {recipe_folder} : {custom_id}")
         run_recipe(recipe_path)
 
+    sys.exit()
     check_in(recipe_author, force=True)
 
     for r in recipes:
