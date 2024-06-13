@@ -495,12 +495,15 @@ def check_memories_recipes(user_input: str, history=[]) -> str:
                 msg_text = str(result["value"])
                 elements.append(cl.Text(name="", content=msg_text, display="inline"))
             elif result["type"] == "number":
-                result["value"] = "{:,}".format(result["value"])
-                msg_text = f"The answer is: **{result['value']}**"
+                value = result["value"]
+                if isinstance(value, str):
+                    value = float(value)
+                value = "{:,}".format(value)
+                msg_text = f"The answer is: **{value}**"
                 elements.append(
                     cl.Text(
                         name="",
-                        content=f"The answer is: **{result['value']}**",
+                        content=msg_text,
                         display="inline",
                     )
                 )

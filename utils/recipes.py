@@ -392,20 +392,23 @@ def process_memory_recipe_results(result: dict, table_data: dict) -> str:
         file = f"{os.getenv('IMAGE_HOST')}/memory_image_{recipe_id}.png"
         result = {"type": "image", "file": file, "value": ""}
     else:
-        result = json.loads(table_data["result"])
-        print(result)
-        result = json.loads(result)
-        # try:
-        #    result = result["result"]
-        # except Exception:
-        #    result = json.loads(result)
-        #    result = result["result"]
+        # TODO 'result' in memory should be a JSON, just like sample_result
+        # in recipe, then this goes away
+        if mem_type == "recipe":
+            result = json.loads(table_data["result"])
+            result = json.loads(result)
+        else:
+            print("Memory, skipping result json extraction")
+            result = json.loads(table_data["result"])
+            result = result["result"]
+            print(result)
 
     print("Recipe ID: ", recipe_id, "Intent: ", content)
 
     return {"result": result, "metadata": metadata}
 
 
+# TODO Absolutely needs to be converted to registered functions
 def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
     """
     Runs a recipe based on the result of a memory recipe search.
@@ -466,6 +469,9 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
         # Adjust .env location in code
         code = code.replace("load_dotenv()", "load_dotenv('../.env')")
 
+        # Adjust any images saved in code
+        code = re.sub(r"./work/(.*?\.png)", r"/app/recipes/public/\1", code)
+
         # Adjust path
         code = (
             "import os\nimport sys\n# Add parent folder to path\nsys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))\n"
@@ -489,12 +495,22 @@ def run_recipe(custom_id: str, recipe: dict, user_input, chat_history):
             result["output"] = result["output"].split("OUTPUT:")[1]
             print(result["output"])
             result = json.loads(result["output"])
+            print("Recipe executed successfully.")
         else:
             print(result["output"])
             print(result["errors"])
-            raise ValueError("No 'OUTPUT:' found in recipe output")
+            result["result"] = {
+                "type": "text",
+                "file": "",
+                "value": "Recipe produced no output",
+            }
+            result["metadata"] = {
+                "params": {},
+                "attribution": "",
+                "data_url": "",
+                "time_period": {"start": "", "end": ""},
+            }
 
-    print("Recipe executed successfully.")
     print(result)
     return result
 
