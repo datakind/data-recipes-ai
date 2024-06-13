@@ -176,8 +176,8 @@ class EventHandler(AsyncAssistantEventHandler):
         """
         print("Tool call done!")
         # Turning this off, analysis would stop suddenly
-        self.current_step.end = utc_now()
-        await self.current_step.update()
+        # self.current_step.end = utc_now()
+        # await self.current_step.update()
 
     async def on_image_file_done(self, image_file):
         """
@@ -212,9 +212,10 @@ class EventHandler(AsyncAssistantEventHandler):
                 function_name = tool.function.name
                 function_args = tool.function.arguments
 
-                function_output = asyncio.run(
-                    run_function(function_name, function_args)
-                )
+                # function_output = asyncio.run(
+                #    run_function(function_name, function_args)
+                # )
+                function_output = run_function(function_name, function_args)
 
                 tool_outputs.append(
                     {"tool_call_id": tool.id, "output": function_output}
@@ -238,7 +239,7 @@ class EventHandler(AsyncAssistantEventHandler):
                 await msg.update()
 
 
-async def run_function(function_name, function_args):
+def run_function(function_name, function_args):
     """
     Run a function with the given name and arguments.
 
@@ -255,8 +256,7 @@ async def run_function(function_name, function_args):
     try:
         eval_str = f"{function_name}(**{function_args})"
         print(f"Running function: {eval_str}")
-        task = asyncio.create_task(eval(eval_str))
-        output = await task
+        output = eval(eval_str)
 
         if isinstance(output, bytes):
             output = output.decode("utf-8")
@@ -429,6 +429,7 @@ def get_metadata_footer(metadata):
     for label in label_map:
         if label in metadata:
             if label_map[label]["value"] != "":
+                print("LLLLLLLLL ", label_map[label]["value"])
                 footer += f"; {label_map[label]['value']}"
 
     return footer
@@ -607,6 +608,7 @@ async def main(message: cl.Message):
         thread_id=thread_id,
         assistant_id=assistant.id,
         event_handler=EventHandler(assistant_name=assistant.name),
+        # max_completion_tokens=20000
     ) as stream:
         await stream.until_done()
 
@@ -669,21 +671,21 @@ async def on_audio_end(elements: list[Element]):
     await main(message=msg)
 
 
-@cl.password_auth_callback
-def auth_callback(username: str, password: str):
-    """
-    Authenticates a user based on the provided username and password.
+# @cl.password_auth_callback
+# def auth_callback(username: str, password: str):
+#     """
+#     Authenticates a user based on the provided username and password.
 
-    Args:
-        username (str): The username of the user.
-        password (str): The password of the user.
+#     Args:
+#         username (str): The username of the user.
+#         password (str): The password of the user.
 
-    Returns:
-        cl.User or None: If the authentication is successful, returns a User object with the user's identifier, role, and provider. Otherwise, returns None.
-    """
-    if (username, password) == (user, password):
-        return cl.User(
-            identifier=user, metadata={"role": "admin", "provider": "credentials"}
-        )
-    else:
-        return None
+#     Returns:
+#         cl.User or None: If the authentication is successful, returns a User object with the user's identifier, role, and provider. Otherwise, returns None.
+#     """
+#     if (username, password) == (user, password):
+#         return cl.User(
+#             identifier=user, metadata={"role": "admin", "provider": "credentials"}
+#         )
+#     else:
+#         return None
