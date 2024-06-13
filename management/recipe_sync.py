@@ -186,14 +186,9 @@ def save_data(df):
         # Add intent to metadata, useful later on
         metadata["intent"] = document
 
-        # If metadata is a dict. TODO SHouldn't need this
-        if isinstance(metadata, dict):
-            with open(metadata_path, "w") as file:
-                json.dump(metadata, file, indent=4)
-        else:
-            with open(metadata_path, "w", encoding="utf-8") as file:
-                json_data = json.dumps(metadata, indent=4)
-                file.write(json_data)
+        # Update metadata file
+        with open(metadata_path, "w") as file:
+            json.dump(metadata, file, indent=4)
 
         # Save the checksum of the files
         save_cksum(folder_path)

@@ -51,7 +51,7 @@ CREATE TABLE public.recipe (
   sample_call varchar NOT NULL,
   sample_result varchar NOT NULL,
   sample_result_type varchar NOT NULL,
-  sample_metadata varchar NULL,
+  sample_metadata json NULL,
   source varchar NOT NULL,
   created_by varchar NOT NULL,
   updated_by varchar NOT NULL,
