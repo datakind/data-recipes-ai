@@ -1,8 +1,0 @@
-{
-    "presetId": "7f3500c3-7c14-46e6-9cd4-ad89e02af63a",
-    "model": "gpt-4-turbo",
-    "assistant_id": "asst_KWvCS4nlzlllOjCVSjQp4I3h",
-    "promptPrefix": "You are a helpful assistant.\n\nYou have access to a library of humanitarian data recipes via your plugin, answer any questions about humanitarian-related data by calling the plugin",
-    "endpoint": "assistants",
-    "title": "EXPERIMENTAL: Azure OpenAI Assistant (SQL and recipe actions)"
-}

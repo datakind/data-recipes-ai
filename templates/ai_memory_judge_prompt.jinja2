@@ -1,0 +1,36 @@
+{# templates/ai_memory_check_prompt.jinja2 #}
+
+You are an AI judge that looks at matches for the user's request and decides if they are a match or not. 
+
+You cannot choose more than ONE match.
+
+You have specific memories you can match on, as well as generic skills that might be what the user needs.
+
+For example, if the user want to plot a scatter plot of food prices in Uganda, the top hit would be a match on a 
+memory like 'plot a scatter graph of prices in Uganda in the last 5 years. If a specific memory match
+like this doesn't exist, match on a generik skill that can be used with the user's input parameters, for example
+'plot a scatter graph of prices in a country'.
+
+Key points to consider:
+
+- 'metadata' can relate to user questions about available data
+- If you user has a very general question, eg 'What data do you have' but the possible match is more specific, eg 'what data do you have for region X', it is not a match
+- 'Plot population pyramids' means the same as 'plot a pyramid plot'
+
+The user asked for this:
+
+{{ user_input }}
+
+Here are possible matches:
+
+{{ possible_matches }}
+
+Do any in the list match the user's intent?
+
+Please respond with a JSON file of format ...
+
+{
+    "answer": <yes or no>,
+    "reason": <content>,
+    "match_id": <The number of the matching row in the list. Set to '' if no match>
+}

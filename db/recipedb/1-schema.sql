@@ -51,6 +51,7 @@ CREATE TABLE public.recipe (
   sample_call varchar NOT NULL,
   sample_result varchar NOT NULL,
   sample_result_type varchar NOT NULL,
+  sample_metadata json NULL,
   source varchar NOT NULL,
   created_by varchar NOT NULL,
   updated_by varchar NOT NULL,
@@ -71,50 +72,32 @@ CREATE TABLE public.memory (
   recipe_params json NOT NULL,
   result varchar NOT NULL,
   result_type varchar NOT NULL,
+  result_metadata varchar NULL,
   source varchar NOT NULL,
   created_by varchar NOT NULL,
   updated_by varchar NOT NULL,
   last_updated timestamp NOT NULL,
-  attribution varchar NULL,
   CONSTRAINT langchain_pg_embedding_pkey3 PRIMARY KEY (custom_id),
   CONSTRAINT result_type_fkey FOREIGN KEY (result_type) REFERENCES result_type(name),
   CONSTRAINT custom_id_fkey FOREIGN KEY (custom_id) REFERENCES langchain_pg_embedding(custom_id) ON DELETE CASCADE
 );
 
+CREATE VIEW recipe_view AS
+SELECT
+	lpe.document,
+	r.*
+FROM
+	langchain_pg_embedding lpe,
+	recipe r
+WHERE
+	lpe.custom_id = r.custom_id;
 
--- Ugrade 
-/*
-insert into recipe 
-select 
-  le.uuid, 
-  le.cmetadata->>'functions_code' AS functions_code,
-  'dummy description, update me',
-  '{}'::json,
-  ARRAY['HAPI'],
-  null,
-  null,
-  le.cmetadata->>'calling_code',
-  case when le.cmetadata->>'response_text' is null then
-     le.cmetadata->>'response_image'
-  else 
-     le.cmetadata->>'response_text'
-  end,
-  case when le.cmetadata->>'response_text' is null then
-     'png'
-  else 
-     'text'
-  end,
-  'Recipe Manager',
-  'Matt',
-  'Matt',
-  NOW()
-FROM 
-    langchain_pg_embedding le,
-    langchain_pg_collection lc
-where 
-	le.collection_id = lc.uuid and
-	le.cmetadata->>'calling_code' is not null and
-	lc."name" = 'recipe_embedding';
-
-delete from public.langchain_pg_embedding where uuid not in (select uuid from recipe);
-*/
+CREATE VIEW memory_view AS
+SELECT
+	lpe.document,
+	m.*
+FROM
+	langchain_pg_embedding lpe,
+	memory m
+WHERE
+	lpe.custom_id = m.custom_id;

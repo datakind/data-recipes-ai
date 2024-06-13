@@ -33,13 +33,22 @@ DATASET INFO:
 
 Do not add a LIMIT clause in any of your queries.
 
-Table table_metainfo has data on the columns of the tables in the database. 
+Table table_metadata describes what data is available, with table names, columns and 
+what countries countries are in each table.
 
 Be aware that values in the data may be lowercase, uppercase or a mix of both.
 
 Also, when matching by field, there may be variants, eg there are multiple types of rice in the food prices table
 
-When searching by a dimension, always 
+Be aware that values can have different cases in the database.
+
+If doing sub-clauses use 'IN', eg SELECT * FROM hapi_food_food_price WHERE adm0_code IN (SELECT code FROM hapi_metadata_location WHERE name = 'Chad')
+
+Location is country in the HDX data, try and display the country name in the output.
+
+If asking for a summary about the data, don't select all rows, try and use aggregate querites, distinct and other tools as needed.
+
+Use your dataset info above to choose the right columns on tables.
 
 IMPORTANT: You must respond ONLY with a JSON record with the following fields:
 

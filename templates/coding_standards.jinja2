@@ -120,7 +120,55 @@ WHERE
 
 Conversely, if you do not exclude the aggregate data, you will get a mix of aggregated and disaggregated data.
 
-2. HDX Shape files
+3. Generating attribution functions 
+
+HAPI data tables include a column called `resource_hdx_id`. If a function extracts data from
+a data table using a SQL query, the same where clause can be used t select unique vaues of `resource_hdx_id`.
+Then to generate the attrubution, an example attribution function would look like this ...
+
+```
+def get_attribution(country, ipc_level):
+    """
+    Get the attribution URL for a given country and IPC level.
+
+    Args:
+        country (str): The name of the country.
+        ipc_level (str): The IPC level.
+
+    Returns:
+        str: The attribution URL.
+
+    Raises:
+        None
+
+    """
+    country_code = get_country_code(country)
+    query = f"""
+    SELECT distinct resource_hdx_id
+    FROM hapi_food_food_security f
+    WHERE f.adm0_code = '{country_code}'
+    AND f.adm1_code IS NOT NULL
+    AND f.ipc_phase = '{ipc_level}'
+    AND f.latest = TRUE
+    """
+    data = execute_query(query)
+    if not data:
+        print('No data found for given parameters.')
+    resource_id = data[0][0]
+    hdx_url, data_url = get_hdx_dataset_url(resource_id)
+
+    return hdx_url, data_url
+```
+
+The same is true for the time period, you can use exactly the same where clause, but select disct values of reference_period_start, reference_period_end. 
+
+You should build a result record that looks like this ...
+
+`result = {'file': file_path, 'metadata': {'attribution': attribution_url,'data_url': resource_url,'time_period': {'start': start_period,'end': end_period}}}`
+
+Print it, and return it as a json object.
+
+4. HDX Shape files
 
 You Must ALWAYS link on adm1_code if linking shapefiles to hapi tables. For example ...
 
@@ -149,12 +197,38 @@ def function1(<params):
 def function2(<params):
     <CODE>
 
+def get_attributions(<params>):
+    <CODE>
+
+
 def function3(<params>):
     function1(<params>)
     function2(<params>)
-    <CODE TO CALCULATES ANSWER, HANDLING ERRORS>
-    <PRINT ANSWER>
-    return <ANSWER>
+    <CODE TO CALCULATES RESULT, HANDLING ERRORS>
+
+    result = {
+        "result": {
+            "type": f"{<TYPE, image, text, csv, etc>}",
+            "file": f"{<FILE PATH IF APPROPRIATE>}",
+            "value": f"{<TEXT IF APPROPRIATE>}"
+        },
+        "metadata": {
+            "params": {
+                "param1": f"{<PARAM1>}",
+                "param2": f"{<PARAM2>}",
+                "param3": f"{<PARAM3>}"
+            },
+            "attribution": f"{<ATTRIBUTION INFO>}",
+            "data_url": f"{<DATA LINK>}",
+            "time_period": {
+                "start": f"{<START PERIOD>}",
+                "end": f"{<END PERIOD>}"
+            }
+        }
+    }
+    print("OUTPUT:")
+    print(json.dumps(result, indent=4))
+    return result
 
 
 

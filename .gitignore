@@ -12,18 +12,17 @@ ingestion/api/hdx/*
 .vscode
 code-interpreter/static/*
 __pycache__
-ui/recipes-chat/datadb
-ui/recipes-chat/docsdb
-ui/recipes-chat/recipesdb
 instructions.txt
 dataset_details.json
 .DS_Store
-recipes-management/checked_out/*
-!recipes-management/checked_out/.gitkeep
-!recipes-management/checked_out/skills.py
-recipes-management/files/
+management/checked_out/*
+!management/checked_out/.gitkeep
+!management/checked_out/skills.py
+management/files/
 database.sqlite
 .cli_config
-recipes-management/work/
-actions/actions_plugins/recipe-server/utils
+management/work/
+server/robocorp/actions_plugins/recipe-server/utils
+data
+server/fastapi/recipes/
 

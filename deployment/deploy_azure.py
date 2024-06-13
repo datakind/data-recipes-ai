@@ -66,22 +66,8 @@ def deploy():
     should be defined before calling this function.
     """
     tags = {
-        "data-recipes-ai-api": [f"{container_registry}/{repo}", "api"],
-        "getmeili/meilisearch:v1.7.3": [f"{container_registry}/{repo}", "meilisearch"],
-        "ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest": [
-            f"{container_registry}/{repo}",
-            "rag_api",
-        ],
-        "ankane/pgvector:latest": [f"{container_registry}/{repo}", "docsdb"],
-        "data-recipes-ai-actions": [
-            f"{container_registry}/{repo}",
-            "actions",
-        ],
-        "busybox": [f"{container_registry}/{repo}", "init"],
-        "data-recipes-ai-code-interpreter": [
-            f"{container_registry}/{repo}",
-            "code-interpreter",
-        ],
+        "data-recipes-ai-cli-server": [f"{container_registry}/{repo}", "server"],
+        "data-recipes-ai-cli-chat": [f"{container_registry}/{repo}", "chat"],
     }
 
     run_cmd("az login")
@@ -100,6 +86,8 @@ def deploy():
         client.images.get(image).tag(tags[image][0], tags[image][1])
         print(f"Pushing {image} image ... to {tags[image][0]}:{tags[image][1]}")
         client.images.push(tags[image][0], tags[image][1])
+
+    sys.exit()
 
     run_cmd(f"docker compose -f {docker_compose_file} down")
     run_cmd(f"docker compose -f {docker_compose_file} pull")
