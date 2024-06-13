@@ -1297,7 +1297,6 @@ def rebuild(recipe_author):
         print(f"Running recipe {recipe_folder} : {custom_id}")
         run_recipe(recipe_path)
 
-    sys.exit()
     check_in(recipe_author, force=True)
 
     for r in recipes:
@@ -1306,7 +1305,7 @@ def rebuild(recipe_author):
         save_as_memory(recipe_folder)
 
     # Now do checkout to align all ids
-    check_out(recipe_author, force_checkout=True)
+    # check_out(recipe_author, force_checkout=True)
 
 
 def validate_output(output):
