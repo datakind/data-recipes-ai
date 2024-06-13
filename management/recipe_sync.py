@@ -1262,6 +1262,9 @@ def rebuild(recipe_author):
 
     recipes = os.listdir(checked_out_folder_name)
 
+    if ".DS_Store" in recipes:
+        recipes.remove(".DS_Store")
+
     delete_all_db_records()
 
     for r in recipes:
