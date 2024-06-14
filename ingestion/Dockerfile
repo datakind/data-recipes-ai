@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install -r requirements.txt
 
 # Override main requirements.txt version for legacy geopandas
-RUN pip uninstall pandas
+RUN pip uninstall pandas -y
 RUN pip install pandas==1.5.3 
 
 COPY ./ingestion .
