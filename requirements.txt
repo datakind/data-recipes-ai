@@ -5,7 +5,7 @@ sqlalchemy==2.0.30
 pandas==2.2.2
 black==22.1.0
 click==8.1.7
-chainlit==1.1.202
+chainlit==1.1.301
 datetime==4.3
 autogenstudio==0.0.56
 langchain_openai==0.1.7
@@ -21,5 +21,5 @@ hdx-python-utilities==3.6.6
 robocorp-truststore
 robocorp
 robocorp-actions
-literalai==0.0.601
+literalai==0.0.604
 
