@@ -12,6 +12,7 @@ COPY ./server/fastapi /app
 COPY ./server/robocorp/actions_plugins/recipe-server/actions.py /app/actions.py
 COPY ./templates /app/templates
 COPY ./utils /app/utils
+COPY ./management/skills.py /app/recipes/skills.py
 COPY requirements.txt /app
 
 # Install any needed packages specified in requirements.txt.
