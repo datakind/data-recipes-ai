@@ -1,0 +1,26 @@
+# A Docker environment is provided with Data Recipes, but below you can also find
+# a simple conda environment. To use this ...
+#
+# 1. Install [miniconda](https://docs.conda.io/en/latest/miniconda.html) by selecting the installer that fits your OS version. Once it is installed you may have to restart your terminal (closing your terminal and opening again)
+# 2. In this directory, open terminal
+# 3. `conda env create -f environment.yml`
+# 4. `conda activate data_recipes`
+#
+name: data_recipes
+dependencies:
+  - pip
+  - python=3.11.4
+  - pip:
+    - psycopg2_binary==2.9.9
+    - python-dotenv==1.0.0
+    - sqlalchemy==2.0.30
+    - pandas==2.2.2
+    - datetime==4.3
+    - matplotlib==3.9.0
+    - geopandas==0.10.2
+    - seaborn==0.13.2
+    - hdx_python_api==6.2.4
+    - geoalchemy2==0.14.6
+    - hdx-python-country==3.6.9
+    - hdx-python-utilities==3.6.6
+

@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import re
@@ -107,10 +108,12 @@ def download_openapi_data(
     limit = 1000
     offset = 0
 
+    skip_delete_files = ["openapi.json", "processed_data", ".gitkeep"]
+
     files = os.listdir(save_path)
     if skip_downloaded is False:
         for f in files:
-            if "openapi.json" not in f:
+            if f not in skip_delete_files:
                 filename = f"{save_path}/{f}"
                 os.remove(filename)
 
@@ -403,12 +406,14 @@ def map_field_names(df, field_map):
     return df
 
 
-def main(skip_downloaded=False):
+def main(skip_downloaded=True, process_data=True, upload_data=True):
     """
     Main function for data ingestion.
 
     Args:
-        skip_downloaded (bool, optional): Flag to skip downloaded data. Defaults to False.
+        skip_downloaded (bool): If True, skip downloading data that already exists locally.
+        process_data (bool): If True, process and normalize downloaded data according to ingest.config.
+        upload_data (bool): If True, upload the processed data to the database.
     """
     apis, field_map, standard_names = read_integration_config(INTEGRATION_CONFIG)
     conn = connect_to_db()
@@ -451,10 +456,12 @@ def main(skip_downloaded=False):
         )
 
         # Standardize column names
-        process_openapi_data(api_name, save_path, field_map, standard_names)
+        if process_data is True:
+            process_openapi_data(api_name, save_path, field_map, standard_names)
 
         # Upload CSV files to the database, with supporting metadata
-        save_openapi_data(f"{save_path}/processed", conn, api_name)
+        if upload_data is True:
+            save_openapi_data(f"{save_path}/processed", conn, api_name)
 
     # Download shapefiles from HDX. Note, this also standardizes column names
     download_hdx_boundaries(
@@ -466,8 +473,54 @@ def main(skip_downloaded=False):
     )
 
     # Upload shapefiles to the database
-    upload_hdx_shape_files("./api/hdx/", conn)
+    if upload_data is True:
+        upload_hdx_shape_files("./api/hdx/", conn)
 
 
 if __name__ == "__main__":
-    main(skip_downloaded=True)
+
+    # Here get command line parameters --skip_downloaded, --process_data, --upload_data
+
+    parser = argparse.ArgumentParser(
+        description="Run data recipes ingestion process. See ingestion.config for the configured interfaces"
+    )
+
+    parser.add_argument(
+        "--force_download",
+        action="store_true",
+        help="Force the re-download of data that already exists locally",
+    )
+
+    parser.add_argument(
+        "--skip_processing",
+        action="store_true",
+        help="Skip any processing of downloaded data according to ingest.config",
+    )
+
+    parser.add_argument(
+        "--skip_uploading",
+        action="store_true",
+        help="Skip upload the processed data to the database",
+    )
+
+    args = parser.parse_args()
+
+    skip_downloaded = True
+    process_data = True
+    upload_data = True
+
+    if args.force_download:
+        print("Forcing re-download of data, even if it exists locally")
+        skip_downloaded = False
+    if args.skip_processing:
+        print("Won't post process data")
+        process_data = False
+    if args.skip_uploading:
+        print("Won't uploading data")
+        upload_data = False
+
+    main(
+        skip_downloaded=skip_downloaded,
+        process_data=process_data,
+        upload_data=upload_data,
+    )

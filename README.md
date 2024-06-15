@@ -64,6 +64,26 @@ To run the ingestion module for ingested datasets, so assistants and plugins can
 
 It may take a while!
 
+Note: By default, rerunning the ingestion will not download data if the file already exists locally. To override this, you can run with ...
+
+`python3 ingest.py --force_download`
+
+#### Running ingestion without running full environment
+
+If you want to *just* download data and not run the full environment, this is possible as follows:
+
+First setup conda environment ...
+
+1. Install [miniconda](https://docs.conda.io/en/latest/miniconda.html) by selecting the installer that fits your OS version. Once it is installed you may have to restart your terminal (closing your terminal and opening again)
+2. Open terminal and `cd ingestion`
+3. `conda env create -f environment.yml`
+4. `conda activate data_recipes`
+
+Then run ingestion in download only mode ...
+
+5. `python ingest.py --skip_processing --skip_uploading`
+
+
 ### Recipes in Open AI (or Azure OpenAI) assistants
 
 The above will provide basic data recipes via the plugins architecture. If you want to also explore using Azure or Open AI assistants, the repo includes an approach where data files are uploaded to the assistant, and a prompt for it to analyse. 
