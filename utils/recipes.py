@@ -101,47 +101,6 @@ def initialize_vector_db():
     return db
 
 
-prompt_map = {
-    "memory": """
-        You judge matches of user intent with those stored in a database to decide if they are true matches of intent.
-        When asked to compare two intents, check they are the same, have the same entities and would result in the same outcome.
-        If the user doesn't specify data source, but everything else matches, it's a match
-
-        Answer with a JSON record ...
-
-        {
-            "answer": <yes or no>,
-            "reason": <your reasoning>"
-        }
-    """,
-    "recipe": """
-        You judge matches of user intent with generic DB intents in the database to see if a DB intent can be used to solve the user's intent.
-        The requested output format of the user's intent MUST be the same as the output format of the generic DB intent.
-        For exmaple, if the user's intent is to get a plot, the generic DB intent MUST also be to get a plot.
-        The level of data aggregation is important, if the user's request differs from the DB intent, then reject it.
-        If the user doesn't specify data source, but everything else matches, it's a match
-
-        Answer with a JSON record ...
-
-        {
-            "answer": <yes or no>,
-            "reason": <your reasoning>"
-        }
-    """,
-    "helper_function": """
-        You judge matches of user input helper functions and those already in the database
-        If the user help function matches the database helper function, then it's a match
-
-        Answer with a JSON record ...
-
-        {
-            "answer": <yes or no>,
-            "reason": <your reasoning>"
-        }
-    """,
-}
-
-
 def add_recipe_memory(intent, metadata, mem_type="recipe", force=False):
     """
     Add a new memory document to the memory store.
@@ -244,7 +203,7 @@ def check_recipe_memory(intent, debug=True):
         user_input=intent, possible_matches=match_list
     )
     print(prompt)
-    response = call_llm(prompt_map[mem_type], prompt)
+    response = call_llm("", prompt)
     print(response)
     if "content" in response:
         response = response["content"]
@@ -532,10 +491,10 @@ def get_memory_recipe(user_input, chat_history, generate_intent="true") -> str:
     logging.info("Python HTTP trigger function processed a request.")
     # Retrieve the CSV file from the request
 
-    # TODO Deactivating, under analysis
-    generate_intent = "false"
+    # Generate intent from chat history if generate_intent is true
     if generate_intent is not None and generate_intent == "true":
         print("********* Generating intent from chat history ...")
+        print("Chat history: ", chat_history)
         user_input = generate_intent_from_history(chat_history)
         print("Generated intent: ", user_input)
         user_input = user_input["intent"]
