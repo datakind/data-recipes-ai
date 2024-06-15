@@ -64,6 +64,10 @@ To run the ingestion module for ingested datasets, so assistants and plugins can
 
 It may take a while!
 
+Note: By default, rerunning the ingestion will not download data if the file already exists locally. To override this, you can run with ...
+
+`python3 ingest.py --force_download`
+
 #### Running ingestion without running full environment
 
 If you want to *just* download data and not run the full environment, this is possible as follows:
