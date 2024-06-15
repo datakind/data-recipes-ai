@@ -176,8 +176,8 @@ class EventHandler(AsyncAssistantEventHandler):
         """
         print("Tool call done!")
         # Turning this off, analysis would stop suddenly
-        # self.current_step.end = utc_now()
-        # await self.current_step.update()
+        self.current_step.end = utc_now()
+        await self.current_step.update()
 
     async def on_image_file_done(self, image_file):
         """
@@ -198,6 +198,17 @@ class EventHandler(AsyncAssistantEventHandler):
             self.current_message.elements = []
         self.current_message.elements.append(image_element)
         await self.current_message.update()
+
+    async def on_end(
+        self,
+    ):
+        print("\n end assistant > ", self.current_run_step_snapshot)
+
+    async def on_exception(self, exception: Exception) -> None:
+        print("\n Exception > ", self.current_run_step_snapshot)
+
+    async def on_timeout(self) -> None:
+        print("\n Timeout > ", self.current_run_step_snapshot)
 
     @override
     async def on_event(self, event):

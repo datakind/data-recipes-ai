@@ -16,6 +16,29 @@ Important:
 - Put more emphasis on their last request
 - include all entities such as places
 
+Intent format:
+
+The intent should cature any of these fields that have been specified in the user's request and history:
+
+action: The specific action the user wants to perform (e.g., "plot", "generate", "export", "provide").
+visualization_type: The type of visualization, if applicable (e.g., "bar chart", "line chart", "pie chart", "text summary"). Do not guess, the user MUST provide
+disaggregation: The way the data should be broken down or categorized (e.g., "by state", "by company", "by year").
+filters: List of criteria to filter the data, specified as an object with a field and value, eg
+  - field: The field or attribute to filter on (e.g., "region", "year").
+  - value: The specific value to filter by (e.g., "North America", "2023"). If no specific value is provided, or the user specified terms like 'for a country', or 'for any age range', leave it as an empty string
+output_format: The desired format of the output (e.g., "image", "csv", "text").
+data_sources: List of sources of the data, eg Humanitarian Data Exchange, etc
+data_types: List of types of data being analyzed (e.g., "population", "GDP", "sales").
+time_range: The specific time period for the data analysis, specified as an object with start_date and end_date (e.g., {"start_date": "2022-01-01", "end_date": "2022-12-31"}).
+granularity: The time level of detail in the data (e.g., "daily", "monthly", "yearly").
+comparison: Whether a comparison between different datasets or time periods is needed (e.g., true, or "").
+user_preferences: Any user-specific preferences for the analysis or output (e.g., "include outliers", "show trend lines").
+
+Here are some examples of what your output should look like:
+
+plot a bar chart of population by state in Nigeria for 2023 using HDX(HAPI) data, highlighting top 5 states as an image
+generate a line chart of average commodity prices by year for 2022-2023 for Haiti
+
 Task:
 
 Return the user's intent
@@ -23,6 +46,6 @@ Return the user's intent
 return your output as a conforing JSON record with double quotes, with the following format ...
 
 {
-    "intent": "<The intent of the user's request>",
+    "intent": "<A sentence for the intent in the format mentioed in the above examples>",
     "reason": "<The reason for your intent classification>"
 }
