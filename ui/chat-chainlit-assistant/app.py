@@ -221,11 +221,14 @@ class EventHandler(AsyncAssistantEventHandler):
                     {"tool_call_id": tool.id, "output": function_output}
                 )
 
+            print("TOOL OUTPUTS: ")
+            print(tool_outputs)
+
             # Streaming
             with sync_openai_client.beta.threads.runs.submit_tool_outputs_stream(
                 thread_id=self.current_run.thread_id,
                 run_id=self.current_run.id,
-                tool_outputs=[{"tool_call_id": tool.id, "output": function_output}],
+                tool_outputs=tool_outputs,
                 event_handler=AssistantEventHandler(),
             ) as stream:
                 print("Tool output submitted successfully")
@@ -289,7 +292,7 @@ async def cleanup():
     Returns:
         None
     """
-    await cl.user_session.clear()
+    # await cl.user_session.clear()
     thread = cl.user_session.get("thread")
     run_id = cl.user_session.get("run_id")
     if run_id is not None:
@@ -300,8 +303,8 @@ async def cleanup():
 
 
 # @cl.on_stop
-# async def on_stop():
-#    await cleanup()
+async def on_stop():
+    await cleanup()
 
 
 @cl.step(type="tool")
@@ -384,10 +387,9 @@ async def start_chat():
     thread = await async_openai_client.beta.threads.create()
     # Store thread ID in user session for later use
     cl.user_session.set("thread_id", thread.id)
-    # await cl.Avatar(name=assistant.name, path="./public/logo.png").send()
-    # await cl.Message(
-    #    content=f"Hi. I'm your humanitarian AI assistant.", disable_feedback=True
-    # ).send()
+    await cl.Message(
+        content="Hi. I'm your humanitarian AI assistant.", disable_feedback=True
+    ).send()
 
     cl.user_session.set("chat_history", [])
 
@@ -431,7 +433,7 @@ def get_metadata_footer(metadata):
         if label in metadata:
             if label_map[label]["value"] != "":
                 val = label_map[label]["value"]
-                if "()" not in val:
+                if "()" not in val and len(val) > 5:
                     footer += f"; {val}"
 
     return footer
@@ -577,6 +579,7 @@ async def main(message: cl.Message):
     chat_history.append({"role": "user", "content": message.content})
     cl.user_session.set("chat_history", chat_history)
 
+    # Check recipes
     msg = await cl.Message("").send()
     memory_found, memory_content, memory_response, meta_data_msg = (
         await async_check_memories_recipes(message.content, chat_history)
@@ -589,7 +592,7 @@ async def main(message: cl.Message):
         print("Adding memory to thread")
         await async_openai_client.beta.threads.messages.create(
             thread_id=thread_id,
-            role="user",
+            role="assistant",
             content=memory_content,
             # attachments=attachments,
         )
@@ -677,21 +680,21 @@ async def on_audio_end(elements: list[Element]):
     await main(message=msg)
 
 
-# @cl.password_auth_callback
-# def auth_callback(username: str, password: str):
-#     """
-#     Authenticates a user based on the provided username and password.
+@cl.password_auth_callback
+def auth_callback(username: str, password: str):
+    """
+    Authenticates a user based on the provided username and password.
 
-#     Args:
-#         username (str): The username of the user.
-#         password (str): The password of the user.
+    Args:
+        username (str): The username of the user.
+        password (str): The password of the user.
 
-#     Returns:
-#         cl.User or None: If the authentication is successful, returns a User object with the user's identifier, role, and provider. Otherwise, returns None.
-#     """
-#     if (username, password) == (user, password):
-#         return cl.User(
-#             identifier=user, metadata={"role": "admin", "provider": "credentials"}
-#         )
-#     else:
-#         return None
+    Returns:
+        cl.User or None: If the authentication is successful, returns a User object with the user's identifier, role, and provider. Otherwise, returns None.
+    """
+    if (username, password) == (user, password):
+        return cl.User(
+            identifier=user, metadata={"role": "admin", "provider": "credentials"}
+        )
+    else:
+        return None
