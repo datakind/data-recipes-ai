@@ -228,7 +228,7 @@ class EventHandler(AsyncAssistantEventHandler):
             with sync_openai_client.beta.threads.runs.submit_tool_outputs_stream(
                 thread_id=self.current_run.thread_id,
                 run_id=self.current_run.id,
-                tool_outputs=[{"tool_call_id": tool.id, "output": function_output}],
+                tool_outputs=tool_outputs,
                 event_handler=AssistantEventHandler(),
             ) as stream:
                 print("Tool output submitted successfully")
