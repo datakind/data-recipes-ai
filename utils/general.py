@@ -38,6 +38,10 @@ def replace_env_variables(value):
     elif isinstance(value, str):
         matches = re.findall(r"\{\{ (.+?) \}\}", value)
         for match in matches:
+            if os.getenv(match) is None:
+                print(f"Environment variable {match} is not set.")
+                sys.exit(1)
+
             value = value.replace("{{ " + match + " }}", os.getenv(match))
         return value
     else:
