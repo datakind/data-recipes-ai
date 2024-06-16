@@ -223,16 +223,16 @@ class EventHandler(AsyncAssistantEventHandler):
                 function_name = tool.function.name
                 function_args = tool.function.arguments
 
-                # function_output = asyncio.run(
-                #    run_function(function_name, function_args)
-                # )
-                function_output = run_function(function_name, function_args)
+                function_output = asyncio.run(
+                    run_function(function_name, function_args)
+                )
 
                 tool_outputs.append(
                     {"tool_call_id": tool.id, "output": function_output}
                 )
 
             print("TOOL OUTPUTS: ")
+
             print(tool_outputs)
 
             # Streaming
@@ -253,7 +253,7 @@ class EventHandler(AsyncAssistantEventHandler):
                 await msg.update()
 
 
-def run_function(function_name, function_args):
+async def run_function(function_name, function_args):
     """
     Run a function with the given name and arguments.
 
