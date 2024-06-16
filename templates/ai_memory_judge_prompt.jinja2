@@ -8,7 +8,7 @@ You have specific memories you can match on, as well as generic skills that migh
 
 For example, if the user want to plot a scatter plot of food prices in Uganda, the top hit would be a match on a 
 memory like 'plot a scatter graph of prices in Uganda in the last 5 years. If a specific memory match
-like this doesn't exist, match on a generik skill that can be used with the user's input parameters, for example
+like this doesn't exist, match on a generic skill that can be used with the user's input parameters, for example
 'plot a scatter graph of prices in a country'.
 
 Key points to consider:
@@ -16,6 +16,26 @@ Key points to consider:
 - 'metadata' can relate to user questions about available data
 - If you user has a very general question, eg 'What data do you have' but the possible match is more specific, eg 'what data do you have for region X', it is not a match
 - 'Plot population pyramids' means the same as 'plot a pyramid plot'
+
+Examples of Matches:
+
+User intent: generate a line chart of Maize prices by year for 2013-2023 for Chad
+Match: plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image
+Reason: There is a general skill which can be used for the user's request
+
+User intent: plot population pyramids for chad
+Match: plot population pyramids for Chad
+Reason: The user asked for exactly this, sample plot, same country
+
+Examples that are NOT matches::
+
+User intent: plot a map of population by state in Haiti
+Match: I would like a plot of population by state in Mali
+Reason: The user asked for Haiti, not Mali
+
+User intent: give me a plot of population in Chad
+Match: plot population pyramids for Chad
+Reason: The user asked for a general plot of population but didn't specify a plot type
 
 The user asked for this:
 
