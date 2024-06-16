@@ -113,17 +113,6 @@ services:
       - type: bind
         source: ./utils
         target: /app/utils
-  # code-interpreter:
-  #   # image: ghcr.io/iamgreggarcia/codesphera:latest
-  #   container_name: recipes-ai-code-interpreter
-  #   build:
-  #     context: .
-  #     dockerfile: ./code-interpreter/Dockerfile
-  #   ports:
-  #     - "3333:3333"
-  #   volumes:
-  #     - shared-data:/app/static
-  #   #command: python3 -c "import localserver.main; localserver.main.start()"
 
   manager:
     container_name: recipes-ai-manager
