@@ -14,8 +14,10 @@ from dotenv import load_dotenv
 from shapefiles import download_hdx_boundaries
 from sqlalchemy import create_engine, text
 
-# This is copied into Docker env
-from utils.general import is_running_in_docker, read_integration_config
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)  # noqa: E402
+from utils.general import is_running_in_docker, read_integration_config  # noqa: E402
 
 INTEGRATION_CONFIG = "ingestion.config"
 
