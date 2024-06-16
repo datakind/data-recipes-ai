@@ -19,7 +19,9 @@ from literalai.helper import utc_now
 from openai import (
     AssistantEventHandler,
     AsyncAssistantEventHandler,
+    AsyncAzureOpenAI,
     AsyncOpenAI,
+    AzureOpenAI,
     OpenAI,
 )
 from typing_extensions import override
@@ -45,21 +47,32 @@ images_loc = "./public/images/"
 user = os.environ.get("USER_LOGIN")
 password = os.environ.get("USER_PWD")
 
-async_openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-sync_openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+if os.environ.get("ASSISTANTS_API_TYPE") == "openai":
+    async_openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    sync_openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+else:
+    async_openai_client = AsyncAzureOpenAI(
+        azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
+        api_key=os.getenv("ASSISTANTS_API_KEY"),
+        api_version=os.getenv("ASSISTANTS_API_VERSION"),
+    )
+    sync_openai_client = AzureOpenAI(
+        azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
+        api_key=os.getenv("ASSISTANTS_API_KEY"),
+        api_version=os.getenv("ASSISTANTS_API_VERSION"),
+    )
+
 
 cl.instrument_openai()  # Instrument the OpenAI API client
 
-assistant = sync_openai_client.beta.assistants.retrieve(
-    os.environ.get("OPENAI_ASSISTANT_ID")
-)
+assistant = sync_openai_client.beta.assistants.retrieve(os.environ.get("ASSISTANTS_ID"))
 
 # config.ui.name = assistant.name
 bot_name = os.getenv("ASSISTANTS_BOT_NAME")
 config.ui.name = bot_name
 
 
-class EventHandler(AsyncAssistantEventHandler):
+class EventHandler(AssistantEventHandler):
 
     def __init__(self, assistant_name: str) -> None:
         """
@@ -75,182 +88,139 @@ class EventHandler(AsyncAssistantEventHandler):
         self.current_message: cl.Message = None
         self.current_step: cl.Step = None
         self.current_tool_call = None
+        self.current_message_text = ""
         self.assistant_name = assistant_name
 
-    async def on_text_created(self, text) -> None:
-        """
-        Handles the event when a new text is created.
-
-        Args:
-            text: The newly created text.
-
-        Returns:
-            None
-        """
-        self.current_message = await cl.Message(
-            author=self.assistant_name, content=""
-        ).send()
-
-    async def on_text_delta(self, delta, snapshot):
-        """
-        Handles the text delta event.
-
-        Parameters:
-        - delta: The text delta object.
-        - snapshot: The current snapshot of the document.
-
-        Returns:
-        - None
-        """
-        if delta.value is not None:
-            await self.current_message.stream_token(delta.value)
-
-    async def on_text_done(self, text):
-        """
-        Callback method called when text input is done.
-
-        Args:
-            text (str): The text input provided by the user.
-
-        Returns:
-            None
-        """
-        await self.current_message.update()
-
-    async def on_tool_call_created(self, tool_call):
-        """
-        Callback method called when a tool call is created.
-
-        Args:
-            tool_call: The tool call object representing the created tool call.
-        """
-        self.current_tool_call = tool_call.id
-        self.current_step = cl.Step(name=tool_call.type, type="tool")
-        self.current_step.language = "python"
-        self.current_step.created_at = utc_now()
-        await self.current_step.send()
-
-    async def on_tool_call_delta(self, delta, snapshot):
-        """
-        Handles the tool call delta event.
-
-        Args:
-            delta (ToolCallDelta): The delta object representing the tool call event.
-            snapshot (Snapshot): The snapshot object representing the current state.
-
-        Returns:
-            None
-        """
-        print(f"Tool call delta: {delta.type}")
-        if snapshot.id != self.current_tool_call:
-            self.current_tool_call = snapshot.id
-            self.current_step = cl.Step(name=delta.type, type="tool")
-            self.current_step.language = "python"
-            self.current_step.start = utc_now()
-            await self.current_step.send()
-
-        if delta.type == "code_interpreter":
-            if delta.code_interpreter.outputs:
-                for output in delta.code_interpreter.outputs:
-                    if output.type == "logs":
-                        error_step = cl.Step(name=delta.type, type="tool")
-                        error_step.is_error = True
-                        error_step.output = output.logs
-                        error_step.language = "markdown"
-                        error_step.start = self.current_step.start
-                        error_step.end = utc_now()
-                        await error_step.send()
-            else:
-                if delta.code_interpreter.input:
-                    await self.current_step.stream_token(delta.code_interpreter.input)
-
-    async def on_tool_call_done(self, tool_call):
-        """
-        Callback method called when a tool call is done.
-
-        Args:
-            tool_call: The tool call object representing the completed tool call.
-
-        Returns:
-            None
-        """
-        print("Tool call done!")
-        # Turning this off, analysis would stop suddenly
-        self.current_step.end = utc_now()
-        await self.current_step.update()
-
-    async def on_image_file_done(self, image_file):
-        """
-        Callback function called when an image file is done processing.
-
-        Args:
-            image_file: The image file object that has finished processing.
-
-        Returns:
-            None
-        """
-        image_id = image_file.file_id
-        response = await async_openai_client.files.with_raw_response.content(image_id)
-        image_element = cl.Image(
-            name=image_id, content=response.content, display="inline", size="large"
-        )
-        if not self.current_message.elements:
-            self.current_message.elements = []
-        self.current_message.elements.append(image_element)
-        await self.current_message.update()
-
-    async def on_end(
-        self,
-    ):
-        print("\n end assistant > ", self.current_run_step_snapshot)
-
-    async def on_exception(self, exception: Exception) -> None:
-        print("\n Exception > ", self.current_run_step_snapshot)
-
-    async def on_timeout(self) -> None:
-        print("\n Timeout > ", self.current_run_step_snapshot)
-
     @override
-    async def on_event(self, event):
-        # Retrieve events that are denoted with 'requires_action'
-        # since these will have our tool_calls
+    def on_event(self, event):
+        """
+        Handles the incoming event and performs the necessary actions based on the event type.
+
+        Args:
+            event: The event object containing information about the event.
+
+        Returns:
+            None
+        """
         print(event.event)
-        if event.event == "thread.run.requires_action":
-            tool_outputs = []
-            for tool in event.data.required_action.submit_tool_outputs.tool_calls:
-                print(tool)
+        run_id = event.data.id
+        if event.event == "thread.message.created":
+            self.current_message = run_sync(cl.Message(content="").send())
+            self.current_message_text = ""
+            print("Run started")
+        if event.event == "thread.message.completed":
+            self.handle_message_completed(event.data, run_id)
+        elif event.event == "thread.run.requires_action":
+            self.handle_requires_action(event.data, run_id)
+        elif event.event == "thread.message.delta":
+            self.handle_message_delta(event.data)
+        else:
+            print(json.dumps(str(event.data), indent=4))
+            print(f"Unhandled event: {event.event}")
 
-                function_name = tool.function.name
-                function_args = tool.function.arguments
+    def handle_message_delta(self, data):
+        """
+        Handles the message delta data.
 
-                # function_output = asyncio.run(
-                #    run_function(function_name, function_args)
-                # )
-                function_output = run_function(function_name, function_args)
+        Args:
+            data: The message delta data.
 
-                tool_outputs.append(
-                    {"tool_call_id": tool.id, "output": function_output}
-                )
+        Returns:
+            None
+        """
+        for content in data.delta.content:
+            if content.type == "text":
+                content = content.text.value
+                self.current_message_text += content
+                run_sync(self.current_message.stream_token(content))
+            elif content.type == "image_file":
+                file_id = content.image_file.file_id
+                image_data = sync_openai_client.files.content(file_id)
+                image_data_bytes = image_data.read()
+                png_file = f"{images_loc}{file_id}.png"
+                print(f"Writing image to {png_file}")
+                with open(png_file, "wb") as file:
+                    file.write(image_data_bytes)
+                    image = cl.Image(path=png_file, display="inline", size="large")
+                    print(f"Image: {png_file}")
+                    if not self.current_message.elements:
+                        self.current_message.elements = []
+                        self.current_message.elements.append(image)
+                        run_sync(self.current_message.update())
+            else:
+                print(f"Unhandled delta type: {content.type}")
 
-            print("TOOL OUTPUTS: ")
-            print(tool_outputs)
+    def handle_message_completed(self, data, run_id):
+        """
+        Handles the completion of a message.
 
-            # Streaming
-            with sync_openai_client.beta.threads.runs.submit_tool_outputs_stream(
-                thread_id=self.current_run.thread_id,
-                run_id=self.current_run.id,
-                tool_outputs=tool_outputs,
-                event_handler=AssistantEventHandler(),
-            ) as stream:
-                print("Tool output submitted successfully")
-                msg = await cl.Message(author=self.assistant_name, content="").send()
-                response = ""
-                for text in stream.text_deltas:
-                    response += text
-                    await msg.stream_token(text)
-                if len(response) > 5:
-                    await msg.stream_token(llm_footer)
-                await msg.update()
+        Args:
+            data: The data associated with the completed message.
+            run_id: The ID of the message run.
+
+        Returns:
+            None
+        """
+        # Add footer to self message. We have to start a new message so it's in right order
+        # TODO combine streaming with image and footer
+        run_sync(self.current_message.update())
+        self.current_message = run_sync(cl.Message(content="").send())
+
+        word_count = len(self.current_message_text.split())
+        if word_count > 10:
+            run_sync(self.current_message.stream_token(llm_footer))
+        run_sync(self.current_message.update())
+
+    def handle_requires_action(self, data, run_id):
+        """
+        Handles the required action by executing the specified tools and submitting the tool outputs.
+
+        Args:
+            data: The data containing the required action information.
+            run_id: The ID of the current run.
+
+        Returns:
+            None
+        """
+        tool_outputs = []
+
+        for tool in data.required_action.submit_tool_outputs.tool_calls:
+            print(tool)
+
+            function_name = tool.function.name
+            function_args = tool.function.arguments
+
+            function_output = run_function(function_name, function_args)
+
+            tool_outputs.append({"tool_call_id": tool.id, "output": function_output})
+
+        print("TOOL OUTPUTS: ")
+
+        print(tool_outputs)
+
+        # Submit all tool_outputs at the same time
+        self.submit_tool_outputs(tool_outputs, run_id)
+
+    def submit_tool_outputs(self, tool_outputs, run_id):
+        """
+        Submits the tool outputs to the current run.
+
+        Args:
+            tool_outputs (list): A list of tool outputs to be submitted.
+            run_id (str): The ID of the current run.
+
+        Returns:
+            None
+        """
+        with sync_openai_client.beta.threads.runs.submit_tool_outputs_stream(
+            thread_id=self.current_run.thread_id,
+            run_id=self.current_run.id,
+            tool_outputs=tool_outputs,
+            event_handler=EventHandler(assistant_name=self.assistant_name),
+        ) as stream:
+            # Needs this line, or it doesn't work! :)
+            for text in stream.text_deltas:
+                print(text, end="", flush=True)
 
 
 def run_function(function_name, function_args):
@@ -283,7 +253,7 @@ def run_function(function_name, function_args):
     return output
 
 
-def print(*tup):
+def print_to_log(*tup):
     """
     Custom print function that logs the output using the logger.
 
@@ -575,15 +545,26 @@ async def main(message: cl.Message):
     """
     thread_id = cl.user_session.get("thread_id")
 
-    attachments = await process_files(message.elements)
+    # Azure doesn't yet support attachments
+    if os.getenv("ASSISTANTS_API_TYPE") == "openai":
 
-    # Add a Message to the Thread
-    await async_openai_client.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content=message.content,
-        attachments=attachments,
-    )
+        attachments = await process_files(message.elements)
+
+        # Add a Message to the Thread
+        await async_openai_client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=message.content,
+            attachments=attachments,
+        )
+    else:
+
+        # Add a Message to the Thread
+        await async_openai_client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=message.content,
+        )
 
     # Append to chat history
     chat_history = cl.user_session.get("chat_history")
@@ -624,13 +605,12 @@ async def main(message: cl.Message):
 
     # Create and Stream a Run
     print(f"Creating and streaming a run {assistant.id}")
-    async with async_openai_client.beta.threads.runs.stream(
+    with sync_openai_client.beta.threads.runs.stream(
         thread_id=thread_id,
         assistant_id=assistant.id,
         event_handler=EventHandler(assistant_name=assistant.name),
-        # max_completion_tokens=20000
     ) as stream:
-        await stream.until_done()
+        stream.until_done()
 
 
 @cl.on_audio_chunk
