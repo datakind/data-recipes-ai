@@ -89,6 +89,7 @@ def download_openapi_data(
     save_path,
     query_extra="",
     skip_downloaded=False,
+    save_parquet=False,
 ):
     """
     Downloads data based on the functions specified in the openapi.json definition file.
@@ -104,6 +105,7 @@ def download_openapi_data(
         data_node (str): The node in the openapi JSON file where the data is stored
         query_extra (str): Extra query parameters to add to the request
         skip_downloaded (bool): If True, skip downloading data that already exists
+        save_parquet (bool): If True, save parquet files in addition to CSVs
 
     """
 
@@ -161,6 +163,10 @@ def download_openapi_data(
             df = pd.DataFrame(data)
             print(df.shape[0], "After DF")
             df.to_csv(file_name, index=False)
+
+            if save_parquet:
+                df.to_parquet(file_name.replace(".csv", ".parquet"), index=False)
+
             with open(f"{save_path}/{endpoint_clean}_meta.json", "w") as f:
                 full_meta = openapi_def["paths"][endpoint]
                 f.write(json.dumps(full_meta, indent=4))
@@ -408,7 +414,7 @@ def map_field_names(df, field_map):
     return df
 
 
-def main(skip_downloaded=True, process_data=True, upload_data=True):
+def main(skip_downloaded=True, process_data=True, upload_data=True, save_parquet=False):
     """
     Main function for data ingestion.
 
@@ -416,6 +422,7 @@ def main(skip_downloaded=True, process_data=True, upload_data=True):
         skip_downloaded (bool): If True, skip downloading data that already exists locally.
         process_data (bool): If True, process and normalize downloaded data according to ingest.config.
         upload_data (bool): If True, upload the processed data to the database.
+        save_parquet (bool): If True, save parquet files in addition to CSVs.
     """
     apis, field_map, standard_names = read_integration_config(INTEGRATION_CONFIG)
     conn = connect_to_db()
@@ -455,6 +462,7 @@ def main(skip_downloaded=True, process_data=True, upload_data=True):
             save_path,
             query_extra,
             skip_downloaded,
+            save_parquet,
         )
 
         # Standardize column names
@@ -505,11 +513,18 @@ if __name__ == "__main__":
         help="Skip upload the processed data to the database",
     )
 
+    parser.add_argument(
+        "--save_parquet",
+        action="store_true",
+        help="Also save as parquet files in addition to CSVs",
+    )
+
     args = parser.parse_args()
 
     skip_downloaded = True
     process_data = True
     upload_data = True
+    save_parquet = False
 
     if args.force_download:
         print("Forcing re-download of data, even if it exists locally")
@@ -520,9 +535,13 @@ if __name__ == "__main__":
     if args.skip_uploading:
         print("Won't uploading data")
         upload_data = False
+    if args.save_parquet:
+        print("Will save parquet files")
+        save_parquet = True
 
     main(
         skip_downloaded=skip_downloaded,
         process_data=process_data,
         upload_data=upload_data,
+        save_parquet=save_parquet,
     )
