@@ -425,7 +425,9 @@ def main(skip_downloaded=True, process_data=True, upload_data=True, save_parquet
         save_parquet (bool): If True, save parquet files in addition to CSVs.
     """
     apis, field_map, standard_names = read_integration_config(INTEGRATION_CONFIG)
-    conn = connect_to_db()
+
+    if skip_downloaded is False:
+        conn = connect_to_db()
 
     for api in apis:
 
