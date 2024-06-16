@@ -164,7 +164,9 @@ class EventHandler(AssistantEventHandler):
         # Add footer to self message. We have to start a new message so it's in right order
         # TODO combine streaming with image and footer
         run_sync(self.current_message.update())
-        self.current_message = run_sync(cl.Message(content="").send())
+        self.current_message = run_sync(
+            cl.Message(content="", disable_feedback=True).send()
+        )
 
         word_count = len(self.current_message_text.split())
         if word_count > 10:
@@ -220,7 +222,7 @@ class EventHandler(AssistantEventHandler):
         ) as stream:
             # Needs this line, or it doesn't work! :)
             for text in stream.text_deltas:
-                print(text, end="", flush=True)
+                print(text)
 
 
 def run_function(function_name, function_args):
@@ -253,7 +255,7 @@ def run_function(function_name, function_args):
     return output
 
 
-def print_to_log(*tup):
+def print(*tup):
     """
     Custom print function that logs the output using the logger.
 
@@ -653,18 +655,19 @@ async def on_audio_end(elements: list[Element]):
     audio_file = audio_buffer.read()
     audio_mime_type: str = cl.user_session.get("audio_mime_type")
 
-    input_audio_el = cl.Audio(
-        mime=audio_mime_type, content=audio_file, name=audio_buffer.name
-    )
-    await cl.Message(
-        author="You",
-        type="user_message",
-        content="",
-        elements=[input_audio_el, *elements],
-    ).send()
+    # input_audio_el = cl.Audio(
+    #    mime=audio_mime_type, content=audio_file, name=audio_buffer.name
+    # )
 
     whisper_input = (audio_buffer.name, audio_file, audio_mime_type)
     transcription = await speech_to_text(whisper_input)
+
+    await cl.Message(
+        author="You",
+        type="user_message",
+        content=transcription,
+        # elements=[input_audio_el, *elements],
+    ).send()
 
     msg = cl.Message(author="You", content=transcription, elements=elements)
 
