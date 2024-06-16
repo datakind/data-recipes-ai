@@ -29,26 +29,28 @@ def function3(<params>):
     function2(<params>)
     <CODE TO CALCULATES RESULT, HANDLING ERRORS>
 
+    # IMPORTANT, this should be a JSON record with double quotes
     result = {
-        'result': {
-            'type': '<TYPE, image, text, csv, etc>',
-            'file': '<FILE PATH IF APPROPRIATE>',
-            'value': '<TEXT IF APPROPRIATE>'
+        "result": {
+            "type": f"{<TYPE, image, text, csv, etc>}",
+            "file": f"{<FILE PATH IF APPROPRIATE>}",
+            "value": f"{<TEXT IF APPROPRIATE>}"
         },
-        'metadata': {
-            'params': {
-                'param1': <PARAM1>,
-                'param2': <PARAM2>,
-                'param3': <PARAM3>
+        "metadata": {
+            "params": {
+                "param1": f"{<PARAM1>}",
+                "param2": f"{<PARAM2>}",
+                "param3": f"{<PARAM3>}",
             },
-            'attribution': <ATTRIBUTION INFO>,
-            'data_url': <DATA LINK>,
-            'time_period': {
-                'start': <START PERIOD>,
-                'end': <END PERIOD>
+            "attribution": f"{<ATTRIBUTION INFO>}",
+            "data_url": f"{<DATA LINK>}",
+            "time_period": {
+                "start": f"{<START PERIOD>}",
+                "end": f"{<END PERIOD>}"
             }
         }
     }
+    print("OUTPUT: ")    
     print(json.dumps(result, indent=4))
     return result
 

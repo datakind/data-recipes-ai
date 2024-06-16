@@ -162,12 +162,6 @@ def get_attribution(country, ipc_level):
 
 The same is true for the time period, you can use exactly the same where clause, but select disct values of reference_period_start, reference_period_end. 
 
-You should build a result record that looks like this ...
-
-`result = {'file': file_path, 'metadata': {'attribution': attribution_url,'data_url': resource_url,'time_period': {'start': start_period,'end': end_period}}}`
-
-Print it, and return it as a json object.
-
 4. HDX Shape files
 
 You Must ALWAYS link on adm1_code if linking shapefiles to hapi tables. For example ...
