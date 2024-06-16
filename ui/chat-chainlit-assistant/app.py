@@ -19,7 +19,9 @@ from literalai.helper import utc_now
 from openai import (
     AssistantEventHandler,
     AsyncAssistantEventHandler,
+    AsyncAzureOpenAI,
     AsyncOpenAI,
+    AzureOpenAI,
     OpenAI,
 )
 from typing_extensions import override
@@ -45,14 +47,25 @@ images_loc = "./public/images/"
 user = os.environ.get("USER_LOGIN")
 password = os.environ.get("USER_PWD")
 
-async_openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-sync_openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+if os.environ.get("ASSISTANTS_API_TYPE") == "openai":
+    async_openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    sync_openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+else:
+    async_openai_client = AsyncAzureOpenAI(
+        azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
+        api_key=os.getenv("ASSISTANTS_API_KEY"),
+        api_version=os.getenv("ASSISTANTS_API_VERSION"),
+    )
+    sync_openai_client = AzureOpenAI(
+        azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
+        api_key=os.getenv("ASSISTANTS_API_KEY"),
+        api_version=os.getenv("ASSISTANTS_API_VERSION"),
+    )
+
 
 cl.instrument_openai()  # Instrument the OpenAI API client
 
-assistant = sync_openai_client.beta.assistants.retrieve(
-    os.environ.get("OPENAI_ASSISTANT_ID")
-)
+assistant = sync_openai_client.beta.assistants.retrieve(os.environ.get("ASSISTANTS_ID"))
 
 # config.ui.name = assistant.name
 bot_name = os.getenv("ASSISTANTS_BOT_NAME")
@@ -102,7 +115,7 @@ class EventHandler(AssistantEventHandler):
         elif event.event == "thread.message.delta":
             self.handle_message_delta(event.data)
         else:
-            print(event.data)
+            print(json.dumps(str(event.data), indent=4))
             print(f"Unhandled event: {event.event}")
 
     def handle_message_delta(self, data):
@@ -532,15 +545,26 @@ async def main(message: cl.Message):
     """
     thread_id = cl.user_session.get("thread_id")
 
-    attachments = await process_files(message.elements)
+    # Azure doesn't yet support attachments
+    if os.getenv("ASSISTANTS_API_TYPE") == "openai":
 
-    # Add a Message to the Thread
-    await async_openai_client.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content=message.content,
-        attachments=attachments,
-    )
+        attachments = await process_files(message.elements)
+
+        # Add a Message to the Thread
+        await async_openai_client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=message.content,
+            attachments=attachments,
+        )
+    else:
+
+        # Add a Message to the Thread
+        await async_openai_client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=message.content,
+        )
 
     # Append to chat history
     chat_history = cl.user_session.get("chat_history")
