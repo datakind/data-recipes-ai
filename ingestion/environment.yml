@@ -23,4 +23,6 @@ dependencies:
     - geoalchemy2==0.14.6
     - hdx-python-country==3.6.9
     - hdx-python-utilities==3.6.6
+    - pyarrow==16.1.0
+    - fastparquet==2024.5.0 
 

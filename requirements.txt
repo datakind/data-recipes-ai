@@ -22,4 +22,6 @@ robocorp-truststore
 robocorp
 robocorp-actions
 literalai==0.0.604
+pyarrow==16.1.0
+fastparquet==2024.5.0 
 
