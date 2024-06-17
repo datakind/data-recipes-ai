@@ -131,8 +131,9 @@ class EventHandler(AssistantEventHandler):
         for content in data.delta.content:
             if content.type == "text":
                 content = content.text.value
-                self.current_message_text += content
-                run_sync(self.current_message.stream_token(content))
+                if content is not None:
+                    self.current_message_text += content
+                    run_sync(self.current_message.stream_token(content))
             elif content.type == "image_file":
                 file_id = content.image_file.file_id
                 image_data = sync_openai_client.files.content(file_id)
