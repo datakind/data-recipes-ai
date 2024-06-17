@@ -120,7 +120,16 @@ WHERE
 
 Conversely, if you do not exclude the aggregate data, you will get a mix of aggregated and disaggregated data.
 
-3. Generating attribution functions 
+3. Finding data for a region, country, etc
+
+HAPI admin tables contain mappings of admin codes to names. But they don't contain data like population, funding, 
+refugee metrics etc. You must query non-meta data tables for those
+
+4. Filtering by a dimensions
+
+Do not make assumptions about the possible values of a dimension. Always query the table for the distinct values of the dimension first.
+
+5. Generating attribution functions 
 
 HAPI data tables include a column called `resource_hdx_id`. If a function extracts data from
 a data table using a SQL query, the same where clause can be used t select unique vaues of `resource_hdx_id`.
@@ -162,7 +171,7 @@ def get_attribution(country, ipc_level):
 
 The same is true for the time period, you can use exactly the same where clause, but select disct values of reference_period_start, reference_period_end. 
 
-4. HDX Shape files
+6. HDX Shape files
 
 You Must ALWAYS link on adm1_code if linking shapefiles to hapi tables. For example ...
 

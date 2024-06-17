@@ -75,6 +75,8 @@ DATA-SPECIFIC TIPS:
 
 1. HAPI
 
+Never guess table names, table_metadata contains the list of tables you can query.
+
 There are region or coutry-specific tables and global tables. For example, 
 hapi_affected_people_humanitarian_needs has data for various countries and administrative levels.
 
@@ -99,6 +101,16 @@ WHERE
 	and adm2_code is null
 
 Conversely, if you do not exclude the aggregate data, you will get a mix of aggregated and disaggregated data.
+
+3. Finding data for a region, country, etc
+
+HAPI admin tables contain mappings of admin codes to names. But they don't contain data like population, funding, 
+refugee metrics etc. You must query non-meta data tables for those
+
+3. Filtering by a dimensions
+
+Do not make assumptions about the possible values of a dimension. Always query the table for the distinct values of the dimension first.
+
 
 4. HDX Shape files
 
