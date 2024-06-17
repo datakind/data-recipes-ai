@@ -44,7 +44,10 @@ This repo contains a docker-compose environment that will run the following comp
 The following sets you up with data recipes, as provided using the OpenAI plugin architecture. The plugin calls the recipe server, which extracts recipes and memories of data analysis tasks, and presents them back to the user.
 
 
-1. Copy `.env.example` to `.env` and set variables according to instructions in the file
+1. Copy `.env.example` to `.env` and set variables according to instructions in the file. Most variables be left as-is, but at a minimum you will need to set variables in these sections (see `.env.example` for instructions on how to set them):
+    - API Settings - Needed for ingesting data from data sources
+    - Recipes AI Settings - Set to your LLM deployment accordingly
+    - Assistant Settings - Set to your LLM deployment accordingly
 2. `docker compose up -d --build`
 3. Go to [http://localhost:8000/]
 
