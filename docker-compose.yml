@@ -140,7 +140,17 @@ services:
       - ./utils:/app/utils
       - ./templates:/app/templates
       - ./db/recipedb:/app/db
-
+  promptflow:
+    image: mcr.microsoft.com/azureml/promptflow/promptflow-runtime-stable:latest
+    container_name: data-recipes-promptflow
+    env_file:
+          - .env
+    volumes:
+      - ./flows:/app
+      - ./utils:/app/utils
+      - ./templates:/app/templates
+      - shared-data:/app/recipes/public
+      - ./management/skills.py:/app/recipes/skills.py
 volumes:
   pgdata2:
   shared-data:
