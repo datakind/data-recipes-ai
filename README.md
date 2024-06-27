@@ -199,6 +199,19 @@ To activate:
 6. Go to playground and start a new session, select the 'Recipes data Analysis' workflow
 7. Ask 'What is the total population of Mali?'
 
+# Evaluation with Prompt Flow
+
+1. Install the DevContainers VSCode extension 
+2. Build data recipes using the `docker compose` command mentioned above
+3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
+
+   `Dev Containers: Attach to remote container`. 
+
+   Select the promptflow container. This opens a new VSCode window - use it for the next steps.
+4. Open folder `/app`
+5. Click on `flow.dag.yaml`
+6. Top left of main pane, click on 'Visual editor'
+
 # Deployment
 
 We will add more details here soon, for now, here are some notes on Azure ...
