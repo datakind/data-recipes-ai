@@ -535,87 +535,6 @@ def check_memories_recipes(user_input: str, history=[]) -> str:
 async_check_memories_recipes = make_async(check_memories_recipes)
 
 
-@cl.on_message
-async def main(message: cl.Message):
-    """
-    Process the user's message and interact with the assistant.
-
-    Args:
-        message (cl.Message): The user's message.
-
-    Returns:
-        None
-    """
-    thread_id = cl.user_session.get("thread_id")
-
-    # Azure doesn't yet support attachments
-    if os.getenv("ASSISTANTS_API_TYPE") == "openai":
-
-        attachments = await process_files(message.elements)
-
-        # Add a Message to the Thread
-        await async_openai_client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=message.content,
-            attachments=attachments,
-        )
-    else:
-
-        # Add a Message to the Thread
-        await async_openai_client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=message.content,
-        )
-
-    # Append to chat history
-    chat_history = cl.user_session.get("chat_history")
-    chat_history.append({"role": "user", "content": message.content})
-    cl.user_session.set("chat_history", chat_history)
-
-    # Check recipes
-    msg = await cl.Message("").send()
-    memory_found, memory_content, memory_response, meta_data_msg = (
-        await async_check_memories_recipes(message.content, chat_history)
-    )
-
-    # memory_foundy=False
-
-    # Message to the thread. If a memory add it as the assistant
-    if memory_found is True:
-        print("Adding memory to thread")
-        await async_openai_client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="assistant",
-            content=memory_content,
-            # attachments=attachments,
-        )
-
-        msg.content = memory_response["content"]
-        msg.elements = memory_response["elements"]
-        await msg.update()
-
-        # TODO really should be part of message above so feedback can apply
-        await cl.Message(meta_data_msg).send()
-
-        # No need to send anything
-        return
-
-    # msg.content = "Can't find anything in my memories, let me do some analysis ..."
-    msg.content = ""
-    await msg.update()
-
-    # Create and Stream a Run
-    print(f"Creating and streaming a run {assistant.id}")
-    with sync_openai_client.beta.threads.runs.stream(
-        thread_id=thread_id,
-        assistant_id=assistant.id,
-        event_handler=EventHandler(assistant_name=assistant.name),
-    ) as stream:
-        stream.until_done()
-
-
 @cl.on_audio_chunk
 async def on_audio_chunk(chunk: cl.AudioChunk):
     """
@@ -693,3 +612,94 @@ def auth_callback(username: str, password: str):
         )
     else:
         return None
+
+
+async def add_message_to_thread(thread_id, role, content, message=None):
+    """
+    Add a message to a thread.
+
+    Args:
+        thread_id (str): The ID of the thread.
+        role (str): The role of the message author.
+        content (str): The content of the message.
+        message (cl.Message): The message object.
+
+    Returns:
+        None
+    """
+    # Azure doesn't yet support attachments
+    if os.getenv("ASSISTANTS_API_TYPE") == "openai":
+
+        if message is not None:
+            attachments = await process_files(message.elements)
+
+        # Add a Message to the Thread
+        await async_openai_client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role=role,
+            content=content,
+            attachments=attachments,
+        )
+    else:
+
+        # Add a Message to the Thread
+        await async_openai_client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role=role,
+            content=content,
+        )
+
+
+@cl.on_message
+async def main(message: cl.Message):
+    """
+    Process the user's message and interact with the assistant.
+
+    Args:
+        message (cl.Message): The user's message.
+
+    Returns:
+        None
+    """
+    thread_id = cl.user_session.get("thread_id")
+    chat_history = cl.user_session.get("chat_history")
+    msg = await cl.Message("").send()
+
+    # Record user's message
+    add_message_to_thread(thread_id, "user", message.content, message)
+    chat_history.append({"role": "user", "content": message.content})
+
+    # Check recipes
+    memory_found, memory_content, memory_response, meta_data_msg = (
+        await async_check_memories_recipes(message.content, chat_history)
+    )
+
+    # Message to the thread. If a memory add it as the assistant
+    if memory_found is True:
+        print("Adding memory to thread")
+        add_message_to_thread(thread_id, "assistant", memory_content)
+
+        # Send memory output
+        msg.content = memory_response["content"]
+        msg.elements = memory_response["elements"]
+        await msg.update()
+
+        # TODO really should be part of message above so feedback can apply
+        await cl.Message(meta_data_msg).send()
+
+    else:
+
+        # msg.content = "Can't find anything in my memories, let me do some analysis ..."
+        msg.content = ""
+        await msg.update()
+
+        # Create and Stream a Run
+        print(f"Creating and streaming a run {assistant.id}")
+        with sync_openai_client.beta.threads.runs.stream(
+            thread_id=thread_id,
+            assistant_id=assistant.id,
+            event_handler=EventHandler(assistant_name=assistant.name),
+        ) as stream:
+            stream.until_done()
+
+    cl.user_session.set("chat_history", chat_history)
