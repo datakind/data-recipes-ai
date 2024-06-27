@@ -249,11 +249,12 @@ def test():
     asyncio.run(app.start_chat())
 
     # Here insert history to thread
+    # thread_id = app.cl.user_session.get("thread_id")
+    # wait app.add_message_to_thread(thread_id, "user", message.content, message)
 
     # msg = cl_mock.Message(author="You", content="What is the total population of Mali", elements=[])
     msg = cl_mock.Message(author="You", content="Hi", elements=[])
-    thread = asyncio.run(app.main(msg))
-    print(thread)
+    asyncio.run(app.main(msg))
 
 
 if __name__ == "__main__":

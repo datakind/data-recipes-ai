@@ -1,0 +1,64 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+environment:
+  python_requirements_txt: requirements.txt
+inputs:
+  query:
+    type: string
+    default: what's the total population of mali?
+  context:
+    type: string
+    default: The total population of Mali is 17,839,995
+outputs:
+  agent_putput:
+    type: string
+    reference: ${call_assistant.output.response}
+  groundedness_score:
+    type: string
+    reference: ${groundedness_score.output}
+  context:
+    type: string
+    reference: ${inputs.context}
+  query:
+    type: string
+    reference: ${inputs.query}
+  function_name:
+    type: string
+    reference: ${call_assistant.output.function_name}
+  function_args:
+    type: string
+    reference: ${call_assistant.output.function_args}
+nodes:
+- name: call_assistant
+  type: python
+  source:
+    type: code
+    path: call_assistant.py
+  inputs: {}
+- name: groundedness_score
+  type: llm
+  source:
+    type: code
+    path: groundedness_score.jinja2
+  inputs:
+    deployment_name: gpt-4-turbo
+    answer: ${call_assistant.output.response}
+    context: ${inputs.context}
+    temperature: 1
+    model: gpt-4-turbo-preview
+  connection: azure_openai
+  api: chat
+- name: concat_scores
+  type: python
+  source:
+    type: code
+    path: concat_scores.py
+  inputs:
+    groundesness_score: ${groundedness_score.output}
+- name: aggregate_variant_results
+  type: python
+  source:
+    type: code
+    path: aggregate_variant_results.py
+  inputs:
+    results: ${concat_scores.output}
+  aggregation: true
