@@ -128,6 +128,8 @@ def get_event_handler(cl, assistant_name):  # noqa: C901
                 self.handle_requires_action(event.data, run_id)
             elif event.event == "thread.message.delta":
                 self.handle_message_delta(event.data)
+            elif event.event == "thread.run.completed":
+                print("Run completed")
             else:
                 print(json.dumps(str(event.data), indent=4))
                 print(f"Unhandled event: {event.event}")
@@ -613,10 +615,6 @@ async def on_audio_end(elements: list[Element]):
         # elements=[input_audio_el, *elements],
     ).send()
 
-    msg = cl.Message(author="You", content=transcription, elements=elements)
-
-    await main(message=msg)
-
 
 @cl.password_auth_callback
 def auth_callback(username: str, password: str):
@@ -654,31 +652,23 @@ async def add_message_to_thread(thread_id, role, content, message=None):
 
     print(f"Content: {content}")
 
+    attachments = []
+
     # Azure doesn't yet support attachments
     if os.getenv("ASSISTANTS_API_TYPE") == "openai":
-
         if message is not None:
             attachments = await process_files(message.elements)
 
-        # Add a Message to the Thread
-        await async_openai_client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role=role,
-            content=content,
-            attachments=attachments,
-        )
-    else:
-
-        # Add a Message to the Thread
-        await async_openai_client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role=role,
-            content=content,
-        )
+    await async_openai_client.beta.threads.messages.create(
+        thread_id=thread_id,
+        role=role,
+        content=content,
+        attachments=attachments,
+    )
 
 
 @cl.on_message
-async def main(message: cl.Message):
+async def process_message(message: cl.Message):
     """
     Process the user's message and interact with the assistant.
 
