@@ -218,7 +218,9 @@ Then ...
 5. Open folder `/app`
 6. Click on `flow.dag.yaml`
 7. Top left of main pane, click on 'Visual editor'
-8. You can no run by clicking the play icon. See Promptflow documentation for more details
+8. On bottom left under connections, configure an Azure OpenAI connection called 'azure_openai'
+9. On the Groundedness node, select your new connection
+10. You can no run by clicking the play icon. See Promptflow documentation for more details
 
 # Deployment
 
