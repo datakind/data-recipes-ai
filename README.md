@@ -214,10 +214,11 @@ Then ...
    `Dev Containers: Attach to remote container`. 
 
    Select the promptflow container. This opens a new VSCode window - use it for the next steps.
-4. Open folder `/app`
-5. Click on `flow.dag.yaml`
-6. Top left of main pane, click on 'Visual editor'
-7. You can no run by clicking the play icon. See Promptflow documentation for more details
+4. Install Promptflow add-in
+5. Open folder `/app`
+6. Click on `flow.dag.yaml`
+7. Top left of main pane, click on 'Visual editor'
+8. You can no run by clicking the play icon. See Promptflow documentation for more details
 
 # Deployment
 
