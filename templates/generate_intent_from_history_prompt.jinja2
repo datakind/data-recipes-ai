@@ -10,12 +10,6 @@ Here is the chat history:
 
 {{ chat_history }}
 
-Important:
-
-- Be careful to note the chat history, they may have just asked a follow-up question
-- Put more emphasis on their last input, it has a stronger influence on the intent than earlier inputs in chat_history
-- include all entities such as places
-
 Intent format:
 
 The intent should cature any of these fields that have been specified in the user's request and history:
@@ -44,7 +38,7 @@ What is the total population of Mali?
 
 Here is the chat history:
 
-[{"author": "user","content": "Hi"},{"author":"assistant","content": "Hello! How can I help you today?"},{"author": "user","content": "What is the total population of Mali"}]
+[{"author": "user","content": "Hi"},{"author": "user","content": "What is the total population of Mali"}]
 
 Output:
 
@@ -84,7 +78,7 @@ Output:
 
 {
     "intent": "plot a bar chart of population by state in Nigeria for 2023 using HDX(HAPI) data, highlighting top 5 states as an image",
-    "reason": "The user's last request specifies the action (plot), visualization type (bar chart), disaggregation (by state), data source (HDX(HAPI) data), location (Nigeria), and output format (image). The user also requested to highlight the top 5 states. There is no need for further clarification."
+    "reason": "The user changed context, their last request specifies the action (plot), visualization type (bar chart), disaggregation (by state), data source (HDX(HAPI) data), location (Nigeria), and output format (image). The user also requested to highlight the top 5 states. There is no need for further clarification."
 }
 
 ======== EXAMPLE 4
@@ -105,6 +99,11 @@ Output:
 }
 
 =======================================================================
+
+Important:
+
+- The user's last input is the most important, but pay attention to the chat history to see if they changed context are are asking something entirely new, or are asking a follow-up question
+- include all entities such as places
 
 Task:
 

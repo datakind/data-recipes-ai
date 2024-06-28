@@ -470,6 +470,9 @@ def check_memories_recipes(user_input: str, history=[]) -> str:
     memory_response = None
     meta_data_msg = ""
 
+    print("History:")
+    print(history)
+
     memory = call_get_memory_recipe_api(
         user_input, history=str(history), generate_intent="true"
     )

@@ -67,6 +67,8 @@ def call_assistant(query: str, chat_history: str) -> dict:
     chat_history = chat_history.replace('"', '\\"')
     chat_history = chat_history.replace("'", "\\'")
 
+    print("History:", chat_history)
+
     result = run_chainlit_mock(chat_history)
 
     response = {"response": result}
@@ -271,6 +273,9 @@ def run_chainlit_mock(chat_history: str) -> str:
         output = process.stdout.readline()
         print(output)
         if output == b"" and process.poll() is not None:
+            print(
+                "Process finished with No output, try running call_assistant by hand to debug."
+            )
             break
         if output:
             all_output += output.decode("utf-8")
@@ -318,7 +323,7 @@ def run_sync(func, *args, **kwargs):
         return func(*args, **kwargs)
 
 
-async def test_using_app_code_async(msg, timeout=5):
+async def test_using_app_code_async(chat_history, timeout=5):
 
     cl_mock = setup_mock_class()
     import app as app
@@ -330,7 +335,22 @@ async def test_using_app_code_async(msg, timeout=5):
 
     thread_id = app.cl.user_session.get("thread_id")
 
-    msg = cl_mock.Message(author="You", content=msg, elements=[])
+    # Here build history
+    chat_history = chat_history.replace("\\", "")
+    print(">>>>>>>> Chat history:", chat_history)
+    history = json.loads(chat_history)
+    last_message = history[-1]
+    app_chat_history = app.cl.user_session.get("chat_history")
+    for message in history:
+        role = message["author"]
+        msg = message["content"]
+        await app.add_message_to_thread(thread_id, role, msg)
+        app_chat_history.append({"role": role, "content": msg})
+    app.cl.user_session.set("chat_history", history)
+
+    print("<<<<<<<< Last message:", last_message)
+
+    msg = cl_mock.Message(author="user", content=last_message["content"], elements=[])
     await app.process_message(msg)
 
     messages = app.sync_openai_client.beta.threads.messages.list(thread_id)
@@ -339,10 +359,10 @@ async def test_using_app_code_async(msg, timeout=5):
     return result
 
 
-def test_using_app_code(msg):
+def test_using_app_code(chat_history):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    result = loop.run_until_complete(test_using_app_code_async(msg))
+    result = loop.run_until_complete(test_using_app_code_async(chat_history))
     loop.close()
     return result
 
