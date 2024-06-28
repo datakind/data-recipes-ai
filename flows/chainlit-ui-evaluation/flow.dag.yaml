@@ -4,7 +4,7 @@ environment:
 inputs:
   query:
     type: string
-    default: Hi
+    default: What's the total population of Mali?
   context:
     type: string
     default: '"The answer is:\n\n            \n            The answer is:
@@ -18,7 +18,7 @@ inputs:
       \"2018-12-31T23:59:59\"}}"'
   chat_history:
     type: string
-    default: '[{"author": "user","content": "Whatis the total population of Mali?"}]'
+    default: '[{"author": "user","content": "Hi!"}]'
 outputs:
   agent_output:
     type: string

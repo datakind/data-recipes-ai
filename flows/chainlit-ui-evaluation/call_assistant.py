@@ -132,7 +132,7 @@ def setup_mock_class():
             Returns:
                 MockMessage: The updated message.
             """
-            print(f"Streaming token: Author: {self.author}, Content: {content}")
+            # print(f"Streaming token: Author: {self.author}, Content: {content}")
             self.content += content
             return self
 
