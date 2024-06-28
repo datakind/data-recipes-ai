@@ -9,7 +9,7 @@ inputs:
     type: string
     default: The total population of Mali is 17,839,995
 outputs:
-  agent_putput:
+  agent_output:
     type: string
     reference: ${call_assistant.output.response}
   groundedness_score:
@@ -21,12 +21,6 @@ outputs:
   query:
     type: string
     reference: ${inputs.query}
-  function_name:
-    type: string
-    reference: ${call_assistant.output.function_name}
-  function_args:
-    type: string
-    reference: ${call_assistant.output.function_args}
 nodes:
 - name: call_assistant
   type: python
