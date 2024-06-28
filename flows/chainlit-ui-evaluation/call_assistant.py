@@ -16,11 +16,12 @@ OUTPUT_TAG = "ASSISTANT_OUTPUT"
 
 @tool
 # async def call_assistant(chat_history: list) -> dict:
-def call_assistant(query: str) -> dict:
+def call_assistant(query: str, chat_history: str) -> dict:
     """
     Calls the assistant API with the given input and retrieves the response.
 
     Args:
+        query: What the user asked
         chat_history (list): A list containing the chat history, of the format ...
 
         [
@@ -43,17 +44,25 @@ def call_assistant(query: str) -> dict:
               function output, and the number of tokens in the function output.
     """
 
-    chat_history = [
-        {"author": "user", "content": "Hi"},
-        {
-            "author": "assistant",
-            "content": "Hello! How can I help you today?",
-        },
-        {
-            "author": "assistant",
-            "content": "Hi again!",
-        },
-    ]
+    print(chat_history)
+
+    chat_history = json.loads(chat_history)
+
+    # Add user query to chat history
+    chat_history.append({"author": "user", "content": query})
+
+    # chat_history = [
+    #     {"author": "user", "content": "Hi"},
+    #     {
+    #         "author": "assistant",
+    #         "content": "Hello! How can I help you today?",
+    #     },
+    #     {
+    #         "author": "assistant",
+    #         "content": "Hi again!",
+    #     },
+    # ]
+
     chat_history = json.dumps(chat_history)
     chat_history = chat_history.replace('"', '\\"')
     chat_history = chat_history.replace("'", "\\'")

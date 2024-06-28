@@ -8,6 +8,13 @@ inputs:
   context:
     type: string
     default: The total population of Mali is 17,839,995
+  chat_history:
+    type: string
+    default: "[{\"author\": \"user\",\"content\":
+      \"Hi\"},{\"author\":\"assistant\",\"content\": \"Hello!
+      How can I help you today?\"},{\"author\":
+      \"assistant\",\"content\": \"What is the total population of
+      Mali?\"}]"
 outputs:
   agent_output:
     type: string
@@ -29,6 +36,7 @@ nodes:
     path: call_assistant.py
   inputs:
     query: ${inputs.query}
+    chat_history: ${inputs.chat_history}
 - name: groundedness_score
   type: llm
   source:
