@@ -201,6 +201,12 @@ To activate:
 
 # Evaluation with Prompt Flow
 
+First, you will need to build the environment to include Prompt Flow ...
+
+`docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d --build`
+
+Then ...
+
 1. Install the DevContainers VSCode extension 
 2. Build data recipes using the `docker compose` command mentioned above
 3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
@@ -211,6 +217,7 @@ To activate:
 4. Open folder `/app`
 5. Click on `flow.dag.yaml`
 6. Top left of main pane, click on 'Visual editor'
+7. You can no run by clicking the play icon. See Promptflow documentation for more details
 
 # Deployment
 
