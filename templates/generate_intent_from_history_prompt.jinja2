@@ -36,8 +36,75 @@ user_preferences: Any user-specific preferences for the analysis or output (e.g.
 
 Here are some examples of what your output should look like:
 
-plot a bar chart of population by state in Nigeria for 2023 using HDX(HAPI) data, highlighting top 5 states as an image
-generate a line chart of average commodity prices by year for 2022-2023 for Haiti
+======== EXAMPLE 1
+
+The user asked this question:
+
+What is the total population of Mali?
+
+Here is the chat history:
+
+[{"author": "user","content": "Hi"},{"author":"assistant","content": "Hello! How can I help you today?"},{"author": "user","content": "What is the total population of Mali"}]
+
+Output:
+
+{
+    "intent": "provide the total population of Mali",
+    "reason": "The user's last request clearly asked for the total population of Mali in their last input. There is no need for further clarification."
+}
+
+======== EXAMPLE 2
+
+The user asked this question:
+
+Can you give me average commodity prices by year for 2022-2023 for Haiti?
+
+Here is the chat history:
+
+[{"author": "user","content": "Can you give me average commodity prices by year for 2022-2023 for Haiti?"}]
+
+Output:
+
+{
+    "intent": "generate a line chart of average commodity prices by year for 2022-2023 for Haiti",
+    "reason": "The user's last request specifies the action (generate), visualization type (line chart), data type (average commodity prices), time range (2022-2023), and location (Haiti). There is no need for further clarification."
+}
+
+======== EXAMPLE 3
+
+The user asked this question:
+
+Plot a bar chart for the population of Nigeria by admin 1, and highlight the top 5 states please
+
+Here is the chat history:
+
+[{"author": "user","content": "Do you have data on conflicts in Ethiopia"}, {"author": "user","content": "Plot a map for the population of Nigeria by admin 1"}]
+
+Output:
+
+{
+    "intent": "plot a bar chart of population by state in Nigeria for 2023 using HDX(HAPI) data, highlighting top 5 states as an image",
+    "reason": "The user's last request specifies the action (plot), visualization type (bar chart), disaggregation (by state), data source (HDX(HAPI) data), location (Nigeria), and output format (image). The user also requested to highlight the top 5 states. There is no need for further clarification."
+}
+
+======== EXAMPLE 4
+
+The user asked this question:
+
+Plot that by state on a map
+
+Here is the chat history:
+
+[{"author": "user","content": "What's the total populkation of Nigeria?"}, {"author": "user","content": "Plot that by state on a map"}]
+
+Output:
+
+{
+    "intent": "plot a map of the total population of Nigeria by state as an image",
+    "reason": "The user's last request was a follow-on from a previous request and specifies the action (plot), visualization type (map), disaggregation (by state), data type (total population), location (Nigeria), and output format (image). There is no need for further clarification."
+}
+
+=======================================================================
 
 Task:
 
