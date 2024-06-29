@@ -44,7 +44,7 @@ jobs:
         IMAGE_HOST: ${{ secrets.IMAGE_HOST }} 
         RECIPE_SERVER_API: ${{ secrets.RECIPE_SERVER_API }} 
 
-        CHAINLIT_AUTH_SECRET: ${{ secrets.CHAINLIT_AUTH_SECRET= }} 
+        CHAINLIT_AUTH_SECRET: ${{ secrets.CHAINLIT_AUTH_SECRET }} 
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
 
