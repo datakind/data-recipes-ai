@@ -73,9 +73,13 @@ jobs:
         #  uses: ./.github/actions/setvars
         #  with:
         #    varFilePath: ./.github/variables/variables.env
-       
-        - name: Pull latest Docker images
-          run: docker pull ankane/pgvector:latest
+    
+
+        - name: Debugging information
+          run: |
+            docker-compose --version
+            docker images ankane/pgvector:latest
+            docker run --rm ankane/pgvector:latest ls /usr/local/bin
 
         - name: Build the stack
           run: |
