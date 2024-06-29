@@ -83,7 +83,9 @@ jobs:
         - name: Run the stack
           run: |
             env > .env 
-            docker-compose -f docker-compose.yml -f docker-compose-dev.yml up -d
+            #docker-compose -f docker-compose.yml -f docker-compose-dev.yml up -d
+            docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
+            docker compose -f docker-compose.yml -f docker-compose-dev.yml start recipedb datadb server promptflow
             docker ps
 
         - name: Self tests (Integration)
