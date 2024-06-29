@@ -79,7 +79,8 @@ jobs:
           run: |
             docker-compose --version
             docker images ankane/pgvector:latest
-            docker run --rm ankane/pgvector:latest ls /usr/local/bin
+            docker run --rm ankane/pgvector:latest cat /usr/local/bin/docker-entrypoint.sh
+
 
         - name: Build the stack
           run: |
