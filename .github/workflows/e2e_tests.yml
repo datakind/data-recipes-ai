@@ -102,7 +102,7 @@ jobs:
             docker-compose \
             -f docker-compose.yml -f docker-compose.dev.yml \
             config > docker-stack.yml
-            docker-compose -f docker-stack.yml up -d
+            docker-compose -f docker-stack.yml start recipedb datadb server promptflow
             echo "logs db ..."
             docker-compose -f docker-stack.yml logs recipedb
             sleep 10
