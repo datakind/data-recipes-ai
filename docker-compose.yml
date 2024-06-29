@@ -140,7 +140,6 @@ services:
       - ./utils:/app/utils
       - ./templates:/app/templates
       - ./db/recipedb:/app/db
-
 volumes:
   pgdata2:
   shared-data:

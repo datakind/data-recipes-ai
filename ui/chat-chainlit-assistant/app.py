@@ -72,158 +72,181 @@ bot_name = os.getenv("ASSISTANTS_BOT_NAME")
 config.ui.name = bot_name
 
 
-class EventHandler(AssistantEventHandler):
+def get_event_handler(cl, assistant_name):  # noqa: C901
+    """
+    Returns an instance of the EventHandler class, which is responsible for handling events in the ChatChainlitAssistant.
 
-    def __init__(self, assistant_name: str) -> None:
-        """
-        Initializes a new instance of the ChatChainlitAssistant class.
+    Args:
+        cl: The ChatClient instance used for communication with the chat service.
+        assistant_name (str): The name of the assistant.
 
-        Args:
-            assistant_name (str): The name of the assistant.
+    Returns:
+        EventHandler: An instance of the EventHandler class.
+    """
 
-        Returns:
-            None
-        """
-        super().__init__()
-        self.current_message: cl.Message = None
-        self.current_step: cl.Step = None
-        self.current_tool_call = None
-        self.current_message_text = ""
-        self.assistant_name = assistant_name
+    class EventHandler(AssistantEventHandler):
 
-    @override
-    def on_event(self, event):
-        """
-        Handles the incoming event and performs the necessary actions based on the event type.
+        def __init__(self, assistant_name: str) -> None:
+            """
+            Initializes a new instance of the ChatChainlitAssistant class.
 
-        Args:
-            event: The event object containing information about the event.
+            Args:
+                assistant_name (str): The name of the assistant.
 
-        Returns:
-            None
-        """
-        print(event.event)
-        run_id = event.data.id
-        if event.event == "thread.message.created":
-            self.current_message = run_sync(cl.Message(content="").send())
+            Returns:
+                None
+            """
+            super().__init__()
+            self.current_message: cl.Message = None
+            self.current_step: cl.Step = None
+            self.current_tool_call = None
             self.current_message_text = ""
-            print("Run started")
-        if event.event == "thread.message.completed":
-            self.handle_message_completed(event.data, run_id)
-        elif event.event == "thread.run.requires_action":
-            self.handle_requires_action(event.data, run_id)
-        elif event.event == "thread.message.delta":
-            self.handle_message_delta(event.data)
-        else:
-            print(json.dumps(str(event.data), indent=4))
-            print(f"Unhandled event: {event.event}")
+            self.assistant_name = assistant_name
+            self.cl = cl
 
-    def handle_message_delta(self, data):
-        """
-        Handles the message delta data.
+        @override
+        def on_event(self, event):
+            """
+            Handles the incoming event and performs the necessary actions based on the event type.
 
-        Args:
-            data: The message delta data.
+            Args:
+                event: The event object containing information about the event.
 
-        Returns:
-            None
-        """
-        for content in data.delta.content:
-            if content.type == "text":
-                content = content.text.value
-                if content is not None:
-                    self.current_message_text += content
-                    run_sync(self.current_message.stream_token(content))
-            elif content.type == "image_file":
-                file_id = content.image_file.file_id
-                image_data = sync_openai_client.files.content(file_id)
-                image_data_bytes = image_data.read()
-                png_file = f"{images_loc}{file_id}.png"
-                print(f"Writing image to {png_file}")
-                with open(png_file, "wb") as file:
-                    file.write(image_data_bytes)
-                    image = cl.Image(path=png_file, display="inline", size="large")
-                    print(f"Image: {png_file}")
-                    if not self.current_message.elements:
-                        self.current_message.elements = []
-                        self.current_message.elements.append(image)
-                        run_sync(self.current_message.update())
+            Returns:
+                None
+            """
+            print(event.event)
+            run_id = event.data.id
+            if event.event == "thread.message.created":
+                self.current_message = self.cl.Message(content="")
+                self.current_message = run_sync(self.current_message.send())
+                self.current_message_text = ""
+                print("Run started")
+            if event.event == "thread.message.completed":
+                self.handle_message_completed(event.data, run_id)
+            elif event.event == "thread.run.requires_action":
+                self.handle_requires_action(event.data, run_id)
+            elif event.event == "thread.message.delta":
+                self.handle_message_delta(event.data)
+            elif event.event == "thread.run.completed":
+                print("Run completed")
             else:
-                print(f"Unhandled delta type: {content.type}")
+                print(json.dumps(str(event.data), indent=4))
+                print(f"Unhandled event: {event.event}")
 
-    def handle_message_completed(self, data, run_id):
-        """
-        Handles the completion of a message.
+        def handle_message_delta(self, data):
+            """
+            Handles the message delta data.
 
-        Args:
-            data: The data associated with the completed message.
-            run_id: The ID of the message run.
+            Args:
+                data: The message delta data.
 
-        Returns:
-            None
-        """
-        # Add footer to self message. We have to start a new message so it's in right order
-        # TODO combine streaming with image and footer
-        run_sync(self.current_message.update())
-        self.current_message = run_sync(
-            cl.Message(content="", disable_feedback=True).send()
-        )
+            Returns:
+                None
+            """
+            for content in data.delta.content:
+                if content.type == "text":
+                    content = content.text.value
+                    if content is not None:
+                        self.current_message_text += content
+                        run_sync(self.current_message.stream_token(content))
+                elif content.type == "image_file":
+                    file_id = content.image_file.file_id
+                    image_data = sync_openai_client.files.content(file_id)
+                    image_data_bytes = image_data.read()
+                    png_file = f"{images_loc}{file_id}.png"
+                    print(f"Writing image to {png_file}")
+                    with open(png_file, "wb") as file:
+                        file.write(image_data_bytes)
+                        image = cl.Image(path=png_file, display="inline", size="large")
+                        print(f"Image: {png_file}")
+                        if not self.current_message.elements:
+                            self.current_message.elements = []
+                            self.current_message.elements.append(image)
+                            run_sync(self.current_message.update())
+                else:
+                    print(f"Unhandled delta type: {content.type}")
 
-        word_count = len(self.current_message_text.split())
-        if word_count > 10:
-            run_sync(self.current_message.stream_token(llm_footer))
-        run_sync(self.current_message.update())
+        def handle_message_completed(self, data, run_id):
+            """
+            Handles the completion of a message.
 
-    def handle_requires_action(self, data, run_id):
-        """
-        Handles the required action by executing the specified tools and submitting the tool outputs.
+            Args:
+                data: The data associated with the completed message.
+                run_id: The ID of the message run.
 
-        Args:
-            data: The data containing the required action information.
-            run_id: The ID of the current run.
+            Returns:
+                None
+            """
+            # Add footer to self message. We have to start a new message so it's in right order
+            # TODO combine streaming with image and footer
+            run_sync(self.current_message.update())
+            self.current_message = run_sync(
+                cl.Message(content="", disable_feedback=True).send()
+            )
 
-        Returns:
-            None
-        """
-        tool_outputs = []
+            word_count = len(self.current_message_text.split())
+            if word_count > 10:
+                run_sync(self.current_message.stream_token(llm_footer))
+            run_sync(self.current_message.update())
 
-        for tool in data.required_action.submit_tool_outputs.tool_calls:
-            print(tool)
+        def handle_requires_action(self, data, run_id):
+            """
+            Handles the required action by executing the specified tools and submitting the tool outputs.
 
-            function_name = tool.function.name
-            function_args = tool.function.arguments
+            Args:
+                data: The data containing the required action information.
+                run_id: The ID of the current run.
 
-            function_output = run_function(function_name, function_args)
+            Returns:
+                None
+            """
+            tool_outputs = []
 
-            tool_outputs.append({"tool_call_id": tool.id, "output": function_output})
+            for tool in data.required_action.submit_tool_outputs.tool_calls:
+                print(tool)
 
-        print("TOOL OUTPUTS: ")
+                function_name = tool.function.name
+                function_args = tool.function.arguments
 
-        print(tool_outputs)
+                function_output = run_function(function_name, function_args)
 
-        # Submit all tool_outputs at the same time
-        self.submit_tool_outputs(tool_outputs, run_id)
+                tool_outputs.append(
+                    {"tool_call_id": tool.id, "output": function_output}
+                )
 
-    def submit_tool_outputs(self, tool_outputs, run_id):
-        """
-        Submits the tool outputs to the current run.
+            print("TOOL OUTPUTS: ")
 
-        Args:
-            tool_outputs (list): A list of tool outputs to be submitted.
-            run_id (str): The ID of the current run.
+            print(tool_outputs)
 
-        Returns:
-            None
-        """
-        with sync_openai_client.beta.threads.runs.submit_tool_outputs_stream(
-            thread_id=self.current_run.thread_id,
-            run_id=self.current_run.id,
-            tool_outputs=tool_outputs,
-            event_handler=EventHandler(assistant_name=self.assistant_name),
-        ) as stream:
-            # Needs this line, or it doesn't work! :)
-            for text in stream.text_deltas:
-                print(text)
+            # Submit all tool_outputs at the same time
+            self.submit_tool_outputs(tool_outputs, run_id)
+
+        def submit_tool_outputs(self, tool_outputs, run_id):
+            """
+            Submits the tool outputs to the current run.
+
+            Args:
+                tool_outputs (list): A list of tool outputs to be submitted.
+                run_id (str): The ID of the current run.
+
+            Returns:
+                None
+            """
+            event_handler = get_event_handler(cl, assistant.name)
+            with sync_openai_client.beta.threads.runs.submit_tool_outputs_stream(
+                thread_id=self.current_run.thread_id,
+                run_id=self.current_run.id,
+                tool_outputs=tool_outputs,
+                event_handler=event_handler,
+            ) as stream:
+                # Needs this line, or it doesn't work! :)
+                for text in stream.text_deltas:
+                    print(text)
+
+    event_handler = EventHandler(assistant_name)
+
+    return event_handler
 
 
 def run_function(function_name, function_args):
@@ -365,17 +388,20 @@ async def start_chat():
     It also sends an avatar and a welcome message to the chat.
 
     Returns:
-        None
+        dict: The thread object returned by the OpenAI API.
     """
     # Create a Thread
     thread = await async_openai_client.beta.threads.create()
     # Store thread ID in user session for later use
     cl.user_session.set("thread_id", thread.id)
+
     await cl.Message(
         content="Hi. I'm your humanitarian AI assistant.", disable_feedback=True
     ).send()
 
     cl.user_session.set("chat_history", [])
+
+    return thread
 
 
 def get_metadata_footer(metadata):
@@ -443,6 +469,9 @@ def check_memories_recipes(user_input: str, history=[]) -> str:
     memory_content = None
     memory_response = None
     meta_data_msg = ""
+
+    print("History:")
+    print(history)
 
     memory = call_get_memory_recipe_api(
         user_input, history=str(history), generate_intent="true"
@@ -535,87 +564,6 @@ def check_memories_recipes(user_input: str, history=[]) -> str:
 async_check_memories_recipes = make_async(check_memories_recipes)
 
 
-@cl.on_message
-async def main(message: cl.Message):
-    """
-    Process the user's message and interact with the assistant.
-
-    Args:
-        message (cl.Message): The user's message.
-
-    Returns:
-        None
-    """
-    thread_id = cl.user_session.get("thread_id")
-
-    # Azure doesn't yet support attachments
-    if os.getenv("ASSISTANTS_API_TYPE") == "openai":
-
-        attachments = await process_files(message.elements)
-
-        # Add a Message to the Thread
-        await async_openai_client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=message.content,
-            attachments=attachments,
-        )
-    else:
-
-        # Add a Message to the Thread
-        await async_openai_client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=message.content,
-        )
-
-    # Append to chat history
-    chat_history = cl.user_session.get("chat_history")
-    chat_history.append({"role": "user", "content": message.content})
-    cl.user_session.set("chat_history", chat_history)
-
-    # Check recipes
-    msg = await cl.Message("").send()
-    memory_found, memory_content, memory_response, meta_data_msg = (
-        await async_check_memories_recipes(message.content, chat_history)
-    )
-
-    # memory_foundy=False
-
-    # Message to the thread. If a memory add it as the assistant
-    if memory_found is True:
-        print("Adding memory to thread")
-        await async_openai_client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="assistant",
-            content=memory_content,
-            # attachments=attachments,
-        )
-
-        msg.content = memory_response["content"]
-        msg.elements = memory_response["elements"]
-        await msg.update()
-
-        # TODO really should be part of message above so feedback can apply
-        await cl.Message(meta_data_msg).send()
-
-        # No need to send anything
-        return
-
-    # msg.content = "Can't find anything in my memories, let me do some analysis ..."
-    msg.content = ""
-    await msg.update()
-
-    # Create and Stream a Run
-    print(f"Creating and streaming a run {assistant.id}")
-    with sync_openai_client.beta.threads.runs.stream(
-        thread_id=thread_id,
-        assistant_id=assistant.id,
-        event_handler=EventHandler(assistant_name=assistant.name),
-    ) as stream:
-        stream.until_done()
-
-
 @cl.on_audio_chunk
 async def on_audio_chunk(chunk: cl.AudioChunk):
     """
@@ -670,10 +618,6 @@ async def on_audio_end(elements: list[Element]):
         # elements=[input_audio_el, *elements],
     ).send()
 
-    msg = cl.Message(author="You", content=transcription, elements=elements)
-
-    await main(message=msg)
-
 
 @cl.password_auth_callback
 def auth_callback(username: str, password: str):
@@ -693,3 +637,91 @@ def auth_callback(username: str, password: str):
         )
     else:
         return None
+
+
+async def add_message_to_thread(thread_id, role, content, message=None):
+    """
+    Add a message to a thread.
+
+    Args:
+        thread_id (str): The ID of the thread.
+        role (str): The role of the message author.
+        content (str): The content of the message.
+        message (cl.Message): The message object.
+
+    Returns:
+        None
+    """
+
+    print(f"Content: {content}")
+
+    attachments = []
+
+    # Azure doesn't yet support attachments
+    if os.getenv("ASSISTANTS_API_TYPE") == "openai":
+        if message is not None:
+            attachments = await process_files(message.elements)
+
+    await async_openai_client.beta.threads.messages.create(
+        thread_id=thread_id,
+        role=role,
+        content=content,
+        attachments=attachments,
+    )
+
+
+@cl.on_message
+async def process_message(message: cl.Message):
+    """
+    Process the user's message and interact with the assistant.
+
+    Args:
+        message (cl.Message): The user's message.
+
+    Returns:
+        None
+    """
+
+    thread_id = cl.user_session.get("thread_id")
+    chat_history = cl.user_session.get("chat_history")
+    chat_history.append({"role": "user", "content": message.content})
+
+    # Add user message to thread
+    print(f"Adding user message {message.content} to thread {thread_id}")
+    await add_message_to_thread(thread_id, "user", message.content, message)
+
+    # Check memories/recipes
+    msg = await cl.Message("").send()
+    memory_found, memory_content, memory_response, meta_data_msg = (
+        await async_check_memories_recipes(message.content, chat_history)
+    )
+
+    if memory_found is True:
+        print("Adding memory to thread as assistant")
+        await add_message_to_thread(thread_id, "assistant", memory_content)
+
+        # output memory artifacts
+        msg.content = memory_response["content"]
+        msg.elements = memory_response["elements"]
+        await msg.update()
+
+        # TODO really should be part of message above so feedback can apply
+        await cl.Message(meta_data_msg).send()
+
+    else:
+
+        # msg.content = "Can't find anything in my memories, let me do some analysis ..."
+        msg.content = ""
+        await msg.update()
+
+        # Create and Stream a Run to assistant
+        print(f"Creating and streaming a run {assistant.id}")
+        event_handler = get_event_handler(cl, assistant.name)
+        with sync_openai_client.beta.threads.runs.stream(
+            thread_id=thread_id,
+            assistant_id=assistant.id,
+            event_handler=event_handler,
+        ) as stream:
+            stream.until_done()
+
+    cl.user_session.set("chat_history", chat_history)

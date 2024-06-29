@@ -199,6 +199,29 @@ To activate:
 6. Go to playground and start a new session, select the 'Recipes data Analysis' workflow
 7. Ask 'What is the total population of Mali?'
 
+# Evaluation with Prompt Flow
+
+First, you will need to build the environment to include Prompt Flow ...
+
+`docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d --build`
+
+Then ...
+
+1. Install the DevContainers VSCode extension 
+2. Build data recipes using the `docker compose` command mentioned above
+3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
+
+   `Dev Containers: Attach to remote container`. 
+
+   Select the promptflow container. This opens a new VSCode window - use it for the next steps.
+4. Install Promptflow add-in
+5. Open folder `/app`
+6. Click on `flow.dag.yaml`
+7. Top left of main pane, click on 'Visual editor'
+8. On bottom left under connections, configure an Azure OpenAI connection called 'azure_openai'
+9. On the Groundedness node, select your new connection
+10. You can no run by clicking the play icon. See Promptflow documentation for more details
+
 # Deployment
 
 We will add more details here soon, for now, here are some notes on Azure ...

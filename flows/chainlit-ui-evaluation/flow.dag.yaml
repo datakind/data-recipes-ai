@@ -1,0 +1,71 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+environment:
+  python_requirements_txt: requirements.txt
+inputs:
+  query:
+    type: string
+    default: What's the total population of Mali?
+  context:
+    type: string
+    default: '"The answer is:\n\n            \n            The answer is:
+      **17,907,114.0**\n\n            Metadata for the
+      answer:\n            {\"params\": {\"country_code\": \"MLI\"},
+      \"attribution\":
+      \"https://data.humdata.org/dataset/ce21c7db-d8f0-40f8-adc2-452d2d2d105c\",
+      \"data_url\":
+      \"https://data.humdata.org/dataset/ce21c7db-d8f0-40f8-adc2-452d2d2d105c/resource/6f243ba2-4d4a-4663-a7c4-e917dbbde73a/download/mli_pop_adm0_v2.csv\",
+      \"time_period\": {\"start\": \"2018-01-01\", \"end\":
+      \"2018-12-31T23:59:59\"}}"'
+  chat_history:
+    type: string
+    default: '[{"author": "user","content": "Hi!"}]'
+outputs:
+  agent_output:
+    type: string
+    reference: ${call_assistant.output.response}
+  groundedness_score:
+    type: string
+    reference: ${groundedness_score.output}
+  context:
+    type: string
+    reference: ${inputs.context}
+  query:
+    type: string
+    reference: ${inputs.query}
+nodes:
+- name: call_assistant
+  type: python
+  source:
+    type: code
+    path: call_assistant.py
+  inputs:
+    query: ${inputs.query}
+    chat_history: ${inputs.chat_history}
+- name: groundedness_score
+  type: llm
+  source:
+    type: code
+    path: groundedness_score.jinja2
+  inputs:
+    deployment_name: gpt-4-turbo
+    answer: ${call_assistant.output.response}
+    context: ${inputs.context}
+    temperature: 1
+    model: gpt-4-turbo-preview
+  connection: azure_openai
+  api: chat
+- name: concat_scores
+  type: python
+  source:
+    type: code
+    path: concat_scores.py
+  inputs:
+    groundesness_score: ${groundedness_score.output}
+- name: aggregate_variant_results
+  type: python
+  source:
+    type: code
+    path: aggregate_variant_results.py
+  inputs:
+    results: ${concat_scores.output}
+  aggregation: true
