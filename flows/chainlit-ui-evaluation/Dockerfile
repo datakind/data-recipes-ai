@@ -20,6 +20,8 @@ RUN pip3 install chainlit==1.1.305
 # Needed for promptflow connections
 RUN pip install keyrings.alt
 
+WORKDIR /app/chainlit-ui-evaluation
+
 # Set up Connections
-RUN cd /app/chainlit-ui-evaluation && pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
-RUN cd /app/chainlit-ui-evaluation && pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
+RUN pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
+RUN pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
