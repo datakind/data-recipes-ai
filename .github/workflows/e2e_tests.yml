@@ -74,32 +74,27 @@ jobs:
         #  with:
         #    varFilePath: ./.github/variables/variables.env
        
-        #- name: Build the stack
-        #  run: |
-        #    env > .env 
-        #    echo $ASSISTANTS_API_TYPE
-        #    #docker buildx create --use --driver=docker-container
-        #    #docker buildx bake -f ./docker-compose.yml  -f docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 recipedb datadb server promptflow
+        - name: Build the stack
+          run: |
+            env > .env 
+            export DATA_DB_CONN_STRING="postgresql://${POSTGRES_DATA_USER}:${POSTGRES_DATA_PASSWORD}@${POSTGRES_DATA_HOST}:${POSTGRES_DATA_PORT}/${POSTGRES_DATA_DB}"
+            export POSTGRES_RECIPE_CONN_STRING="postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@${POSTGRES_RECIPE_HOST}:${POSTGRES_RECIPE_PORT}/${POSTGRES_RECIPE_DB}"
+            docker buildx create --use --driver=docker-container
+            docker buildx bake -f ./docker-compose.yml  -f docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 recipedb datadb server promptflow
         #    docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
 
 
-        #- name: Run the stack
-        #  run: |
-        #    env > .env 
-        #    docker compose -f docker-compose.yml -f docker-compose-dev.yml start recipedb datadb server promptflow
-        #    docker ps
+        - name: Run the stack
+          run: |
+            export DATA_DB_CONN_STRING="postgresql://${POSTGRES_DATA_USER}:${POSTGRES_DATA_PASSWORD}@${POSTGRES_DATA_HOST}:${POSTGRES_DATA_PORT}/${POSTGRES_DATA_DB}"
+            export POSTGRES_RECIPE_CONN_STRING="postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@${POSTGRES_RECIPE_HOST}:${POSTGRES_RECIPE_PORT}/${POSTGRES_RECIPE_DB}"
+            env > .env 
+            docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d recipedb datadb server promptflow
+            docker ps
 
         - name: End to End tests using Promtpflow and chainlit code
           run:  |
             set -e
-            env > .env
-            export DATA_DB_CONN_STRING="postgresql://${POSTGRES_DATA_USER}:${POSTGRES_DATA_PASSWORD}@${POSTGRES_DATA_HOST}:${POSTGRES_DATA_PORT}/${POSTGRES_DATA_DB}"
-            export POSTGRES_RECIPE_CONN_STRING="postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@${POSTGRES_RECIPE_HOST}:${POSTGRES_RECIPE_PORT}/${POSTGRES_RECIPE_DB}"
-            # We only build a subset of what's needed so space isn't an issue
-            docker-compose -f docker-compose.yml -f docker-compose-dev.yml up -d recipedb datadb server promptflow
-            echo "logs db ..."
-            docker-compose -f docker-compose.yml -f docker-compose-dev.yml logs recipedb
-            sleep 10
             docker ps
             echo "logs backend ..."
             docker-compose -f docker-compose.yml -f docker-compose-dev.yml  logs server
