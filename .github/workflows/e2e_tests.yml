@@ -79,12 +79,13 @@ jobs:
             env > .env 
             export DATA_DB_CONN_STRING="postgresql://${POSTGRES_DATA_USER}:${POSTGRES_DATA_PASSWORD}@${POSTGRES_DATA_HOST}:${POSTGRES_DATA_PORT}/${POSTGRES_DATA_DB}"
             export POSTGRES_RECIPE_CONN_STRING="postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@${POSTGRES_RECIPE_HOST}:${POSTGRES_RECIPE_PORT}/${POSTGRES_RECIPE_DB}"
-            export COMPOSE_PROFILES=*
             docker buildx create --use --driver=docker-container
             docker buildx bake -f ./docker-compose.yml  -f docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 recipedb datadb server promptflow
+            #docker buildx bake -f ./docker-compose.yml  -f docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 recipedb datadb server promptflow
+ 
+            docker buildx bake -f ./docker-compose.yml  --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 recipedb datadb server promptflow
+ 
             #docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
-
-            #docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb
 
 
 
