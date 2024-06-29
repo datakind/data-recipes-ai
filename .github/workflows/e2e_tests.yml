@@ -95,10 +95,6 @@ jobs:
                 echo "Remove __pycache__ files"
                 sudo find . -type d -name __pycache__ -exec rm -r {} \+
             fi
-            DOMAIN=backend \
-            SMTP_HOST="" \
-            TRAEFIK_PUBLIC_NETWORK_IS_EXTERNAL=false \
-            INSTALL_DEV=true \
             docker-compose \
             -f docker-compose.yml -f docker-compose-dev.yml \
             config > docker-stack.yml
@@ -109,9 +105,11 @@ jobs:
             docker ps
             echo "logs backend ..."
             docker-compose -f docker-stack.yml logs server
-            #echo "Tests ..."
-            #docker-compose -f docker-stack.yml exec -T backend /app/tests-start.sh --ignore=app/tests/api/api_v1/self/ "$@" -s
-            #echo "Logs backend ..."
-            docker-compose -f docker-stack.yml logs backend
+            echo "Tests ..."
+            docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run
+            docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation pf run show-details -n base_run
+            docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation pf run show-metrics -n base_run
+            docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation pf run visualize -n base_run
+            docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation python3 check_evaluation_results.py
             docker-compose -f docker-stack.yml down -v --remove-orphans
 

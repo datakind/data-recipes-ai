@@ -2,12 +2,11 @@
 
 services:
   promptflow:
-    #image: mcr.microsoft.com/azureml/promptflow/promptflow-runtime-stable:latest
     build:
       context: .
       dockerfile: ./flows/chainlit-ui-evaluation//Dockerfile
       args:
-        OPENAI_API_KEY: ${ASSISTANTS_API_KEY}
+        OPENAI_API_KEY: ${OPENAI_API_KEY}
         OPENAI_API_ENDPOINT: ${ASSISTANTS_BASE_URL}
     container_name: recipes-ai-promptflow
     env_file:
