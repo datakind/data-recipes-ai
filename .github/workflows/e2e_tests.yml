@@ -92,6 +92,7 @@ jobs:
         - name: End to End tests using Promtpflow and chainlit code
           run:  |
             set -e
+            env > .env
             docker-compose -f docker-compose.yml -f docker-compose-dev.yml  build recipedb datadb server promptflow
             docker-compose -f docker-compose.yml -f docker-compose-dev.yml  start recipedb datadb server promptflow
             echo "logs db ..."
@@ -99,12 +100,12 @@ jobs:
             sleep 10
             docker ps
             echo "logs backend ..."
-            docker-compose -f docker-stack.yml logs server
+            docker-compose -f docker-stack.yml -f docker-compose-dev.yml  logs server
             echo "Tests ..."
             docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run
             docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation promptflow pf run show-details -n base_run
             docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation promptflow pf run show-metrics -n base_run
             #docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation promptflow pf run visualize -n base_run
             docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation promptflow python3 check_evaluation_results.py
-            docker-compose -f docker-stack.yml down -v --remove-orphans
+            docker-compose -f docker-stack.yml -f docker-compose-dev.yml down -v --remove-orphans
 
