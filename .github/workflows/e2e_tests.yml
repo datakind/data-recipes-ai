@@ -1,0 +1,113 @@
+name: End-to-End Tests
+
+on: [push, pull_request]
+
+#on:
+#  pull_request_target:
+#    types: [labeled]
+
+jobs:
+
+  test:
+      runs-on: ubuntu-latest
+      env: 
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ASSISTANTS_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ASSISTANTS_API_TYPE: ${{ secrets.ASSISTANTS_API_TYPE }}
+        ASSISTANTS_ID: ${{ secrets.ASSISTANTS_ID }} 
+        ASSISTANTS_BASE_URL: ${{ secrets.ASSISTANTS_BASE_URL }} 
+        ASSISTANTS_MODEL: ${{ secrets.ASSISTANTS_MODEL }} 
+        ASSISTANTS_BOT_NAME: ${{ secrets.ASSISTANTS_BOT_NAME }} 
+
+        POSTGRES_DATA_HOST: ${{ secrets.POSTGRES_DATA_HOST }} 
+        POSTGRES_DATA_PORT: ${{ secrets.POSTGRES_DATA_PORT }} 
+        POSTGRES_DATA_DB: ${{ secrets.POSTGRES_DATA_DB }} 
+        POSTGRES_DATA_USER: ${{ secrets.POSTGRES_DATA_USER }} 
+        POSTGRES_DATA_PASSWORD: ${{ secrets.POSTGRES_DATA_PASSWORD }} 
+
+        POSTGRES_RECIPE_HOST: ${{ secrets.POSTGRES_RECIPE_HOST }} 
+        POSTGRES_RECIPE_PORT: ${{ secrets.POSTGRES_RECIPE_PORT }} 
+        POSTGRES_RECIPE_DB: ${{ secrets.POSTGRES_RECIPE_DB }} 
+        POSTGRES_RECIPE_USER: ${{ secrets.POSTGRES_RECIPE_USER }} 
+        POSTGRES_RECIPE_PASSWORD: ${{ secrets.POSTGRES_RECIPE_PASSWORD }} 
+
+        RECIPES_OPENAI_API_TYPE: ${{ secrets.RECIPES_OPENAI_API_TYPE }} 
+        RECIPES_OPENAI_API_KEY: ${{ secrets.RECIPES_OPENAI_API_KEY }} 
+        RECIPES_MODEL: ${{ secrets.RECIPES_MODEL }} 
+        RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME: ${{ secrets.RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME }} 
+        RECIPES_MEMORY_SIMILARITY_CUTOFF: ${{ secrets.RECIPES_MEMORY_SIMILARITY_CUTOFF }} 
+        RECIPES_RECIPE_SIMILARITY_CUTOFF: ${{ secrets.RECIPES_RECIPE_SIMILARITY_CUTOFF }} 
+        RECIPES_HELPER_FUNCTION_SIMILARITY_CUTOFF: ${{ secrets.RECIPES_HELPER_FUNCTION_SIMILARITY_CUTOFF }} 
+        RECIPES_MODEL_TEMP: ${{ secrets.RECIPES_MODEL_TEMP }} 
+        RECIPES_MODEL_MAX_TOKENS: ${{ secrets.RECIPES_MODEL_MAX_TOKENS }} 
+
+        IMAGE_HOST: ${{ secrets.IMAGE_HOST }} 
+        RECIPE_SERVER_API: ${{ secrets.RECIPE_SERVER_API }} 
+
+        CHAINLIT_AUTH_SECRET=: ${{ secrets.CHAINLIT_AUTH_SECRET= }} 
+        USER_LOGIN: ${{ secrets.USER_LOGIN }} 
+        USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
+
+      steps:
+
+        - name: Checkout
+          uses: actions/checkout@v3
+
+        #- name: Checkout integration tests data
+        #  uses: actions/checkout@master
+        #  with:
+        #    repository: datakind/recipes-ai-test-data
+        #    ssh-key: ${{ secrets.SSH_PRIVATE_KEY}} 
+        #    path: recipes-ai-test-data
+
+        #- name: Place integration test data in right place
+        #  run: |
+        #    ls ./recipes-ai-test-data
+        #    #cp recipes-ai-test-data/*.csv ./backend/app/app/tests/api/api_v1/resources/ 
+        #    # mkdir ./backend/app/app/tests/api/api_v1/integration/resources/
+        #    cp recipes-ai-test-data/*.csv ./backend/app/app/tests/api/api_v1/integration/resources/
+        
+        - name: Set Environment Variables
+          uses: ./.github/actions/setvars
+          with:
+            varFilePath: ./.github/variables/variables.env
+       
+        - name: Build the stack
+          run: |
+            env > .env 
+            docker buildx create --use --driver=docker-container
+            docker buildx bake -f ./docker-compose.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64
+
+        - name: Run the stack
+          run: |
+            env > .env 
+            docker-compose -f docker-compose.yml -f docker-compose-dev.yml up -d
+            docker ps
+
+        - name: Self tests (Integration)
+          run:  |
+            set -e
+            if [ $(uname -s) = "Linux" ]; then
+                echo "Remove __pycache__ files"
+                sudo find . -type d -name __pycache__ -exec rm -r {} \+
+            fi
+            DOMAIN=backend \
+            SMTP_HOST="" \
+            TRAEFIK_PUBLIC_NETWORK_IS_EXTERNAL=false \
+            INSTALL_DEV=true \
+            docker-compose \
+            -f docker-compose.yml -f docker-compose.dev.yml \
+            config > docker-stack.yml
+            docker-compose -f docker-stack.yml up -d
+            echo "logs db ..."
+            docker-compose -f docker-stack.yml logs recipedb
+            sleep 10
+            docker ps
+            echo "logs backend ..."
+            docker-compose -f docker-stack.yml logs server
+            #echo "Tests ..."
+            #docker-compose -f docker-stack.yml exec -T backend /app/tests-start.sh --ignore=app/tests/api/api_v1/self/ "$@" -s
+            #echo "Logs backend ..."
+            docker-compose -f docker-stack.yml logs backend
+            docker-compose -f docker-stack.yml down -v --remove-orphans
+
