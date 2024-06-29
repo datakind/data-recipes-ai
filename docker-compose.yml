@@ -17,6 +17,7 @@ services:
       - .env
   recipedb:
     image: ankane/pgvector:latest
+    platform: linux/amd64
     container_name: recipes-ai-recipesdb
     environment:
       POSTGRES_DB: ${POSTGRES_RECIPE_DB}
