@@ -75,6 +75,9 @@ jobs:
         #    varFilePath: ./.github/variables/variables.env
        
         - name: Build the stack
+          env:
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+            ASSISTANTS_BASE_URL: ${{ secrets.ASSISTANTS_BASE_URL }} 
           run: |
             env > .env 
             #docker buildx create --use --driver=docker-container
@@ -85,7 +88,6 @@ jobs:
         - name: Run the stack
           run: |
             env > .env 
-            cat .env
             docker compose -f docker-compose.yml -f docker-compose-dev.yml start recipedb datadb server promptflow
             docker ps
 
