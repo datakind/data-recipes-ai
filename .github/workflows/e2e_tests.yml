@@ -73,14 +73,7 @@ jobs:
         #  uses: ./.github/actions/setvars
         #  with:
         #    varFilePath: ./.github/variables/variables.env
-    
-
-        - name: Debugging information
-          run: |
-            docker-compose --version
-            docker images ankane/pgvector:latest
-            docker run --rm ankane/pgvector:latest cat /usr/local/bin/docker-entrypoint.sh
-
+  
 
         - name: Build the stack
           run: |
@@ -94,7 +87,7 @@ jobs:
 
             #docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
 
-            docker compose -f docker-compose.yml up recipedb
+            docker compose -f docker-compose.yml up recipedb datadb
 
 
         - name: Run the stack
@@ -112,6 +105,8 @@ jobs:
             docker ps
             echo "logs backend ..."
             docker-compose -f docker-compose.yml -f docker-compose-dev.yml  logs server
+            echo "logs datadb ..."
+            docker-compose -f docker-compose.yml -f docker-compose-dev.yml  logs datadb
             echo "logs recipesdb ..."
             docker-compose -f docker-compose.yml -f docker-compose-dev.yml  logs recipedb
             echo "Tests ..."
