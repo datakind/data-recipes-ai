@@ -87,8 +87,10 @@ jobs:
 
             #docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
 
-            docker compose -f docker-compose.yml up recipedb datadb
-
+            docker compose -f docker-compose.yml up datadb
+            echo "DDDDDDDDD"
+            echo "logs datadb ..."
+            docker-compose -f docker-compose.yml -f docker-compose-dev.yml  logs datadb
 
         - name: Run the stack
           run: |
@@ -96,7 +98,6 @@ jobs:
             export POSTGRES_RECIPE_CONN_STRING="postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@${POSTGRES_RECIPE_HOST}:${POSTGRES_RECIPE_PORT}/${POSTGRES_RECIPE_DB}"
             env > .env 
             #docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d recipedb datadb server promptflow
-            docker compose -f docker-compose.yml -f docker-compose-dev.yml up recipedb 
             docker ps
 
         - name: End to End tests using Promtpflow and chainlit code
