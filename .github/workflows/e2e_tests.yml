@@ -86,11 +86,11 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
 
 
-        - name: Run the stack
-          run: |
-            env > .env 
-            docker compose -f docker-compose.yml -f docker-compose-dev.yml start recipedb datadb server promptflow
-            docker ps
+        #- name: Run the stack
+        #  run: |
+        #    env > .env 
+        #    docker compose -f docker-compose.yml -f docker-compose-dev.yml start recipedb datadb server promptflow
+        #    docker ps
 
         - name: End to End tests using Promtpflow and chainlit code
           run:  |
@@ -102,6 +102,7 @@ jobs:
             docker-compose \
             -f docker-compose.yml -f docker-compose-dev.yml \
             config > docker-stack.yml
+            docker-compose -f docker-stack.yml build recipedb datadb server promptflow
             docker-compose -f docker-stack.yml start recipedb datadb server promptflow
             echo "logs db ..."
             docker-compose -f docker-stack.yml logs recipedb
