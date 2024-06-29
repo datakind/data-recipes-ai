@@ -74,6 +74,9 @@ jobs:
         #  with:
         #    varFilePath: ./.github/variables/variables.env
        
+        - name: Pull latest Docker images
+          run: docker pull ankane/pgvector:latest
+
         - name: Build the stack
           run: |
             env > .env 
