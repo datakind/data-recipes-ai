@@ -100,7 +100,7 @@ jobs:
             TRAEFIK_PUBLIC_NETWORK_IS_EXTERNAL=false \
             INSTALL_DEV=true \
             docker-compose \
-            -f docker-compose.yml -f docker-compose.dev.yml \
+            -f docker-compose.yml -f docker-compose-dev.yml \
             config > docker-stack.yml
             docker-compose -f docker-stack.yml start recipedb datadb server promptflow
             echo "logs db ..."
