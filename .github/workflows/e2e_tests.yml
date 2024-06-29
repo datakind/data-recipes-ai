@@ -86,7 +86,7 @@ jobs:
 
             #docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
 
-            docker compose -f docker-compose.yml up recipesdb
+            docker compose -f docker-compose.yml up recipedb
 
 
         - name: Run the stack
