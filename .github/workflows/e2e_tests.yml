@@ -77,8 +77,10 @@ jobs:
         - name: Build the stack
           run: |
             env > .env 
-            docker buildx create --use --driver=docker-container
-            docker buildx bake -f ./docker-compose.yml  -f docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 recipedb datadb server promptflow
+            #docker buildx create --use --driver=docker-container
+            #docker buildx bake -f ./docker-compose.yml  -f docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 recipedb datadb server promptflow
+            docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
+
 
         - name: Run the stack
           run: |
