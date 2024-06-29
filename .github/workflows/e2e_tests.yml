@@ -1,6 +1,8 @@
 name: End-to-End Tests
 
-on: [push, pull_request]
+#on: [push, pull_request]
+
+on: [push]
 
 #on:
 #  pull_request_target:
@@ -67,10 +69,10 @@ jobs:
         #    # mkdir ./backend/app/app/tests/api/api_v1/integration/resources/
         #    cp recipes-ai-test-data/*.csv ./backend/app/app/tests/api/api_v1/integration/resources/
         
-        - name: Set Environment Variables
-          uses: ./.github/actions/setvars
-          with:
-            varFilePath: ./.github/variables/variables.env
+        #- name: Set Environment Variables
+        #  uses: ./.github/actions/setvars
+        #  with:
+        #    varFilePath: ./.github/variables/variables.env
        
         - name: Build the stack
           run: |
