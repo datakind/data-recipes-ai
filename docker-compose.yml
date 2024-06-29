@@ -17,7 +17,7 @@ services:
       - .env
   recipedb:
     image: ankane/pgvector:latest
-    platform: linux/amd64
+    #platform: linux/amd64
     container_name: recipes-ai-recipesdb
     environment:
       POSTGRES_DB: ${POSTGRES_RECIPE_DB}
@@ -26,9 +26,9 @@ services:
     restart: always
     ports:
       - 5435:5432
-    volumes:
-      - ./db/recipedb:/docker-entrypoint-initdb.d
-      - ./data/recipesdb:/var/lib/postgresql/data
+    #volumes:
+    #  - ./db/recipedb:/docker-entrypoint-initdb.d
+    #  - ./data/recipesdb:/var/lib/postgresql/data
     env_file:
       - .env
   # recipes-server:
