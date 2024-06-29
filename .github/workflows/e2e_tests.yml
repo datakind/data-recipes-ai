@@ -85,6 +85,7 @@ jobs:
         - name: Run the stack
           run: |
             env > .env 
+            cat .env
             docker compose -f docker-compose.yml -f docker-compose-dev.yml start recipedb datadb server promptflow
             docker ps
 
