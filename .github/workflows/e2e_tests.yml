@@ -95,9 +95,7 @@ jobs:
             env > .env
             export DATA_DB_CONN_STRING="postgresql://${POSTGRES_DATA_USER}:${POSTGRES_DATA_PASSWORD}@${POSTGRES_DATA_HOST}:${POSTGRES_DATA_PORT}/${POSTGRES_DATA_DB}"
             # We only build a subset of what's needed so space isn't an issue
-            docker-compose -f docker-compose.yml -f docker-compose-dev.yml  build recipedb datadb server promptflow
-            docker-compose -f docker-compose.yml -f docker-compose-dev.yml  create recipedb datadb server promptflow
-            docker-compose -f docker-compose.yml -f docker-compose-dev.yml  start recipedb datadb server promptflow
+            docker-compose -f docker-compose.yml -f docker-compose-dev.yml up -d recipedb datadb server promptflow
             echo "logs db ..."
             docker-compose -f docker-compose.yml -f docker-compose-dev.yml logs recipedb
             sleep 10
