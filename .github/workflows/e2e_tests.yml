@@ -9,9 +9,9 @@ on: [push]
 #    types: [labeled]
 
 jobs:
-
   test:
       runs-on: ubuntu-latest
+      environment: "GitHub Actions 1"
       env: 
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ASSISTANTS_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -83,7 +83,7 @@ jobs:
             echo $ASSISTANTS_API_TYPE
             #docker buildx create --use --driver=docker-container
             #docker buildx bake -f ./docker-compose.yml  -f docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 recipedb datadb server promptflow
-            #docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
+            docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
 
 
         - name: Run the stack
