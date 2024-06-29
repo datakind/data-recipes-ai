@@ -74,16 +74,13 @@ jobs:
         #  with:
         #    varFilePath: ./.github/variables/variables.env
        
-        - name: Build the stack
-          env:
-            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-            ASSISTANTS_BASE_URL: ${{ secrets.ASSISTANTS_BASE_URL }} 
-          run: |
-            env > .env 
-            echo $ASSISTANTS_API_TYPE
-            #docker buildx create --use --driver=docker-container
-            #docker buildx bake -f ./docker-compose.yml  -f docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 recipedb datadb server promptflow
-            docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
+        #- name: Build the stack
+        #  run: |
+        #    env > .env 
+        #    echo $ASSISTANTS_API_TYPE
+        #    #docker buildx create --use --driver=docker-container
+        #    #docker buildx bake -f ./docker-compose.yml  -f docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 recipedb datadb server promptflow
+        #    docker compose -f docker-compose.yml -f docker-compose-dev.yml build recipedb datadb server promptflow
 
 
         #- name: Run the stack
@@ -95,15 +92,8 @@ jobs:
         - name: End to End tests using Promtpflow and chainlit code
           run:  |
             set -e
-            if [ $(uname -s) = "Linux" ]; then
-                echo "Remove __pycache__ files"
-                sudo find . -type d -name __pycache__ -exec rm -r {} \+
-            fi
-            docker-compose \
-            -f docker-compose.yml -f docker-compose-dev.yml \
-            config > docker-stack.yml
-            docker-compose -f docker-stack.yml build recipedb datadb server promptflow
-            docker-compose -f docker-stack.yml start recipedb datadb server promptflow
+            docker-compose -f docker-compose.yml -f docker-compose-dev.yml  build recipedb datadb server promptflow
+            docker-compose -f docker-compose.yml -f docker-compose-dev.yml  start recipedb datadb server promptflow
             echo "logs db ..."
             docker-compose -f docker-stack.yml logs recipedb
             sleep 10
