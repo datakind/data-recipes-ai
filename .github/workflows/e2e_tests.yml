@@ -83,11 +83,6 @@ jobs:
         - name: Expose GitHub Runtime
           uses: crazy-max/ghaction-github-runtime@v2
 
-        - name: Set Environment Variables
-          uses: ./.github/actions/setvars
-          with:
-            varFilePath: ./.github/variables/variables.env
-            
         - name: Build images
           run: |
             env > .env 
