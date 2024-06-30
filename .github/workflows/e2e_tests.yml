@@ -90,13 +90,13 @@ jobs:
             export POSTGRES_RECIPE_CONN_STRING="postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@${POSTGRES_RECIPE_HOST}:${POSTGRES_RECIPE_PORT}/${POSTGRES_RECIPE_DB}"
 
             docker buildx create --use --driver=docker-container
-            docker buildx bake -f ./docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load 
+            docker buildx bake -f ./docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64
  
         - name: Spin up services
           run: |
-            docker-compose -f ./docker-compose.yml up -d  datadb
+            docker-compose -f ./docker-compose-dev.yml up -d  datadb
             echo "logs datadb ..."
-            docker-compose -f docker-compose.yml  logs datadb
+            docker-compose -f docker-compose-dev.yml  logs datadb
 
         # - name: Run the stack
         #   run: |
