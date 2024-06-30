@@ -1,0 +1,62 @@
+{
+  "tests": [
+    {
+      "test_case": "Test Case 1",
+      "user_input": "Get all recipes",
+      "chat_history": "[{'role': 'user', 'content': 'Get all recipes'}]",
+      "generate_intent": "true",
+      "expected_output": {
+        "result": {
+          "type": "text",
+          "file": "",
+          "value": "|    | type   | intent                                                                                                                                               |\n|---:|:-------|:-----------------------------------------------------------------------------------------------------------------------------------------------------|\n|  0 | recipe | plot a line chart of conflict events by month for a country using HDX data as an image                                                               |\n|  1 | recipe | plot a scatterplot of food price movements and number of fatalities by country using HDXData data, including regression line as an image             |\n|  2 | recipe | plot a line chart of fatalities by month for a country using HDX data as an image                                                                    |\n|  3 | recipe | plot a line chart of commodity prices monthly relative change for a country from 2008-01-01 using HDX data as an image                               |\n|  4 | recipe | plot a bar chart of humanitarian organizations by sector for a given region using Humanitarian Data Exchange data as an image                        |\n|  5 | recipe | provide a list of organizations providing food security for a region in a country                                                                    |\n|  6 | recipe | provide the total population of a provided country using HDX data as text                                                                            |\n|  7 | recipe | plot population pyramids by age for a country using HDX data as an image                                                                             |\n|  8 | recipe | plot a scatterplot of food price movements and number of fatalities by country using HDXData data, including regression line as an image             |\n|  9 | recipe | plot a map of population by admin1 or admin2 for a country using HAPI data as an image                                                               |\n| 10 | recipe | plot a line chart of commodity prices monthly relative change for a country from 2008-01-01 using HDX data as an image                               |\n| 11 | recipe | List organizations in top 3 states by population in provided IPC Phase in a country, using HAPI data                                                 |\n| 12 | recipe | plot a bar chart of humanitarian organizations by sector for a given region using Humanitarian Data Exchange data as an image                        |\n| 13 | recipe | provide a text summary of metadata by subnational region using HAPI data as text                                                                     |\n| 14 | recipe | get all recipes                                                                                                                                      |\n| 15 | recipe | plot a map of IPC phase data by admin_1 using HDX data as an image                                                                                   |\n|  0 | memory | plot a line chart of conflict events by month for Chad using HDX data as an image                                                                    |\n|  1 | memory | plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image |\n|  2 | memory | plot a line chart of fatalities by month for Chad using HDX data as an image                                                                         |\n|  3 | memory | plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image                                    |\n|  4 | memory | plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image                              |\n|  5 | memory | provide a list of organizations providing food security in Wadi Fira, Chad                                                                           |\n|  6 | memory | provide the total population of Mali using HDX data as text                                                                                          |\n|  7 | memory | plot population pyramids by age for Chad using HDX data as an image                                                                                  |\n|  8 | memory | plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image |\n|  9 | memory | plot a map of population by admin1 for Haiti using HAPI data as an image                                                                             |\n| 10 | memory | plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image                                    |\n| 11 | memory | List organizations in the top 3 states by population in IPC Phase 3+ in Chad, using HAPI data                                                        |\n| 12 | memory | plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image                              |\n| 13 | memory | provide a text summary of metadata for Wadi Fira using HAPI data as text                                                                             |\n| 14 | memory | retrieve all recipes                                                                                                                                 |\n| 15 | memory | plot a map of IPC phase 3 data by admin_1 in Chad using HDX data as an image                                                                         |"
+        },
+        "metadata": "{\"params\": {}, \"attribution\": \"\", \"data_url\": \"\", \"time_period\": {\"start\": \"\", \"end\": \"\"}}",
+        "memory_type": "memory",
+        "memory": "retrieve all recipes",
+        "memory_found": "true"
+      }
+    },
+    {
+      "test_case": "Test Case 2",
+      "user_input": "provide the total population of Mali using HDX data as text",
+      "chat_history": "[{'role': 'user', 'content': 'Get all recipes'}, {'role': 'user', 'content': 'provide the total population of Mali using HDX data as text'}]",
+      "generate_intent": "true",
+      "expected_output": {
+        "result": {
+          "type": "number",
+          "file": "",
+          "value": "17907114"
+        },
+        "metadata": "{\"params\": {\"country_code\": \"MLI\"}, \"attribution\": \"https://data.humdata.org/dataset/ce21c7db-d8f0-40f8-adc2-452d2d2d105c\", \"data_url\": \"https://data.humdata.org/dataset/ce21c7db-d8f0-40f8-adc2-452d2d2d105c/resource/6f243ba2-4d4a-4663-a7c4-e917dbbde73a/download/mli_pop_adm0_v2.csv\", \"time_period\": {\"start\": \"2018-01-01\", \"end\": \"2018-12-31T23:59:59\"}}",
+        "memory_type": "memory",
+        "memory": "provide the total population of Mali using HDX data as text",
+        "memory_found": "true"
+      }
+    },
+    {
+      "test_case": "Test Case 3",
+      "user_input": "plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image",
+      "chat_history": "[{'role': 'user', 'content': 'Get all recipes'}, {'role': 'user', 'content': 'provide the total population of Mali using HDX data as text'}, {'role': 'user', 'content': 'plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image'}]",
+      "generate_intent": "true",
+      "expected_output": {
+        "result": {
+          "type": "image",
+          "file": "http://localhost:8000/public/images/memory_image_e9d3e3ee-977f-4291-a51a-7e4e3e4cd5f3.png",
+          "value": ""
+        },
+        "metadata": "{\"params\": {\"region\": \"Wadi Fira\"}, \"attribution\": \"https://data.humdata.org/dataset/682c3db6-e253-430f-a3f3-305ef079e2de\", \"data_url\": \"https://data.humdata.org/dataset/682c3db6-e253-430f-a3f3-305ef079e2de/resource/1e3ba1f4-2dbc-4f46-9ce7-2274e157188e/download/3w-tcd-20240508.xlsx\", \"time_period\": {\"start\": \"2023-12-01\", \"end\": \"2024-05-31T23:59:59.999999\"}}",
+        "memory_type": "memory",
+        "memory": "plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image",
+        "memory_found": "true"
+      }
+    },
+    {
+      "test_case": "Test Case 4",
+      "user_input": "Plot the distribution of internet access in Chad",
+      "chat_history": "[{'role': 'user', 'content': 'Get all recipes'}, {'role': 'user', 'content': 'provide the total population of Mali using HDX data as text'}, {'role': 'user', 'content': 'plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image'}, {'role': 'user', 'content': 'Plot the distribution of internet access in Chad'}]",
+      "generate_intent": "true",
+      "expected_output": {"result":"Sorry, no recipe or memory found","memory_found":"false"}
+    }
+  ]
+}
