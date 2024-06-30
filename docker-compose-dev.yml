@@ -21,7 +21,7 @@ services:
 
   datadb:
     #image: postgis/postgis:12-3.4
-    image: postgres
+    image: postgres:14
     container_name: recipes-ai-datadb
     environment:
       POSTGRES_DB: ${POSTGRES_DATA_DB}
