@@ -20,7 +20,8 @@ services:
       - ./ui/chat-chainlit-assistant/app.py:/app/chainlit-ui-evaluation/app.py
 
   datadb:
-    image: postgis/postgis:12-3.4
+    #image: postgis/postgis:12-3.4
+    image: postgres
     container_name: recipes-ai-datadb
     environment:
       POSTGRES_DB: ${POSTGRES_DATA_DB}
