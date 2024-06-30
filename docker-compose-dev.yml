@@ -1,4 +1,4 @@
-version: "3.3"
+#version: "3.3"
 
 services:
   # promptflow:
@@ -34,6 +34,7 @@ services:
       - ./data/datadb:/var/lib/postgresql/data
     env_file:
       - .env
+
   # recipedb:
   #   image: ankane/pgvector:latest
   #   container_name: recipes-ai-recipesdb
