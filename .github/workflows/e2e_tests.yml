@@ -95,7 +95,7 @@ jobs:
             
         - name: Spin up services
           run: |
-            docker-compose -f ./docker-compose-dev.yml up -d  datadb
+            docker-compose -f ./docker-compose-dev.yml up -d  
             echo "logs datadb ..."
             docker-compose -f docker-compose-dev.yml  logs datadb
 
