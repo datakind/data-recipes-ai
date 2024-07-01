@@ -90,7 +90,6 @@ jobs:
             pip3 install promptflow-tools==1.4.0
             pip3 install chainlit==1.1.305
             pip3 install keyrings.alt
-            pip3 install chainlit==1.1.305
             pip3 list
         - run: |
             cd flows/chainlit-ui-evaluation/
@@ -100,8 +99,9 @@ jobs:
             # Test running one node with default inputs. Good for debugging GH actions
             pf flow test --flow . --node call_assistant
             #pf flow test --flow . --node groundedness_score
-            python3 call_assistant --chat_history '[{"author": "user","content": "What is the total population of Mali"}, {"author": "user","content": "Hi!"}]''
+            python3 call_assistant --chat_history '[{"author": "user","content": "What is the total population of Mali"}, {"author": "user","content": "Hi!"}]'
 
+            # Validation run with data.jsonl
             pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run --stream
             pf run show-details -n base_run
             pf run show-metrics -n base_run
