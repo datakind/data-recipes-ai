@@ -87,7 +87,7 @@ jobs:
             python-version: "3.11.4"
         - run: |
             pip3 install promptflow==1.12.0
-            pip3 install promptflow-tools==1.5.0rc11
+            pip3 install promptflow-tools==1.5.0
             pip3 install chainlit==1.1.305
             pip3 install keyrings.alt
         - run: |
