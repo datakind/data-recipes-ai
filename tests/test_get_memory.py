@@ -5,7 +5,7 @@ import pytest
 #load json file into variable and print it
 @pytest.fixture
 def get_test_cases():
-    with open('test_cases.json') as f:
+    with open('test_cases_get_memory.json') as f:
         test_data = json.load(f)
         return test_data
 
