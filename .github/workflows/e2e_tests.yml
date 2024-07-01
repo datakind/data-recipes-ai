@@ -113,9 +113,11 @@ jobs:
         - name: Spin up services
           run: |
             
-            PLATFORM=linux/amd64 docker-compose -f ./docker-compose-dev.yml up -d  
+            # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds
+            # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
+            docker-compose -f ./docker-compose-github.yml up -d  
             echo "logs datadb ..."
-            docker-compose -f docker-compose-dev.yml  logs datadb
+            docker-compose -f docker-compose-github.yml  logs datadb
 
         # - name: Run the stack
         #   run: |
