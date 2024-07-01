@@ -68,17 +68,16 @@ jobs:
 
         datadb:
           image: postgis/postgis:12-3.4
-          environment:
+          env:
             POSTGRES_DB: ${{ secrets.POSTGRES_DATA_DB }} 
             POSTGRES_USER: ${{ secrets.POSTGRES_DATA_USER }} 
             POSTGRES_PASSWORD: ${{ secrets.POSTGRES_DATA_PASSWORD }} 
-          restart: always
           ports:
             - 5433:5432
           #volumes:
           #  - ./data/datadb:/var/lib/postgresql/data
-          env_file:
-            - .env
+          #env_file:
+          #  - .env
 
       steps:
 
