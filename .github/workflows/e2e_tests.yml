@@ -87,9 +87,10 @@ jobs:
             python-version: "3.11.4"
         - run: |
             pip3 install promptflow==1.12.0
-            pip3 install promptflow-tools==1.5.0
+            pip3 install promptflow-tools
             pip3 install chainlit==1.1.305
             pip3 install keyrings.alt
+            pip3 list
         - run: |
             cd flows/chainlit-ui-evaluation/
             pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
