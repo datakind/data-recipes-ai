@@ -96,8 +96,8 @@ jobs:
             pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
             pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
             pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run --stream
-            pf run show-details -n base_run2
-            pf run show-metrics -n base_run2
-            #pf run visualize -n base_run2
+            pf run show-details -n base_run
+            pf run show-metrics -n base_run
+            #pf run visualize -n base_run
             python3 check_evaluation_results.py
  
