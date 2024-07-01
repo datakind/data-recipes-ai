@@ -90,6 +90,7 @@ jobs:
             pip3 install promptflow-tools==1.4.0
             pip3 install chainlit==1.1.305
             pip3 install keyrings.alt
+            pip3 install chainlit==1.1.305
             pip3 list
         - run: |
             cd flows/chainlit-ui-evaluation/
