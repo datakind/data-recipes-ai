@@ -100,6 +100,9 @@ jobs:
             docker-compose -f docker-compose.yml logs datadb
             echo "logs recipesdb ..."
             docker-compose -f docker-compose.yml logs recipedb
+            echo "logs promptflow ..."
+            docker-compose -f docker-compose.yml logs promptflow
+
             echo "Tests ..."
             docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run
             docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run show-details -n base_run
