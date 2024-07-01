@@ -50,6 +50,22 @@ jobs:
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
 
+      services:
+        datadb:
+          image: postgres:latest
+          env:
+            POSTGRES_DB: datadb
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_USER: postgres
+          ports:
+            - 5432:5432
+          # Set health checks to wait until postgres has started
+          options: >-
+            --health-cmd pg_isready
+            --health-interval 10s
+            --health-timeout 5s
+            --health-retries 5
+
       steps:
 
         - name: Checkout
@@ -89,8 +105,8 @@ jobs:
             export DATA_DB_CONN_STRING="postgresql://${POSTGRES_DATA_USER}:${POSTGRES_DATA_PASSWORD}@${POSTGRES_DATA_HOST}:${POSTGRES_DATA_PORT}/${POSTGRES_DATA_DB}"
             export POSTGRES_RECIPE_CONN_STRING="postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@${POSTGRES_RECIPE_HOST}:${POSTGRES_RECIPE_PORT}/${POSTGRES_RECIPE_DB}"
 
-            docker buildx create --use --driver=docker-container
-            docker buildx bake -f ./docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64
+            #docker buildx create --use --driver=docker-container
+            #docker buildx bake -f ./docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64
 
             
         - name: Spin up services
