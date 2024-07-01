@@ -95,8 +95,7 @@ jobs:
             docker-compose -f ./docker-compose-github.yml pull
             docker-compose -f ./docker-compose-github.yml up -d --build 
             echo "logs datadb ..."
-            docker logs datadb
-            #docker-compose -f docker-compose-github.yml  logs datadb
+            docker-compose -f docker-compose-github.yml  logs datadb
 
         # - name: Run the stack
         #   run: |
