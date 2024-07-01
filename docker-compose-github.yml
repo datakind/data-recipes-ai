@@ -31,10 +31,6 @@ services:
     restart: always
     ports:
       - 5433:5432
-    #volumes:
-    #  - ./data/datadb:/var/lib/postgresql/data
-    #env_file:
-    #  - .env
 
   recipedb:
     platform: linux/amd64

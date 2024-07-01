@@ -93,7 +93,7 @@ jobs:
             # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
             # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
             docker-compose -f ./docker-compose-github.yml pull
-            docker-compose -f ./docker-compose-github.yml up -d  
+            docker-compose -f ./docker-compose-github.yml up -d --build 
             echo "logs datadb ..."
             docker logs datadb
             #docker-compose -f docker-compose-github.yml  logs datadb
