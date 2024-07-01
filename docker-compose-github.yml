@@ -18,21 +18,22 @@ services:
       - ./management/skills.py:/app/chainlit-ui-evaluation/recipes/skills.py
       - ./ui/chat-chainlit-assistant/app.py:/app/chainlit-ui-evaluation/app.py
 
-  # datadb:
-  #   platform: linux/amd64
-  #   image: postgis/postgis:12-3.4
-  #   container_name: recipes-ai-datadb
-  #   environment:
-  #     POSTGRES_DB: ${POSTGRES_DATA_DB}
-  #     POSTGRES_USER: ${POSTGRES_DATA_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
-  #   restart: always
-  #   ports:
-  #     - 5433:5432
-  #   #volumes:
-  #   #  - ./data/datadb:/var/lib/postgresql/data
-  #   env_file:
-  #     - .env
+  # This is actually pulled as a service in the GH action. This is here so up will start it
+  datadb:
+    platform: linux/amd64
+    image: postgis/postgis:12-3.4
+    container_name: recipes-ai-datadb
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATA_DB}
+      POSTGRES_USER: ${POSTGRES_DATA_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
+    restart: always
+    ports:
+      - 5433:5432
+    #volumes:
+    #  - ./data/datadb:/var/lib/postgresql/data
+    env_file:
+      - .env
 
   recipedb:
     platform: linux/amd64

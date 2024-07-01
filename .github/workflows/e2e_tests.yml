@@ -98,7 +98,8 @@ jobs:
             # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
             docker-compose -f ./docker-compose-github.yml up -d  
             echo "logs datadb ..."
-            docker-compose -f docker-compose-github.yml  logs datadb
+            docker logs datadb
+            #docker-compose -f docker-compose-github.yml  logs datadb
 
         # - name: Run the stack
         #   run: |
