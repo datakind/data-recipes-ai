@@ -51,20 +51,6 @@ jobs:
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
 
       services:
-        datadb:
-          image: postgres:latest
-          env:
-            POSTGRES_DB: datadb
-            POSTGRES_PASSWORD: postgres
-            POSTGRES_USER: postgres
-          ports:
-            - 5432:5432
-          # Set health checks to wait until postgres has started
-          options: >-
-            --health-cmd pg_isready
-            --health-interval 10s
-            --health-timeout 5s
-            --health-retries 5
 
         datadb:
           image: postgis/postgis:12-3.4
