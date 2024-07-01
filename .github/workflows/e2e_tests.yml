@@ -79,6 +79,7 @@ jobs:
             docker-compose -f ./docker-compose-github.yml up -d --build 
             echo "logs datadb ..."
             docker-compose -f docker-compose-github.yml  logs datadb
+            docker ps
 
         # TODO The promptflow docker build wasn't working in GH actions, so deploying promptflow to host for now
         - name: Set up promtpflow and run tests
