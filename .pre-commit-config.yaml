@@ -18,5 +18,5 @@ repos:
     rev: 1.7.0
     hooks:
     - id: interrogate
-      args: [--fail-under=50, --verbose]
+      args: [--fail-under=65, --verbose]
       exclude: __init__.py
