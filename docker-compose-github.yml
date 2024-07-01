@@ -18,7 +18,6 @@ services:
       - ./management/skills.py:/app/chainlit-ui-evaluation/recipes/skills.py
       - ./ui/chat-chainlit-assistant/app.py:/app/chainlit-ui-evaluation/app.py
 
-  # This is actually pulled as a service in the GH action. This is here so up will start it
   datadb:
     platform: linux/amd64
     image: postgis/postgis:12-3.4
@@ -47,8 +46,6 @@ services:
     volumes:
       - ./db/recipedb:/docker-entrypoint-initdb.d
       - ./data/recipesdb:/var/lib/postgresql/data
-    #env_file:
-    #  - .env
 
   server:
      platform: linux/amd64

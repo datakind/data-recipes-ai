@@ -50,17 +50,6 @@ jobs:
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
 
-      #services:
-
-        #datadb:
-        #  image: postgis/postgis:12-3.4
-        #  env:
-        #    POSTGRES_DB: ${{ secrets.POSTGRES_DATA_DB }} 
-        #    POSTGRES_USER: ${{ secrets.POSTGRES_DATA_USER }} 
-        #    POSTGRES_PASSWORD: ${{ secrets.POSTGRES_DATA_PASSWORD }} 
-        #  ports:
-        #    - 5433:5432
-
       steps:
 
         - name: Checkout
@@ -76,16 +65,16 @@ jobs:
         - name: Expose GitHub Runtime
           uses: crazy-max/ghaction-github-runtime@v2
 
-        - name: Build images
-          run: |
-            env > .env 
-            export DATA_DB_CONN_STRING="postgresql://${POSTGRES_DATA_USER}:${POSTGRES_DATA_PASSWORD}@${POSTGRES_DATA_HOST}:${POSTGRES_DATA_PORT}/${POSTGRES_DATA_DB}"
-            export POSTGRES_RECIPE_CONN_STRING="postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@${POSTGRES_RECIPE_HOST}:${POSTGRES_RECIPE_PORT}/${POSTGRES_RECIPE_DB}"
+        # - name: Build images
+        #   run: |
+        #     env > .env 
+        #     export DATA_DB_CONN_STRING="postgresql://${POSTGRES_DATA_USER}:${POSTGRES_DATA_PASSWORD}@${POSTGRES_DATA_HOST}:${POSTGRES_DATA_PORT}/${POSTGRES_DATA_DB}"
+        #     export POSTGRES_RECIPE_CONN_STRING="postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@${POSTGRES_RECIPE_HOST}:${POSTGRES_RECIPE_PORT}/${POSTGRES_RECIPE_DB}"
 
-            #docker buildx create --use --driver=docker-container
-            #docker buildx bake -f ./docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 --metadata-file metadata.json 
-            #cat metadata.json
-            #docker images
+        #     docker buildx create --use --driver=docker-container
+        #     docker buildx bake -f ./docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 --metadata-file metadata.json 
+        #     cat metadata.json
+        #     docker images
             
         - name: Spin up services
           run: |
@@ -97,29 +86,21 @@ jobs:
             echo "logs datadb ..."
             docker-compose -f docker-compose-github.yml  logs datadb
 
-        # - name: Run the stack
-        #   run: |
-        #     export DATA_DB_CONN_STRING="postgresql://${POSTGRES_DATA_USER}:${POSTGRES_DATA_PASSWORD}@${POSTGRES_DATA_HOST}:${POSTGRES_DATA_PORT}/${POSTGRES_DATA_DB}"
-        #     export POSTGRES_RECIPE_CONN_STRING="postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@${POSTGRES_RECIPE_HOST}:${POSTGRES_RECIPE_PORT}/${POSTGRES_RECIPE_DB}"
-        #     env > .env 
-        #     #docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d recipedb datadb server promptflow
-        #     docker ps
-
-        # - name: End to End tests using Promtpflow and chainlit code
-        #   run:  |
-        #     set -e
-        #     docker ps
-        #     echo "logs backend ..."
-        #     docker-compose -f docker-compose.yml -f docker-compose-dev.yml  logs server
-        #     echo "logs datadb ..."
-        #     docker-compose -f docker-compose.yml -f docker-compose-dev.yml  logs datadb
-        #     echo "logs recipesdb ..."
-        #     docker-compose -f docker-compose.yml -f docker-compose-dev.yml  logs recipedb
-        #     echo "Tests ..."
-        #     docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run
-        #     docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation promptflow pf run show-details -n base_run
-        #     docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation promptflow pf run show-metrics -n base_run
-        #     #docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation promptflow pf run visualize -n base_run
-        #     docker compose -f docker-compose.yml -f docker-compose-dev.yml  exec --workdir /app/chainlit-ui-evaluation promptflow python3 check_evaluation_results.py
-        #     docker-compose -f docker-stack.yml -f docker-compose-dev.yml down -v --remove-orphans
+        - name: End to End tests using Promtpflow and chainlit code
+          run:  |
+            set -e
+            docker ps
+            echo "logs backend ..."
+            docker-compose -f docker-compose.yml logs server
+            echo "logs datadb ..."
+            docker-compose -f docker-compose.yml logs datadb
+            echo "logs recipesdb ..."
+            docker-compose -f docker-compose.yml logs recipedb
+            echo "Tests ..."
+            docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run
+            docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run show-details -n base_run
+            docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run show-metrics -n base_run
+            #docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run visualize -n base_run
+            docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow python3 check_evaluation_results.py
+            docker-compose -f docker-stack-github.yml down -v --remove-orphans
 
