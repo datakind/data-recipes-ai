@@ -66,6 +66,80 @@ jobs:
       #       --health-timeout 5s
       #       --health-retries 5
 
+      services:
+        promptflow:
+          build:
+            context: .
+            dockerfile: ./flows/chainlit-ui-evaluation//Dockerfile
+            args:
+              OPENAI_API_KEY: ${OPENAI_API_KEY}
+              OPENAI_API_ENDPOINT: ${ASSISTANTS_BASE_URL}
+          container_name: recipes-ai-promptflow
+          env_file:
+            - .env
+          volumes:
+            - ./flows:/app
+            - ./utils:/app/chainlit-ui-evaluation/utils
+            - ./templates:/app/chainlit-ui-evaluation/templates
+            - shared-data:/app/chainlit-ui-evaluation/recipes/public
+            - ./management/skills.py:/app/chainlit-ui-evaluation/recipes/skills.py
+            - ./ui/chat-chainlit-assistant/app.py:/app/chainlit-ui-evaluation/app.py
+      
+        datadb:
+          #image: postgis/postgis:12-3.4
+          image: postgres:14
+          container_name: recipes-ai-datadb
+          environment:
+            POSTGRES_DB: ${POSTGRES_DATA_DB}
+            POSTGRES_USER: ${POSTGRES_DATA_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
+          restart: always
+          ports:
+            - 5433:5432
+          #volumes:
+          #  - ./data/datadb:/var/lib/postgresql/data
+          env_file:
+            - .env
+      
+        recipedb:
+          image: ankane/pgvector:latest
+          container_name: recipes-ai-recipesdb
+          environment:
+            POSTGRES_DB: ${POSTGRES_RECIPE_DB}
+            POSTGRES_USER: ${POSTGRES_RECIPE_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
+          restart: always
+          ports:
+            - 5435:5432
+          volumes:
+            - ./db/recipedb:/docker-entrypoint-initdb.d
+            - ./data/recipesdb:/var/lib/postgresql/data
+          env_file:
+            - .env
+      
+        server:
+           platform: linux/amd64
+           container_name: recipes-ai-server
+           build:
+             context: .
+             dockerfile: ./server/fastapi/Dockerfile
+             args:
+               DATA_DB_CONN_STRING: ${DATA_DB_CONN_STRING}
+           ports:
+             - 4001:8080
+           env_file:
+             - .env
+           volumes:
+             - ./server/fastapi:/app
+             - shared-data:/app/recipes/public
+             - ./templates:/app/templates
+             - ./utils:/app/utils
+             - ./management/skills.py:/app/recipes/skills.py
+      
+      volumes:
+        pgdata2:
+        shared-data:
+
       steps:
 
         - name: Checkout
