@@ -112,13 +112,8 @@ jobs:
             
         - name: Spin up services
           run: |
-            docker buildx create --use --driver=docker-container
-            docker buildx bake -f ./docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 --metadata-file metadata.json 
-            cat metadata.json
             
-            docker-compose -f ./docker-compose-dev.yml pull
-            docker images
-            docker-compose -f ./docker-compose-dev.yml up -d  --force-recreate 
+            PLATFORM=linux/amd64 docker-compose -f ./docker-compose-dev.yml up -d  
             echo "logs datadb ..."
             docker-compose -f docker-compose-dev.yml  logs datadb
 
