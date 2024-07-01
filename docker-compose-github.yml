@@ -27,13 +27,14 @@ services:
       POSTGRES_DB: ${POSTGRES_DATA_DB}
       POSTGRES_USER: ${POSTGRES_DATA_USER}
       POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_DATA_PORT}
     restart: always
     ports:
       - 5433:5432
     #volumes:
     #  - ./data/datadb:/var/lib/postgresql/data
-    env_file:
-      - .env
+    #env_file:
+    #  - .env
 
   recipedb:
     platform: linux/amd64
@@ -43,14 +44,15 @@ services:
       POSTGRES_DB: ${POSTGRES_RECIPE_DB}
       POSTGRES_USER: ${POSTGRES_RECIPE_USER}
       POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_RECIPE_PORT}
     restart: always
     ports:
       - 5435:5432
     volumes:
       - ./db/recipedb:/docker-entrypoint-initdb.d
       - ./data/recipesdb:/var/lib/postgresql/data
-    env_file:
-      - .env
+    #env_file:
+    #  - .env
 
   server:
      platform: linux/amd64
