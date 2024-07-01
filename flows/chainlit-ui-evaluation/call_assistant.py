@@ -270,6 +270,7 @@ def run_chainlit_mock(chat_history: str) -> str:
     )
     print(process)
     while True:
+        print(process.stderr.readline())
         output = process.stdout.readline()
         print(output)
         if output == b"" and process.poll() is not None:
