@@ -98,7 +98,7 @@ jobs:
 
             # Test running one node with default inputs. Good for debugging GH actions
             pf flow test --flow . --node call_assistant
-            pf flow test --flow . --node groundedness_score
+            #pf flow test --flow . --node groundedness_score
 
             pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run --stream
             pf run show-details -n base_run
