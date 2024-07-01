@@ -113,7 +113,7 @@ jobs:
         - name: Spin up services
           run: |
             docker buildx create --use --driver=docker-container
-            docker buildx bake -f ./docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 --metadata-file metadata.json
+            docker buildx bake -f ./docker-compose-dev.yml --set *.cache-to="type=gha,mode=max" --set *.cache-from="type=gha" --load --set *.platform=linux/amd64 --metadata-file metadata.json --push
             cat metadata.json
             docker images
 
