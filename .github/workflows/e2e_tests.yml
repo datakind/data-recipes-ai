@@ -50,20 +50,16 @@ jobs:
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
 
-      services:
+      #services:
 
-        datadb:
-          image: postgis/postgis:12-3.4
-          env:
-            POSTGRES_DB: ${{ secrets.POSTGRES_DATA_DB }} 
-            POSTGRES_USER: ${{ secrets.POSTGRES_DATA_USER }} 
-            POSTGRES_PASSWORD: ${{ secrets.POSTGRES_DATA_PASSWORD }} 
-          ports:
-            - 5433:5432
-          #volumes:
-          #  - ./data/datadb:/var/lib/postgresql/data
-          #env_file:
-          #  - .env
+        #datadb:
+        #  image: postgis/postgis:12-3.4
+        #  env:
+        #    POSTGRES_DB: ${{ secrets.POSTGRES_DATA_DB }} 
+        #    POSTGRES_USER: ${{ secrets.POSTGRES_DATA_USER }} 
+        #    POSTGRES_PASSWORD: ${{ secrets.POSTGRES_DATA_PASSWORD }} 
+        #  ports:
+        #    - 5433:5432
 
       steps:
 
@@ -96,6 +92,7 @@ jobs:
             
             # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
             # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
+            docker-compose -f ./docker-compose-github.yml pull
             docker-compose -f ./docker-compose-github.yml up -d  
             echo "logs datadb ..."
             docker logs datadb
