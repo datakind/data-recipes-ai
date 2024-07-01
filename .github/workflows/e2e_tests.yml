@@ -69,6 +69,7 @@ jobs:
         - name: Expose GitHub Runtime
           uses: crazy-max/ghaction-github-runtime@v2
 
+      
         # - name: Build images
         #   run: |
         #     env > .env 
@@ -79,7 +80,7 @@ jobs:
         #     cat metadata.json
         #     docker images
             
-        - name: Spin up services
+        - name: Spin up DB and recipes server
           run: |
             env > .env 
             
@@ -90,24 +91,21 @@ jobs:
             echo "logs datadb ..."
             docker-compose -f docker-compose-github.yml  logs datadb
 
-        - name: End to End tests using Promtpflow and chainlit code
-          run:  |
-            set -e
-            docker ps
-            echo "logs backend ..."
-            docker-compose -f docker-compose-github.yml logs server
-            echo "logs datadb ..."
-            docker-compose -f docker-compose-github.yml logs datadb
-            echo "logs recipesdb ..."
-            docker-compose -f docker-compose-github.yml logs recipedb
-            echo "logs promptflow ..."
-            docker-compose -f docker-compose-github.yml logs promptflow
-
-            echo "Tests ..."
-            docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run
-            docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run show-details -n base_run
-            docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run show-metrics -n base_run
-            #docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run visualize -n base_run
-            docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow python3 check_evaluation_results.py
-            docker-compose -f docker-compose-github.yml down -v --remove-orphans
-
+        - name: Set up promtpflow and run tests
+          uses: actions/setup-python@v4
+          with:
+            python-version: "3.11.4"
+        - run: |
+            pip3 install promptflow==1.12.0
+            pip3 install chainlit==1.1.305
+            pip3 install keyrings.alt
+        - run: |
+            pip3 install promptflow==1.12.0
+            pip3 install chainlit==1.1.305
+            pip3 install keyrings.alt
+            pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run
+            pf run show-details -n base_run
+            pf run show-metrics -n base_run
+            #pf run visualize -n base_run
+            python3 check_evaluation_results.py
+ 
