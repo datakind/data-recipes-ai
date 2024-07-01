@@ -50,7 +50,7 @@ jobs:
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
 
-      # services:
+      services:
       #   datadb:
       #     image: postgres:latest
       #     env:
@@ -66,6 +66,20 @@ jobs:
       #       --health-timeout 5s
       #       --health-retries 5
 
+        datadb:
+          image: postgis/postgis:12-3.4
+          environment:
+            POSTGRES_DB: ${{ secrets.POSTGRES_DATA_DB }} 
+            POSTGRES_USER: ${{ secrets.POSTGRES_DATA_USER }} 
+            POSTGRES_PASSWORD: ${{ secrets.POSTGRES_DATA_PASSWORD }} 
+          restart: always
+          ports:
+            - 5433:5432
+          #volumes:
+          #  - ./data/datadb:/var/lib/postgresql/data
+          env_file:
+            - .env
+
       steps:
 
         - name: Checkout
@@ -77,24 +91,6 @@ jobs:
         #    repository: datakind/recipes-ai-test-data
         #    ssh-key: ${{ secrets.SSH_PRIVATE_KEY}} 
         #    path: recipes-ai-test-data
-
-        #- name: Place integration test data in right place
-        #  run: |
-        #    ls ./recipes-ai-test-data
-        #    #cp recipes-ai-test-data/*.csv ./backend/app/app/tests/api/api_v1/resources/ 
-        #    # mkdir ./backend/app/app/tests/api/api_v1/integration/resources/
-        #    cp recipes-ai-test-data/*.csv ./backend/app/app/tests/api/api_v1/integration/resources/
-        
-        #- name: Set Environment Variables
-        #  uses: ./.github/actions/setvars
-        #  with:
-        #    varFilePath: ./.github/variables/variables.env
-  
-        #- name: Debugging information
-        #  run: |
-        #    docker-compose --version
-        #    docker images ankane/pgvector:latest
-        #    docker run --rm ankane/pgvector:latest ls /usr/local/bin
 
         - name: Expose GitHub Runtime
           uses: crazy-max/ghaction-github-runtime@v2
