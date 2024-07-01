@@ -99,7 +99,7 @@ jobs:
             # Test running one node with default inputs. Good for debugging GH actions
             pf flow test --flow . --node call_assistant
             #pf flow test --flow . --node groundedness_score
-            python3 call_assistant --chat_history '[{"author": "user","content": "What is the total population of Mali"}, {"author": "user","content": "Hi!"}]'
+            python3 call_assistant --chat_history '[{"author": "user","content": "Hi!"}, {"author": "user","content": "What is the total population of Mali"}]'
 
             # Validation run with data.jsonl
             pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run --stream
