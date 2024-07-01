@@ -95,13 +95,13 @@ jobs:
             set -e
             docker ps
             echo "logs backend ..."
-            docker-compose -f docker-compose.yml logs server
+            docker-compose -f docker-compose-github.yml logs server
             echo "logs datadb ..."
-            docker-compose -f docker-compose.yml logs datadb
+            docker-compose -f docker-compose-github.yml logs datadb
             echo "logs recipesdb ..."
-            docker-compose -f docker-compose.yml logs recipedb
+            docker-compose -f docker-compose-github.yml logs recipedb
             echo "logs promptflow ..."
-            docker-compose -f docker-compose.yml logs promptflow
+            docker-compose -f docker-compose-github.yml logs promptflow
 
             echo "Tests ..."
             docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run
@@ -109,5 +109,5 @@ jobs:
             docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run show-metrics -n base_run
             #docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow pf run visualize -n base_run
             docker compose -f docker-compose-github.yml exec --workdir /app/chainlit-ui-evaluation promptflow python3 check_evaluation_results.py
-            docker-compose -f docker-stack-github.yml down -v --remove-orphans
+            docker-compose -f docker-compose-github.yml down -v --remove-orphans
 
