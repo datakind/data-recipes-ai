@@ -51,20 +51,20 @@ jobs:
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
 
       services:
-      #   datadb:
-      #     image: postgres:latest
-      #     env:
-      #       POSTGRES_DB: datadb
-      #       POSTGRES_PASSWORD: postgres
-      #       POSTGRES_USER: postgres
-      #     ports:
-      #       - 5432:5432
-      #     # Set health checks to wait until postgres has started
-      #     options: >-
-      #       --health-cmd pg_isready
-      #       --health-interval 10s
-      #       --health-timeout 5s
-      #       --health-retries 5
+        datadb:
+          image: postgres:latest
+          env:
+            POSTGRES_DB: datadb
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_USER: postgres
+          ports:
+            - 5432:5432
+          # Set health checks to wait until postgres has started
+          options: >-
+            --health-cmd pg_isready
+            --health-interval 10s
+            --health-timeout 5s
+            --health-retries 5
 
         datadb:
           image: postgis/postgis:12-3.4
@@ -108,7 +108,7 @@ jobs:
         - name: Spin up services
           run: |
             
-            # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds
+            # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
             # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
             docker-compose -f ./docker-compose-github.yml up -d  
             echo "logs datadb ..."
