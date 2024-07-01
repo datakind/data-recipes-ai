@@ -87,7 +87,7 @@ jobs:
             python-version: "3.11.4"
         - run: |
             pip3 install promptflow==1.12.0
-            pip3 install promptflow-tools
+            pip3 install promptflow-tools==1.4.0
             pip3 install chainlit==1.1.305
             pip3 install keyrings.alt
             pip3 list
@@ -95,9 +95,9 @@ jobs:
             cd flows/chainlit-ui-evaluation/
             pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
             pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
-            pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run
-            pf run show-details -n base_run
-            pf run show-metrics -n base_run
-            #pf run visualize -n base_run
+            pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run --stream
+            pf run show-details -n base_run2
+            pf run show-metrics -n base_run2
+            #pf run visualize -n base_run2
             python3 check_evaluation_results.py
  
