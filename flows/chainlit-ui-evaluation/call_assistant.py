@@ -271,10 +271,11 @@ def run_chainlit_mock(chat_history: str) -> str:
     print(process)
     while True:
         print(chat_history)
-        print("Errors:", process.stderr.readline())
+        errors = process.stderr.readline()
+        if errors:
+            print("Errors:", errors)
         output = process.stdout.readline()
         print(output)
-        print("Process poll:", process.poll())
         if output == b"" and process.poll() is not None:
             print(
                 "Process finished with No output, try running call_assistant by hand to debug."
