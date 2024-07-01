@@ -107,9 +107,9 @@ jobs:
             python3 call_assistant.py --chat_history '[{"author": "user","content": "Hi!"}, {"author": "user","content": "What is the total population of Mali"}]'
 
             # Validation run with data.jsonl
-            pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run --stream
-            pf run show-details -n base_run
-            pf run show-metrics -n base_run
-            #pf run visualize -n base_run
-            python3 check_evaluation_results.py
+            #pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run --stream
+            #pf run show-details -n base_run
+            #pf run show-metrics -n base_run
+            ##pf run visualize -n base_run
+            #python3 check_evaluation_results.py
  
