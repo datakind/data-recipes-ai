@@ -27,7 +27,7 @@ jobs:
         POSTGRES_DATA_USER: ${{ secrets.POSTGRES_DATA_USER }} 
         POSTGRES_DATA_PASSWORD: ${{ secrets.POSTGRES_DATA_PASSWORD }} 
 
-        DATA_DB_CONN_STRING: "postgresql://${{ POSTGRES_DATA_USER }}:${{ POSTGRES_DATA_PASSWORD }}@${{ POSTGRES_DATA_HOST }}:${{ POSTGRES_DATA_PORT }}/${{ POSTGRES_DATA_DB }}"
+        DATA_DB_CONN_STRING: "postgresql://${{ secrets.POSTGRES_DATA_USER }}:${{ secrets.POSTGRES_DATA_PASSWORD }}@${{ secrets.POSTGRES_DATA_HOST }}:${{ secrets.POSTGRES_DATA_PORT }}/${{ secrets.POSTGRES_DATA_DB }}"
             
         POSTGRES_RECIPE_HOST: ${{ secrets.POSTGRES_RECIPE_HOST }} 
         POSTGRES_RECIPE_PORT: ${{ secrets.POSTGRES_RECIPE_PORT }} 
@@ -35,7 +35,7 @@ jobs:
         POSTGRES_RECIPE_USER: ${{ secrets.POSTGRES_RECIPE_USER }} 
         POSTGRES_RECIPE_PASSWORD: ${{ secrets.POSTGRES_RECIPE_PASSWORD }} 
 
-        RECIPE_DB_CONN_STRING: "postgresql://${{ POSTGRES_RECIPE_USER }}:${{ POSTGRES_RECIPE_PASSWORD }}@${{ POSTGRES_RECIPE_HOST }}:${{ POSTGRES_RECIPE_PORT }}/${{ POSTGRES_RECIPE_DB }}"
+        RECIPE_DB_CONN_STRING: "postgresql://${{ secrets.POSTGRES_RECIPE_USER }}:${{ secrets.POSTGRES_RECIPE_PASSWORD }}@${{ secrets.POSTGRES_RECIPE_HOST }}:${{ secrets.POSTGRES_RECIPE_PORT }}/${{ secrets.POSTGRES_RECIPE_DB }}"
 
         RECIPES_OPENAI_API_TYPE: ${{ secrets.RECIPES_OPENAI_API_TYPE }} 
         RECIPES_OPENAI_API_KEY: ${{ secrets.RECIPES_OPENAI_API_KEY }} 
@@ -82,8 +82,6 @@ jobs:
         - name: Spin up services
           run: |
             env > .env 
-            export DATA_DB_CONN_STRING="postgresql://${POSTGRES_DATA_USER}:${POSTGRES_DATA_PASSWORD}@${POSTGRES_DATA_HOST}:${POSTGRES_DATA_PORT}/${POSTGRES_DATA_DB}"
-            export RECIPE_DB_CONN_STRING="postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@${POSTGRES_RECIPE_HOST}:${POSTGRES_RECIPE_PORT}/${POSTGRES_RECIPE_DB}"
             
             # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
             # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
