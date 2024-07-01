@@ -270,6 +270,7 @@ def run_chainlit_mock(chat_history: str) -> str:
     )
     print(process)
     while True:
+        print(chat_history)
         print("Errors:", process.stderr.readline())
         output = process.stdout.readline()
         print(output)
