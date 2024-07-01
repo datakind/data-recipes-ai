@@ -2,7 +2,7 @@ services:
   promptflow:
     build:
       context: .
-      dockerfile: ./flows/chainlit-ui-evaluation//Dockerfile
+      dockerfile: ./flows/chainlit-ui-evaluation/Dockerfile
       args:
         OPENAI_API_KEY: ${OPENAI_API_KEY}
         OPENAI_API_ENDPOINT: ${ASSISTANTS_BASE_URL}
