@@ -307,10 +307,12 @@ def process_images(result):
 
     """
 
+    print(f"Processing images ...\n\n{result}")
     if ".png" in result:
         image_location = result
         if "http" in result:
             image_location = result[result.find("http") : result.find(".png") + 4]
+
         cksum, image_path = get_image_cksum(image_location)
 
         print(
