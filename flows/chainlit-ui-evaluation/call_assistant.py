@@ -313,6 +313,10 @@ def process_images(result):
             image_location = result[result.find("http") : result.find(".png") + 4]
         cksum, image_path = get_image_cksum(image_location)
 
+        print(
+            f"Processing image: {image_path}, cksum: {cksum}, location: {image_location}"
+        )
+
         if os.getenv("RECIPES_MODEL") == "gpt-4o":
             # image_validation_prompt = environment.get_template(
             #    "image_validation_prompt.jinja2"
