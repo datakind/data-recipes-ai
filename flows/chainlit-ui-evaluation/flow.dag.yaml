@@ -4,7 +4,7 @@ environment:
 inputs:
   query:
     type: string
-    default: How many rows of data are there in the population table for Nigeria
+    default: plot f{x}=10
   context:
     type: string
     default: '"The answer is:\n\n            \n            The answer is:
