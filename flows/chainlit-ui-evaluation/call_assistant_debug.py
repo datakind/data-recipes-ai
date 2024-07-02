@@ -22,7 +22,9 @@ def main():
     # run_chainlit_mock('[{"author": "user","content": "what is the population of Mali?"}]')
 
     # Memories, image output
-    # run_chainlit_mock('[{"author": "user","content": "plot a line chart of fatalities by month for Chad using HDX data as an image"}]')
+    run_chainlit_mock(
+        '[{"author": "user","content": "plot a line chart of fatalities by month for Chad using HDX data as an image"}]'
+    )
 
     # Recipe run, image output
     # run_chainlit_mock('[{"author": "user","content": "plot population pyramids for Nigeria"}]')
@@ -31,7 +33,7 @@ def main():
     # run_chainlit_mock('[{"author": "user","content": "How many rows does the population table have for Nigeria"}]')
 
     # Assistant simple analysis and code interpretor, image output
-    run_chainlit_mock('[{"author": "user","content": "Plot f{x}=10"}]')
+    # run_chainlit_mock('[{"author": "user","content": "Plot f{x}=10"}]')
 
 
 if __name__ == "__main__":
