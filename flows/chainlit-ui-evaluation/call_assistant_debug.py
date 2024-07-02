@@ -16,10 +16,12 @@ def main():
     """
 
     # Assistant smalltalk
-    # run_chainlit_mock('[{"author": "user","content": "Hi"}]')
+    run_chainlit_mock('[{"author": "user","content": "Hi"}]')
 
     # Memories, text output
-    # run_chainlit_mock('[{"author": "user","content": "what is the population of Mali?"}]')
+    run_chainlit_mock(
+        '[{"author": "user","content": "what is the population of Mali?"}]'
+    )
 
     # Memories, image output
     run_chainlit_mock(
@@ -27,13 +29,17 @@ def main():
     )
 
     # Recipe run, image output
-    # run_chainlit_mock('[{"author": "user","content": "plot population pyramids for Nigeria"}]')
+    run_chainlit_mock(
+        '[{"author": "user","content": "plot population pyramids for Nigeria"}]'
+    )
 
     # Assistant on-the-fly SQL analysis of DB, text output
-    # run_chainlit_mock('[{"author": "user","content": "How many rows does the population table have for Nigeria"}]')
+    run_chainlit_mock(
+        '[{"author": "user","content": "How many rows does the population table have for Nigeria"}]'
+    )
 
     # Assistant simple analysis and code interpretor, image output
-    # run_chainlit_mock('[{"author": "user","content": "Plot f{x}=10"}]')
+    run_chainlit_mock('[{"author": "user","content": "Plot f{x}=10"}]')
 
 
 if __name__ == "__main__":
