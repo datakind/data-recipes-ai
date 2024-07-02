@@ -108,6 +108,8 @@ jobs:
             # Test running one node with default inputs. Good for debugging GH actions
             #pf flow test --flow . --node call_assistant
             #python3 call_assistant.py --chat_history '[{"author": "user","content": "Hi!"}, {"author": "user","content": "What is the total population of Mali"}]'
+            python3 call_assistant.py --chat_history '[{"author": "user","content": "Hi!"}, {"author": "user","content": "plot a line chart of fatalities by month for Chad using HDX data as an image"}]'
+
 
             # Validation run with data.jsonl
             echo "Starting batch run ..."
