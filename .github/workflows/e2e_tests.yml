@@ -27,8 +27,9 @@ jobs:
         POSTGRES_DATA_USER: ${{ secrets.POSTGRES_DATA_USER }} 
         POSTGRES_DATA_PASSWORD: ${{ secrets.POSTGRES_DATA_PASSWORD }} 
 
-        DATA_DB_CONN_STRING: "postgresql://${{ secrets.POSTGRES_DATA_USER }}:${{ secrets.POSTGRES_DATA_PASSWORD }}@${{ secrets.POSTGRES_DATA_HOST }}:${{ secrets.POSTGRES_DATA_PORT }}/${{ secrets.POSTGRES_DATA_DB }}"
-            
+        #DATA_DB_CONN_STRING: "postgresql://${{ secrets.POSTGRES_DATA_USER }}:${{ secrets.POSTGRES_DATA_PASSWORD }}@${{ secrets.POSTGRES_DATA_HOST }}:${{ secrets.POSTGRES_DATA_PORT }}/${{ secrets.POSTGRES_DATA_DB }}"
+        DATA_DB_CONN_STRING: ${{ secrets.DATA_DB_CONN_STRING }}
+
         POSTGRES_RECIPE_HOST: ${{ secrets.POSTGRES_RECIPE_HOST }} 
         POSTGRES_RECIPE_PORT: ${{ secrets.POSTGRES_RECIPE_PORT }} 
         POSTGRES_RECIPE_DB: ${{ secrets.POSTGRES_RECIPE_DB }} 
