@@ -4,7 +4,7 @@ environment:
 inputs:
   query:
     type: string
-    default: plot f(x) = 10
+    default: How many rows of data are there in the population table for Nigeria
   context:
     type: string
     default: '"The answer is:\n\n            \n            The answer is:
@@ -18,7 +18,7 @@ inputs:
       \"2018-12-31T23:59:59\"}}"'
   chat_history:
     type: string
-    default: '[{"author": "user","content": "Hi!"}]'
+    default: "[]"
 outputs:
   agent_output:
     type: string
