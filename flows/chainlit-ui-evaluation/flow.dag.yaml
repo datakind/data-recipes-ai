@@ -4,8 +4,7 @@ environment:
 inputs:
   query:
     type: string
-    default: plot a line chart of fatalities by month for Chad using HDX data as an
-      image
+    default: What is the total population of Mali?
   context:
     type: string
     default: '"The answer is:\n\n            \n            The answer is:
