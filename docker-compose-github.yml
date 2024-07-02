@@ -13,7 +13,7 @@ services:
   #     - ./flows:/app
   #     - ./utils:/app/chainlit-ui-evaluation/utils
   #     - ./templates:/app/chainlit-ui-evaluation/templates
-  #     - shared-data:/app/chainlit-ui-evaluation/recipes/public
+  #     - ./recipes/public:/app/chainlit-ui-evaluation/recipes/public
   #     - ./management/skills.py:/app/chainlit-ui-evaluation/recipes/skills.py
   #     - ./ui/chat-chainlit-assistant/app.py:/app/chainlit-ui-evaluation/app.py
 
@@ -60,7 +60,7 @@ services:
        - .env
      volumes:
        - ./server/fastapi:/app
-       - shared-data:/app/recipes/public
+       - ./flows/chainlit-ui-evaluation/recipes/public:/app/recipes/public
        - ./templates:/app/templates
        - ./utils:/app/utils
        - ./management/skills.py:/app/recipes/skills.py
@@ -68,4 +68,3 @@ services:
 
 volumes:
   pgdata2:
-  shared-data:

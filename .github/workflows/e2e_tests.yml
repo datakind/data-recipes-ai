@@ -104,6 +104,11 @@ jobs:
             cp -r ../../templates .
             cp ../../management/skills.py .
 
+            echo "Listing recipes/public ..."
+            ls ./recipes/public
+            ls 
+
+            echo "Setting up Promptflow connections ..."
             pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
             pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
 
@@ -112,9 +117,7 @@ jobs:
             #python3 call_assistant.py --chat_history '[{"author": "user","content": "Hi!"}, {"author": "user","content": "What is the total population of Mali"}]'
             python3 call_assistant.py --chat_history '[{"author": "user","content": "Hi!"}, {"author": "user","content": "plot a line chart of fatalities by month for Chad using HDX data as an image"}]'
 
-
-            # Validation run with data.jsonl
-            echo "Starting batch run ..."
+            echo "Starting Promptflow batch run  using data.jsonl ..."
             pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
             echo "Getting run details ..."
             pf run show-details -n base_run
