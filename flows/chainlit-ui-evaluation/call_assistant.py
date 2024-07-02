@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import hashlib
 import inspect
 import json
 import os
@@ -10,8 +11,11 @@ import time
 
 from promptflow.core import tool
 
+from utils.llm import call_llm
+
 FINISH_PHRASE = "all done"
 OUTPUT_TAG = "ASSISTANT_OUTPUT"
+IMAGE_DIR = "recipes/public/"
 
 
 @tool
@@ -208,6 +212,29 @@ def setup_mock_class():
             """
             return {"type": "Text", "text": content}
 
+        def Image(self, path, display, size):
+            """
+            Creates an Image element.
+
+            Args:
+                path (str): The path to the image file.
+                display (str): The display mode for the image.
+                size (str): The size of the image.
+
+            Returns:
+                dict: A dictionary containing the text element.
+            """
+
+            print(path)
+            cksum, image_path = get_image_cksum(path)
+
+            return {
+                "type": "Image",
+                "path": path,
+                "cksum": cksum,
+                "image_path": image_path,
+            }
+
     cl_mock = MockChainlit()
 
     return cl_mock
@@ -244,6 +271,59 @@ def run_async_coroutine(coroutine):
         return None
 
 
+def get_image_cksum(image_path):
+    """
+    Calculate the MD5 checksum of an image file.
+
+    Args:
+        image_path (str): The path to the image file.
+
+    Returns:
+        str: The MD5 checksum of the image file.
+
+    """
+    image_name = image_path.split("/")[-1]
+    image_path = f"{IMAGE_DIR}/{image_name}"
+
+    with open(image_path, "rb") as f:
+        image = f.read()
+    cksum = hashlib.md5(image).hexdigest()
+    return cksum, image_path
+
+
+def process_images(result):
+    """
+    Process the images in the result to replace them with their checksums.
+
+    Args:
+        result (str): The result containing images.
+
+    Returns:
+        str: The result with images replaced by their checksums.
+
+    """
+
+    if "image" in result and ".png" in result:
+        image_url = result[result.find("http") : result.find(".png") + 4]
+        cksum, image_path = get_image_cksum(image_url)
+
+        if os.getenv("RECIPES_MODEL") == "gpt-4o":
+            # image_validation_prompt = environment.get_template(
+            #    "image_validation_prompt.jinja2"
+            # )
+            # prompt = image_validation_prompt.render(user_input=metadata["intent"])
+
+            prompt = "Describe this image in detail. Is it relevant to the user query?"
+
+            llm_result = call_llm("", prompt, image=image_path)
+
+            image_str = f"Image cksum: {cksum}\nImage description: {llm_result}"
+
+            result = result.replace(image_url, image_str)
+
+    return result
+
+
 def run_chainlit_mock(chat_history: str) -> str:
     """
     This function is used to run the chainlit script and monitor its output.
@@ -276,7 +356,6 @@ def run_chainlit_mock(chat_history: str) -> str:
     print(process)
     while True:
         output = process.stdout.readline()
-        print(output)
         if output == b"" and process.poll() is not None:
             print(
                 "Process finished with No output, try running call_assistant by hand to debug."
@@ -286,12 +365,11 @@ def run_chainlit_mock(chat_history: str) -> str:
             all_output += output.decode("utf-8")
             print(output.strip())
             if FINISH_PHRASE in str(output).lower():
-                print(FINISH_PHRASE)
                 print("Killing process")
                 os.kill(process.pid, signal.SIGKILL)
-                print(OUTPUT_TAG)
                 if OUTPUT_TAG in all_output:
                     result = all_output.split(OUTPUT_TAG)[1].strip()
+                    result = process_images(result)
                     print("Result:", result)
                 else:
                     result = "Unparsable output"
@@ -383,12 +461,13 @@ def main_direct_function():
 
     """
     # chat_history = '[{\"author\": \"user\",\"content\": \"Hi\"},{\"author\":\"assistant\content\": \"Hello! How can I help you today?\"},{\"author\": \"assistant\",\"content\": \"What is the total population of Mali?\"}]'
-    chat_history = '[{"author": "user","content": "Hi"}'
+    # chat_history = '[{"author": "user","content": "Hi"}'
+    chat_history = '[{"author": "user","content": "plot a line chart of fatalities by month for Chad using HDX data as an image"}]'
 
     result = test_using_app_code(chat_history)
-    print("OUTPUT")
+    print(OUTPUT_TAG)
     print(result)
-    print("OUTPUT")
+    print(OUTPUT_TAG)
 
 
 def main():

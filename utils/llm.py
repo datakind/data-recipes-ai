@@ -25,7 +25,6 @@ sql_rows_cap = 100
 template_dir = "../templates"
 if not os.path.exists(template_dir):
     template_dir = "./templates"
-
 environment = Environment(loader=FileSystemLoader(template_dir))
 sql_prompt_template = environment.get_template("gen_sql_prompt.jinja2")
 
@@ -171,7 +170,7 @@ def call_llm(instructions, prompt, image=None):
         return response
 
     except Exception as e:
-        print(response)
+        # print(response)
         print("Error calling LLM: ", e)
         response = None
 
