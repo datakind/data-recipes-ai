@@ -103,10 +103,7 @@ jobs:
             cp -r ../../utils .
             cp -r ../../templates .
             cp ../../management/skills.py .
-
-            echo "Listing recipes/public ..."
-            ls ./recipes/public
-            ls 
+            mkdir -p ./public/images
 
             echo "Setting up Promptflow connections ..."
             pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 

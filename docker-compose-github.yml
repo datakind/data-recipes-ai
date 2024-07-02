@@ -66,5 +66,6 @@ services:
        - ./management/skills.py:/app/recipes/skills.py
 
 
+
 volumes:
   pgdata2:

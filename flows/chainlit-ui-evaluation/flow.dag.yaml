@@ -4,7 +4,7 @@ environment:
 inputs:
   query:
     type: string
-    default: What is the total population of Mali?
+    default: plot f(x) = 10
   context:
     type: string
     default: '"The answer is:\n\n            \n            The answer is:

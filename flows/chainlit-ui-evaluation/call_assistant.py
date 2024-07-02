@@ -15,7 +15,7 @@ from utils.llm import call_llm
 
 FINISH_PHRASE = "all done"
 OUTPUT_TAG = "ASSISTANT_OUTPUT"
-IMAGE_DIR = "recipes/public/"
+IMAGE_DIR = "./public/images"
 
 
 @tool
