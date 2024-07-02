@@ -267,6 +267,7 @@ def run_chainlit_mock(chat_history: str) -> str:
     if not chat_history.startswith("'"):
         chat_history = f"'{chat_history}'"
 
+    print(f"python3 call_assistant.py --chat_history {chat_history}")
     process = subprocess.Popen(
         ["python3", "call_assistant.py", "--chat_history", chat_history],
         stdout=subprocess.PIPE,
@@ -274,10 +275,6 @@ def run_chainlit_mock(chat_history: str) -> str:
     )
     print(process)
     while True:
-        print(chat_history)
-        errors = process.stderr.readline()
-        if errors:
-            print("Errors:", errors)
         output = process.stdout.readline()
         print(output)
         if output == b"" and process.poll() is not None:
@@ -345,6 +342,8 @@ async def test_using_app_code_async(chat_history, timeout=5):
 
     # Here build history
     chat_history = chat_history.replace("\\", "")
+    # Extract test between []
+    chat_history = chat_history[chat_history.find("[") : chat_history.rfind("]") + 1]
     print(">>>>>>>> Chat history:", chat_history)
     history = json.loads(chat_history)
     last_message = history[-1]
@@ -413,6 +412,7 @@ def main():
     chat_history = args.chat_history
 
     if chat_history:
+        print("Running app code ...")
         result = test_using_app_code(chat_history)
         print(OUTPUT_TAG)
         print(result)
