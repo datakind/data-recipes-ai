@@ -1,7 +1,7 @@
 from typing import List
 
 import numpy as np
-from promptflow import log_metric, tool
+from promptflow.core import log_metric, tool
 
 
 @tool

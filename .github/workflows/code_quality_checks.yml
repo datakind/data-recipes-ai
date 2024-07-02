@@ -1,4 +1,4 @@
-name: Run checks on recipes ai repo
+name: Code quality checks
 
 on: [push, pull_request]
 

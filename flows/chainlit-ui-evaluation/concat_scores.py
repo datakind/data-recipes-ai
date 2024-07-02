@@ -1,7 +1,7 @@
 import re
 
 import numpy as np
-from promptflow import tool
+from promptflow.core import tool
 
 
 @tool
