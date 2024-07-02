@@ -101,8 +101,6 @@ jobs:
             cp -r ../../utils .
             cp -r ../../templates .
             cp ../../management/skills.py .
-            mkdir recipes
-            mkdir recipes/public
 
             pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
             pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
