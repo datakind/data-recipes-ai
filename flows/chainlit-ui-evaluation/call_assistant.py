@@ -19,14 +19,14 @@ IMAGE_DIR = "recipes/public/"
 
 
 @tool
-# async def call_assistant(chat_history: list) -> dict:
 def call_assistant(query: str, chat_history: str) -> dict:
     """
     Calls the assistant API with the given input and retrieves the response.
 
     TODO: This spawns a shall and runs the mock version of chainlit, monitors output, then
     kills the process. This is a workaround because running the exact chainlit code does not
-    exit all asynchronous threads and hangs. This workaround is temporary and should be replaced!!
+    exit all asynchronous threads and hangs. This workaround is temporary, brittle and hard to maintain
+    and should be replaced!!
 
     Args:
         query: What the user asked
