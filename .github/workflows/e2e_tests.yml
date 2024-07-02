@@ -117,7 +117,7 @@ jobs:
             pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
             ls /home/runner/.promptflow/.runs/base_run
-            ls ./flows/chainlit-ui-evaluation/recipes/public
+            ls recipes/public
 
             echo "Getting run details ..."
             pf run show-details -n base_run
