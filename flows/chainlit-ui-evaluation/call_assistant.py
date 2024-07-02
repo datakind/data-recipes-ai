@@ -263,6 +263,10 @@ def run_chainlit_mock(chat_history: str) -> str:
     all_output = ""
     result = ""
     print("Monitoring chainlit output")
+
+    if not chat_history.startswith("'"):
+        chat_history = f"'{chat_history}'"
+
     process = subprocess.Popen(
         ["python3", "call_assistant.py", "--chat_history", chat_history],
         stdout=subprocess.PIPE,
