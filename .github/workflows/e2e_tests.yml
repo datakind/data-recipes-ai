@@ -82,6 +82,7 @@ jobs:
             
             # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
             # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
+            echo "Starting docker containers for dbs and server ..."
             docker-compose -f ./docker-compose-github.yml pull
             docker-compose -f ./docker-compose-github.yml up -d --build 
             echo "logs datadb ..."
@@ -94,6 +95,7 @@ jobs:
           with:
             python-version: "3.11.4"
         - run: |
+            echo "Installing promptflow packages ..."
             pip3 install promptflow==1.12.0
             pip3 install promptflow-tools==1.4.0
             pip3 install chainlit==1.1.305
@@ -125,10 +127,8 @@ jobs:
             echo "Starting Promptflow batch run  using data.jsonl ..."
             pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
-            ls /home/runner/.promptflow/.runs/base_run
-            ls recipes/public
-
-            echo "Getting run details ..."
+        - run: |
+            echo "Promptflow results ..."
             pf run show-details -n base_run
             echo "Getting metrics ..."
             pf run show-metrics -n base_run
