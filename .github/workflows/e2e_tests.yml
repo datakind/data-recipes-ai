@@ -27,7 +27,6 @@ jobs:
         POSTGRES_DATA_USER: ${{ secrets.POSTGRES_DATA_USER }} 
         POSTGRES_DATA_PASSWORD: ${{ secrets.POSTGRES_DATA_PASSWORD }} 
 
-        #DATA_DB_CONN_STRING: "postgresql://${{ secrets.POSTGRES_DATA_USER }}:${{ secrets.POSTGRES_DATA_PASSWORD }}@${{ secrets.POSTGRES_DATA_HOST }}:${{ secrets.POSTGRES_DATA_PORT }}/${{ secrets.POSTGRES_DATA_DB }}"
         DATA_DB_CONN_STRING: ${{ secrets.DATA_DB_CONN_STRING }}
 
         POSTGRES_RECIPE_HOST: ${{ secrets.POSTGRES_RECIPE_HOST }} 
@@ -74,6 +73,10 @@ jobs:
           run: |
             env > .env 
 
+            echo "Installing demo data ..."
+            pip3 install gdown==5.2.0
+            cd data && python3 download_demo_data.py && cd ..
+
             mkdir -p ./flows/chainlit-ui-evaluation/recipes/public
             
             # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
@@ -96,9 +99,12 @@ jobs:
             pip3 install langchain==0.2.1
             pip3 install langchain_openai==0.1.7
             pip3 install psycopg2_binary==2.9.9
+            pip3 install 
             pip3 install keyrings.alt
             pip3 list
         - run: |
+
+            echo "Setting up folders ..."
             cd flows/chainlit-ui-evaluation/
             cp ../../ui/chat-chainlit-assistant/app.py .
             cp -r ../../utils .
