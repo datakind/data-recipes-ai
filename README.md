@@ -50,7 +50,7 @@ The following sets you up with data recipes, as provided using the OpenAI plugin
     - Assistant Settings - Set to your LLM deployment accordingly
 2. `cd data && python3 download_demo_data.py && cd ..`
 3. `docker compose up -d --build`
-4. Go to [http://localhost:8000/]
+4. Go to [http://localhost:8000/](http://localhost:8000/)
 
 
 ## Using Recipes
