@@ -129,6 +129,7 @@ jobs:
 
         - run: |
             echo "Promptflow results ..."
+            cd flows/chainlit-ui-evaluation/
             pf run show-details -n base_run
             echo "Getting metrics ..."
             pf run show-metrics -n base_run
