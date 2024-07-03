@@ -55,7 +55,7 @@ GitHub has an action to run the pre-commit tests to ensure code adheres to stand
 
 End-to-end tests have been configured in GitHub actions which use promptflow to call a wrapper around the chainlit UI, or order to test when memories/recipes are used as well as when the assistant does some on-the-fly analysis. To do this, the chainlit class is patched heavily, and there are limitations in how
 cleanly this could be done, so it isn't an exact replica of the true application, but does capture changes
-with the flow as well as test the assistant directly. The main body of integration tests will test recipes server and the assistant independantly.
+with the flow as well as test the assistant directly. The main body of integration tests will test recipes server and the assistant independently.
 
 Additionally, there were some limitation when implementing in GitHub actions where workaround were implemented
 until a lter data, namely: promptflow is run on the GitHub actions host rather than in docker, and the promptflow wrapper to call chainlit has to run as a script and kill the script based on a STDOUT string. These should be fixed in future.
@@ -64,7 +64,14 @@ Code for e2e tests can be found in `flows/chainlit-ui-evaluation` as run by `.gi
 
 The tests work using promptflow evaluation and a call to an LLM to guage groundedness, due to the fact LLM assistants can produce slightly different results if not providing answers from memory/recipes. The promptflow evaluation test data can be found in `flows/chainlit-ui-evaluation/data.jsonl`. 
 
-A useful way to test a new scenario/test, is to add it to `call_assistant_debug.py`.
+A useful way to test a new scenario and to get the 'expected' output for `data.jsonl`, is to add it to `call_assistant_debug.py`.
+
+TODO, future work:
+
+- Add promptflow to docker-compose-github.yml and update action to use this env (time was short and wasn't working). This will reduce overhead and complexity
+- Figure out how to make call_assistant.py exit async look so it doesn't have to run in a wrapper that then kills process
+- Push docker comtainers to a registry so flow doesn't run build every time
+- Bug the chainlit folks to see if they can do something more formal around testing, to avoid complex monkey patching
 
 ## GitHub Workflow
 
