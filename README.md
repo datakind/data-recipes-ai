@@ -161,7 +161,7 @@ You can also configure VS Code to connect to the recipe-manage container for run
 
 # Autogen Studio and autogen agent teams for creating data recipes
 
-![alt text](../assets/autogen-studio-recipes.png)
+![alt text](./assets/autogen-studio-recipes.png)
 
 Data recipes AI contains an autogenstudio instance for the Docker build, as well as sample skill, agent and workflows to use a team of autogen agents for creating data recipes.
 
