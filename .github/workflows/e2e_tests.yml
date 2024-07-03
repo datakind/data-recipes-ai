@@ -99,7 +99,6 @@ jobs:
             pip3 install langchain==0.2.1
             pip3 install langchain_openai==0.1.7
             pip3 install psycopg2_binary==2.9.9
-            pip3 install 
             pip3 install keyrings.alt
             pip3 list
         - run: |
