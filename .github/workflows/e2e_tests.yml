@@ -54,6 +54,8 @@ jobs:
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
 
+        COLUMNS: 120
+
       steps:
 
         - name: Checkout
