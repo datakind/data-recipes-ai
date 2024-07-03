@@ -32,7 +32,7 @@ Some more discussion on design decisions can also be found [here](https://www.lo
 This repo contains a docker-compose environment that will run the following components:
 
 - A [Chainlit](https://docs.chainlit.io/get-started/overview) chat app
-- A Data Recipes AI server powered by [Robocorps actions server](https://github.com/robocorp/robocorp#readme) and a basic code execution environment to run recipes
+- A Data Recipes AI server 
 - Data ingestion pipeline, with simple configuration that can add new sources if they have an 'openapi.json' file 
 - Postgres Databases for storing recipes and data with extensions for [PGVector](https://github.com/pgvector/pgvector) (for vector search) and [Postgis](https://postgis.net/) (for supporting the storage of Geospatial Shape files)
 - A recipes command line interface (CLI) for people approving/improving/creating recipes using the favorite IDE (eg VS Code + GitHub Copilot)
@@ -48,8 +48,9 @@ The following sets you up with data recipes, as provided using the OpenAI plugin
     - API Settings - Needed for ingesting data from data sources
     - Recipes AI Settings - Set to your LLM deployment accordingly
     - Assistant Settings - Set to your LLM deployment accordingly
-2. `docker compose up -d --build`
-3. Go to [http://localhost:8000/]
+2. `cd data && python3 download_demo_data.py && cd ..`
+3. `docker compose up -d --build`
+4. Go to [http://localhost:8000/]
 
 
 ## Using Recipes

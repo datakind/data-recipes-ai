@@ -99,3 +99,24 @@ Summary of our git branching model:
   (`'{} = {}'.format(a, b)`), instead of the old-style formatting (`'%s = %s' % (a, b)`);
 - You will know if any test breaks when you commit, and the tests will be run
   again in the continuous integration pipeline (see below);
+
+# Demo Data
+
+The quick start instructions and self-tests require demo data in the data db. This can be downloaded from Google drive.
+
+## Uploading new demo data
+
+To upload new demo data ...
+
+1. Run the ingestion (see main README)
+2. In the data directory, `tar -cvf datadb-<DATE>.tar ./datadb` then `gzip datadb-<DATE>.tar`
+3. Upload file to [this folder](https://drive.google.com/drive/folders/1E4G9HM-QzxdXVNkgP3fQXsuNcABWzdus?usp=drive_link)
+4. Edit `data/download_demo_data.py` to use file URL
+
+## Downloading demo data
+
+To download demo data ...
+
+1. `docker compose stop datadb`
+2. `cd data && python3 download_demo_data.py && cd ..`
+3. `docker compose start datadb` 
