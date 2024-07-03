@@ -27,6 +27,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
       POSTGRES_PORT: ${POSTGRES_DATA_PORT}
     restart: always
+    volumes:
+      - ./data/datadb:/var/lib/postgresql/data
     ports:
       - 5433:5432
 

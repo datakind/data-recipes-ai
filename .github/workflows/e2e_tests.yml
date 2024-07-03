@@ -76,6 +76,7 @@ jobs:
             echo "Installing demo data ..."
             pip3 install gdown==5.2.0
             cd data && python3 download_demo_data.py && cd ..
+            ls data/datadb
 
             mkdir -p ./flows/chainlit-ui-evaluation/recipes/public
             
