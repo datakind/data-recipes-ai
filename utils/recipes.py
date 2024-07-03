@@ -25,6 +25,8 @@ from PIL import Image
 from utils.db import execute_query
 from utils.llm import call_llm, get_models
 
+import time
+
 environment = Environment(loader=FileSystemLoader("./templates/"))
 
 db = None
@@ -66,6 +68,20 @@ conn_params = {
     "POSTGRES_PASSWORD": os.getenv("POSTGRES_RECIPE_PASSWORD"),
 }
 
+#time tracking wrapper
+import time
+import pandas as pd
+
+# Define the time_tracker decorator
+def time_tracker(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        duration = end_time - start_time
+        print(f"Function '{func.__name__}' ran for {duration:.4f} seconds")
+        return result, duration
+    return wrapper
 
 # Stored in langchain_pg_collection and langchain_pg_embedding as this
 def initialize_vector_db():
@@ -152,7 +168,7 @@ def add_recipe_memory(intent, metadata, mem_type="recipe", force=False):
     id = db[mem_type].add_documents([new_doc], ids=[uuid_str])
     return id
 
-
+@time_tracker
 def check_recipe_memory(intent, debug=True):
     """
     Check the memory for a given intent.
