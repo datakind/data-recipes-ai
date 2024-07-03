@@ -146,3 +146,58 @@ To download demo data ...
 1. `docker compose stop datadb`
 2. `cd data && python3 download_demo_data.py && cd ..`
 3. `docker compose start datadb` 
+
+## Misc.
+
+### Testing connection to actions server
+
+1. `docker exec -it haa-libre-chat  /bin/sh`
+2. To test the SQL query action, run `curl -X POST -H "Content-Type: application/json"  -d '{"query": "select 1"}' "http://actions:8080/api/actions/postgresql-universal-actions/execute-query/run"`
+3. To get get-memory action, run ... `curl -X POST -H "Content-Type: application/json"  -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}'  "http://actions:8080/api/actions/get-data-recipe-memory/get-memory-recipe/run"`
+
+
+# Evaluation with Prompt Flow
+
+First, you will need to build the environment to include Prompt Flow ...
+
+`docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d --build`
+
+Then ...
+
+1. Install the DevContainers VSCode extension 
+2. Build data recipes using the `docker compose` command mentioned above
+3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
+
+   `Dev Containers: Attach to remote container`. 
+
+   Select the promptflow container. This opens a new VSCode window - use it for the next steps.
+4. Install Promptflow add-in
+5. Open folder `/app`
+6. Click on `flow.dag.yaml`
+7. Top left of main pane, click on 'Visual editor'
+8. On the Groundedness node, select your new connection
+9. You can no run by clicking the play icon. See Promptflow documentation for more details
+
+# Deployment
+
+We will add more details here soon, for now, here are some notes on Azure ...
+
+## Deploying to Azure
+
+A deployment script './deployment/deploy_azure.py' is provided to deploy to an Azure Multicontainer web app you have set up with [these instructions](https://learn.microsoft.com/en-us/azure/app-service/tutorial-multi-container-app). The script is run from the top directory. Note: This is for demo purposes only, as Multicontainer web app are still in Public Preview. 
+
+To run the deployment ...
+
+`python3 ./deployment/deploy_azure.py`
+
+One thing to mention on an Azure deploy, it doesn't get pushed to the web app sometimes, until a user tries to access the web app's published URL. No idea why, but if your release is 'stuck', try this.
+
+Note: 
+
+- `./deployment/./deployment/docker-compose-azure.yml` is the configuration used in the deployment center screen on the web app
+- `./deployment/./deployment/docker-compose-deploy.yml` is the configuration used when building the deployment
+- `docker-compose.yml` is used for building locally
+
+:warning: *This is very much a work in progress, deployment will be automated with fewer compose files soon*
+
+You will need to set key environment variables, see your local `.env` for examples.
