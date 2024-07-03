@@ -62,6 +62,9 @@ until a lter data, namely: promptflow is run on the GitHub actions host rather t
 
 Code for e2e tests can be found in `flows/chainlit-ui-evaluation` as run by `.github/workflows/e2e_tests.yml`
 
+The tests work using promptflow evaluation and a call to an LLM to guage groundedness, due to the fact LLM assistants can produce slightly different results if not providing answers from memory/recipes. The promptflow evaluation test data can be found in `flows/chainlit-ui-evaluation/data.jsonl`. 
+
+A useful way to test a new scenario/test, is to add it to `call_assistant_debug.py`.
 
 ## GitHub Workflow
 
