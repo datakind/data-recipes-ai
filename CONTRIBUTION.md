@@ -60,8 +60,7 @@ with the flow as well as test the assistant directly. The main body of integrati
 Additionally, there were some limitation when implementing in GitHub actions where workaround were implemented
 until a lter data, namely: promptflow is run on the GitHub actions host rather than in docker, and the promptflow wrapper to call chainlit has to run as a script and kill the script based on a STDOUT string. These should be fixed in future.
 
-Code for e2e tests can be found here ...
-
+Code for e2e tests can be found in `flows/chainlit-ui-evaluation` as run by `.github/workflows/e2e_tests.yml`
 
 
 ## GitHub Workflow
