@@ -28,57 +28,66 @@ from typing_extensions import override
 
 from utils.general import call_execute_query_api, call_get_memory_recipe_api
 
-environment = Environment(loader=FileSystemLoader("./templates/"))
-chat_ui_assistant_prompt_template = environment.get_template(
-    "chat_ui_assistant_prompt.jinja2"
-)
-
-footer = "\n***\n"
-llm_footer = footer + "🤖 *Caution: LLM Analysis*"
-human_footer = footer + "✅ *A human approved this data recipe*"
-
 logging.basicConfig(filename="output.log", level=logging.DEBUG)
 logger = logging.getLogger()
 
 load_dotenv("../../.env")
 
+footer = "\n***\n"
+llm_footer = footer + "🤖 *Caution: LLM Analysis*"
+human_footer = footer + "✅ *A human approved this data recipe*"
 images_loc = "./public/images/"
-
 user = os.environ.get("USER_LOGIN")
 password = os.environ.get("USER_PWD")
 
-if os.environ.get("ASSISTANTS_API_TYPE") == "openai":
-    async_openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-    sync_openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-else:
-    async_openai_client = AsyncAzureOpenAI(
-        azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
-        api_key=os.getenv("ASSISTANTS_API_KEY"),
-        api_version=os.getenv("ASSISTANTS_API_VERSION"),
+
+def setup(cl):
+    """
+    Sets up the assistant and OpenAI API clients based on the environment variables.
+
+    Args:
+        cl: The ChatLabs instance.
+
+    Returns:
+        tuple: A tuple containing the assistant, async OpenAI API client, and sync OpenAI API client.
+    """
+
+    if os.environ.get("ASSISTANTS_API_TYPE") == "openai":
+        async_openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        sync_openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    else:
+        async_openai_client = AsyncAzureOpenAI(
+            azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
+            api_key=os.getenv("ASSISTANTS_API_KEY"),
+            api_version=os.getenv("ASSISTANTS_API_VERSION"),
+        )
+        sync_openai_client = AzureOpenAI(
+            azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
+            api_key=os.getenv("ASSISTANTS_API_KEY"),
+            api_version=os.getenv("ASSISTANTS_API_VERSION"),
+        )
+
+    cl.instrument_openai()  # Instrument the OpenAI API client
+
+    assistant = sync_openai_client.beta.assistants.retrieve(
+        os.environ.get("ASSISTANTS_ID")
     )
-    sync_openai_client = AzureOpenAI(
-        azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
-        api_key=os.getenv("ASSISTANTS_API_KEY"),
-        api_version=os.getenv("ASSISTANTS_API_VERSION"),
-    )
+
+    # config.ui.name = assistant.name
+    bot_name = os.getenv("ASSISTANTS_BOT_NAME")
+    config.ui.name = bot_name
+
+    return assistant, async_openai_client, sync_openai_client
 
 
-cl.instrument_openai()  # Instrument the OpenAI API client
-
-assistant = sync_openai_client.beta.assistants.retrieve(os.environ.get("ASSISTANTS_ID"))
-
-# config.ui.name = assistant.name
-bot_name = os.getenv("ASSISTANTS_BOT_NAME")
-config.ui.name = bot_name
-
-
-def get_event_handler(cl, assistant_name):  # noqa: C901
+def get_event_handler(cl, assistant_name, sync_openai_client):  # noqa: C901
     """
     Returns an instance of the EventHandler class, which is responsible for handling events in the ChatChainlitAssistant.
 
     Args:
         cl: The ChatClient instance used for communication with the chat service.
         assistant_name (str): The name of the assistant.
+        sync_openai_client: The synchronous OpenAI API client.
 
     Returns:
         EventHandler: An instance of the EventHandler class.
@@ -86,12 +95,14 @@ def get_event_handler(cl, assistant_name):  # noqa: C901
 
     class EventHandler(AssistantEventHandler):
 
-        def __init__(self, assistant_name: str) -> None:
+        def __init__(self, cl, assistant_name: str, sync_openai_client) -> None:
             """
             Initializes a new instance of the ChatChainlitAssistant class.
 
             Args:
                 assistant_name (str): The name of the assistant.
+                sync_openai_client: The synchronous OpenAI API client.
+
 
             Returns:
                 None
@@ -103,6 +114,7 @@ def get_event_handler(cl, assistant_name):  # noqa: C901
             self.current_message_text = ""
             self.assistant_name = assistant_name
             self.cl = cl
+            self.sync_openai_client = sync_openai_client
 
         @override
         def on_event(self, event):
@@ -156,7 +168,7 @@ def get_event_handler(cl, assistant_name):  # noqa: C901
                         run_sync(self.current_message.stream_token(content))
                 elif content.type == "image_file":
                     file_id = content.image_file.file_id
-                    image_data = sync_openai_client.files.content(file_id)
+                    image_data = self.sync_openai_client.files.content(file_id)
                     image_data_bytes = image_data.read()
                     png_file = f"{images_loc}{file_id}.png"
                     print(f"Writing image to {png_file}")
@@ -237,8 +249,10 @@ def get_event_handler(cl, assistant_name):  # noqa: C901
             Returns:
                 None
             """
-            event_handler = get_event_handler(cl, assistant.name)
-            with sync_openai_client.beta.threads.runs.submit_tool_outputs_stream(
+            event_handler = get_event_handler(
+                cl, self.assistant_name, self.sync_openai_client
+            )
+            with self.sync_openai_client.beta.threads.runs.submit_tool_outputs_stream(
                 thread_id=self.current_run.thread_id,
                 run_id=self.current_run.id,
                 tool_outputs=tool_outputs,
@@ -248,7 +262,7 @@ def get_event_handler(cl, assistant_name):  # noqa: C901
                 for text in stream.text_deltas:
                     print(text)
 
-    event_handler = EventHandler(assistant_name)
+    event_handler = EventHandler(cl, assistant_name, sync_openai_client)
 
     return event_handler
 
@@ -306,6 +320,8 @@ async def cleanup():
     # await cl.user_session.clear()
     thread = cl.user_session.get("thread")
     run_id = cl.user_session.get("run_id")
+    async_openai_client = cl.user_session.get("async_openai_client")
+
     if run_id is not None:
         await async_openai_client.beta.threads.runs.cancel(
             thread_id=thread.id, run_id=cl.user_session.get("run_id")
@@ -333,6 +349,7 @@ async def speech_to_text(audio_file):
         Any exceptions raised by the OpenAI API.
 
     """
+    async_openai_client = cl.user_session.get("async_openai_client")
     response = await async_openai_client.audio.transcriptions.create(
         model="whisper-1", file=audio_file
     )
@@ -350,6 +367,7 @@ async def upload_files(files: List[Element]):
     Returns:
         List[str]: A list of file IDs corresponding to the uploaded files.
     """
+    async_openai_client = cl.user_session.get("async_openai_client")
     file_ids = []
     for file in files:
         uploaded_file = await async_openai_client.files.create(
@@ -394,8 +412,16 @@ async def start_chat():
     Returns:
         dict: The thread object returned by the OpenAI API.
     """
+
+    # Setup clients
+    assistant, async_openai_client, sync_openai_client = setup(cl)
+    cl.user_session.set("assistant", assistant)
+    cl.user_session.set("async_openai_client", async_openai_client)
+    cl.user_session.set("sync_openai_client", sync_openai_client)
+
     # Create a Thread
     thread = await async_openai_client.beta.threads.create()
+
     # Store thread ID in user session for later use
     cl.user_session.set("thread_id", thread.id)
 
@@ -657,6 +683,8 @@ async def add_message_to_thread(thread_id, role, content, message=None):
         None
     """
 
+    async_openai_client = cl.user_session.get("async_openai_client")
+
     print(f"Content: {content}")
 
     attachments = []
@@ -688,6 +716,9 @@ async def process_message(message: cl.Message):
 
     thread_id = cl.user_session.get("thread_id")
     chat_history = cl.user_session.get("chat_history")
+    assistant = cl.user_session.get("assistant")
+    sync_openai_client = cl.user_session.get("sync_openai_client")
+
     chat_history.append({"role": "user", "content": message.content})
 
     # Add user message to thread
@@ -720,7 +751,7 @@ async def process_message(message: cl.Message):
 
         # Create and Stream a Run to assistant
         print(f"Creating and streaming a run {assistant.id}")
-        event_handler = get_event_handler(cl, assistant.name)
+        event_handler = get_event_handler(cl, assistant.name, sync_openai_client)
         with sync_openai_client.beta.threads.runs.stream(
             thread_id=thread_id,
             assistant_id=assistant.id,
