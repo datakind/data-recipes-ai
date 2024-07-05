@@ -14,6 +14,7 @@ COPY ./templates /app/templates
 COPY ./utils /app/utils
 COPY ./management/skills.py /app/recipes/skills.py
 COPY requirements.txt /app
+COPY ./utils /app/tests/utils
 
 # Install any needed packages specified in requirements.txt.
 RUN pip install --upgrade pip
