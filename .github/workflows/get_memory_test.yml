@@ -89,6 +89,9 @@ jobs:
           with:
             python-version: "3.11.4"
         - run: |
+            pip3 install pytest
+
+        - run: |
             cd tests/
             echo "Running tests ..."
             pytest 
