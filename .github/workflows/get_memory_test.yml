@@ -95,7 +95,7 @@ jobs:
 
         - run: |
             echo "exec into container ..."
-            docker exec -it recipes-ai-server /bin/bash
+            docker exec recipes-ai-server /bin/bash
             cd ./app/tests
             ls
             pytest
