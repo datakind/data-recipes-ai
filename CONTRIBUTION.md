@@ -47,6 +47,32 @@ the desired feature.
 
 You can use `pytest` to run your tests, no matter which type of test it is.
 
+### Code quality tests
+
+GitHub has an action to run the pre-commit tests to ensure code adheres to standards. See folder `'github/workflows` for more details.
+
+### End-to-end tests
+
+End-to-end tests have been configured in GitHub actions which use promptflow to call a wrapper around the chainlit UI, or order to test when memories/recipes are used as well as when the assistant does some on-the-fly analysis. To do this, the chainlit class is patched heavily, and there are limitations in how
+cleanly this could be done, so it isn't an exact replica of the true application, but does capture changes
+with the flow as well as test the assistant directly. The main body of integration tests will test recipes server and the assistant independently.
+
+Additionally, there were some limitation when implementing in GitHub actions where workarounds were implemented
+until a lter data, namely: promptflow is run on the GitHub actions host rather than in docker, and the promptflow wrapper to call chainlit has to run as a script and kill the script based on a STDOUT string. These should be fixed in future.
+
+Code for e2e tests can be found in `flows/chainlit-ui-evaluation` as run by `.github/workflows/e2e_tests.yml`
+
+The tests work using promptflow evaluation and a call to an LLM to guage groundedness, due to the fact LLM assistants can produce slightly different results if not providing answers from memory/recipes. The promptflow evaluation test data can be found in `flows/chainlit-ui-evaluation/data.jsonl`. 
+
+A useful way to test a new scenario and to get the 'expected' output for `data.jsonl`, is to add it to `call_assistant_debug.py`.
+
+TODO, future work:
+
+- Add promptflow to docker-compose-github.yml and update action to use this env (time was short and wasn't working). This will reduce overhead and complexity
+- Figure out how to make call_assistant.py exit async look so it doesn't have to run in a wrapper that then kills process
+- Push docker containers to a registry so flow doesn't run build every time
+- Bug the chainlit folks to see if they can do something more formal around testing, to avoid complex monkey patching
+
 ## GitHub Workflow
 
 As many other open source projects, we use the famous
@@ -99,3 +125,79 @@ Summary of our git branching model:
   (`'{} = {}'.format(a, b)`), instead of the old-style formatting (`'%s = %s' % (a, b)`);
 - You will know if any test breaks when you commit, and the tests will be run
   again in the continuous integration pipeline (see below);
+
+# Demo Data
+
+The quick start instructions and self-tests require demo data in the data db. This can be downloaded from Google drive.
+
+## Uploading new demo data
+
+To upload new demo data ...
+
+1. Run the ingestion (see main README)
+2. In the data directory, `tar -cvf datadb-<DATE>.tar ./datadb` then `gzip datadb-<DATE>.tar`
+3. Upload file to [this folder](https://drive.google.com/drive/folders/1E4G9HM-QzxdXVNkgP3fQXsuNcABWzdus?usp=drive_link)
+4. Edit `data/download_demo_data.py` to use file URL
+
+## Downloading demo data
+
+To download demo data ...
+
+1. `docker compose stop datadb`
+2. `cd data && python3 download_demo_data.py && cd ..`
+3. `docker compose start datadb` 
+
+## Misc.
+
+### Testing connection to actions server
+
+1. `docker exec -it haa-libre-chat  /bin/sh`
+2. To test the SQL query action, run `curl -X POST -H "Content-Type: application/json"  -d '{"query": "select 1"}' "http://actions:8080/api/actions/postgresql-universal-actions/execute-query/run"`
+3. To get get-memory action, run ... `curl -X POST -H "Content-Type: application/json"  -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}'  "http://actions:8080/api/actions/get-data-recipe-memory/get-memory-recipe/run"`
+
+
+# Evaluation with Prompt Flow
+
+First, you will need to build the environment to include Prompt Flow ...
+
+`docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d --build`
+
+Then ...
+
+1. Install the DevContainers VSCode extension 
+2. Build data recipes using the `docker compose` command mentioned above
+3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
+
+   `Dev Containers: Attach to remote container`. 
+
+   Select the promptflow container. This opens a new VSCode window - use it for the next steps.
+4. Install Promptflow add-in
+5. Open folder `/app`
+6. Click on `flow.dag.yaml`
+7. Top left of main pane, click on 'Visual editor'
+8. On the Groundedness node, select your new connection
+9. You can no run by clicking the play icon. See Promptflow documentation for more details
+
+# Deployment
+
+We will add more details here soon, for now, here are some notes on Azure ...
+
+## Deploying to Azure
+
+A deployment script './deployment/deploy_azure.py' is provided to deploy to an Azure Multicontainer web app you have set up with [these instructions](https://learn.microsoft.com/en-us/azure/app-service/tutorial-multi-container-app). The script is run from the top directory. Note: This is for demo purposes only, as Multicontainer web app are still in Public Preview. 
+
+To run the deployment ...
+
+`python3 ./deployment/deploy_azure.py`
+
+One thing to mention on an Azure deploy, it doesn't get pushed to the web app sometimes, until a user tries to access the web app's published URL. No idea why, but if your release is 'stuck', try this.
+
+Note: 
+
+- `./deployment/./deployment/docker-compose-azure.yml` is the configuration used in the deployment center screen on the web app
+- `./deployment/./deployment/docker-compose-deploy.yml` is the configuration used when building the deployment
+- `docker-compose.yml` is used for building locally
+
+:warning: *This is very much a work in progress, deployment will be automated with fewer compose files soon*
+
+You will need to set key environment variables, see your local `.env` for examples.

@@ -115,7 +115,7 @@ def get_event_handler(cl, assistant_name):  # noqa: C901
             Returns:
                 None
             """
-            print(event.event)
+            # print(event.event)
             run_id = event.data.id
             if event.event == "thread.message.created":
                 self.current_message = self.cl.Message(content="")
@@ -128,6 +128,10 @@ def get_event_handler(cl, assistant_name):  # noqa: C901
                 self.handle_requires_action(event.data, run_id)
             elif event.event == "thread.message.delta":
                 self.handle_message_delta(event.data)
+            elif event.event == "thread.run.step.delta":
+                # TODO Here put code to stream code_interpreter output to the chat.
+                # When chainlit openai async supports functions
+                pass
             elif event.event == "thread.run.completed":
                 print("Run completed")
             else:

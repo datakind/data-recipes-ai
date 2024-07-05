@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import hashlib
 import inspect
 import json
 import os
@@ -10,15 +11,22 @@ import time
 
 from promptflow.core import tool
 
+from utils.llm import call_llm
+
 FINISH_PHRASE = "all done"
 OUTPUT_TAG = "ASSISTANT_OUTPUT"
+IMAGE_DIR = "./recipes/public/"
 
 
 @tool
-# async def call_assistant(chat_history: list) -> dict:
 def call_assistant(query: str, chat_history: str) -> dict:
     """
     Calls the assistant API with the given input and retrieves the response.
+
+    TODO: This spawns a shall and runs the mock version of chainlit, monitors output, then
+    kills the process. This is a workaround because running the exact chainlit code does not
+    exit all asynchronous threads and hangs. This workaround is temporary, brittle and hard to maintain
+    and should be replaced!! To debug, see call_assistant_debug.py, which at least removes a few layers.
 
     Args:
         query: What the user asked
@@ -208,6 +216,29 @@ def setup_mock_class():
             """
             return {"type": "Text", "text": content}
 
+        def Image(self, path, display, size):
+            """
+            Creates an Image element.
+
+            Args:
+                path (str): The path to the image file.
+                display (str): The display mode for the image.
+                size (str): The size of the image.
+
+            Returns:
+                dict: A dictionary containing the text element.
+            """
+
+            print(path)
+            cksum, image_path = get_image_cksum(path)
+
+            return {
+                "type": "Image",
+                "path": path,
+                "cksum": cksum,
+                "image_path": image_path,
+            }
+
     cl_mock = MockChainlit()
 
     return cl_mock
@@ -244,6 +275,84 @@ def run_async_coroutine(coroutine):
         return None
 
 
+def get_image_cksum(image_path):
+    """
+    Calculate the MD5 checksum of an image file.
+
+    Args:
+        image_path (str): The path to the image file.
+
+    Returns:
+        str: The MD5 checksum of the image file.
+
+    """
+    image_name = image_path.split("/")[-1]
+    image_path = f"{IMAGE_DIR}/{image_name}"
+
+    with open(image_path, "rb") as f:
+        image = f.read()
+    cksum = hashlib.md5(image).hexdigest()
+    return cksum, image_path
+
+
+def process_images(result):
+    """
+    Process the images in the result to replace them with their checksums.
+
+    Args:
+        result (str): The result containing images.
+
+    Returns:
+        str: The result with images replaced by their checksums.
+
+    """
+
+    print(f"Processing images ...\n\n{result}")
+    if ".png" in result:
+        image_location = result
+        if "http" in result:
+            image_location = result[result.find("http") : result.find(".png") + 4]
+
+        cksum, image_path = get_image_cksum(image_location)
+
+        print(
+            f"Processing image: {image_path}, cksum: {cksum}, location: {image_location}"
+        )
+
+        if os.getenv("RECIPES_MODEL") == "gpt-4o":
+            # image_validation_prompt = environment.get_template(
+            #    "image_validation_prompt.jinja2"
+            # )
+            # prompt = image_validation_prompt.render(user_input=metadata["intent"])
+
+            prompt = "Describe this image in detail. Is it relevant to the user query?"
+
+            llm_result = call_llm("", prompt, image=image_path)
+
+            image_str = f"Image cksum: {cksum}\nImage description: {llm_result}"
+
+            result = result.replace(image_location, image_str)
+
+    return result
+
+
+def dump_stderr(process):
+    """
+    Print the stderr output of a process.
+
+    Args:
+        process: The process to print the stderr output for.
+
+    Returns:
+        None.
+
+    """
+    all_error = process.stderr.read()
+    if len(all_error) > 0:
+        print("STDERR:")
+        print(all_error)
+
+
 def run_chainlit_mock(chat_history: str) -> str:
     """
     This function is used to run the chainlit script and monitor its output.
@@ -263,6 +372,11 @@ def run_chainlit_mock(chat_history: str) -> str:
     all_output = ""
     result = ""
     print("Monitoring chainlit output")
+
+    if not chat_history.startswith("'"):
+        chat_history = f"'{chat_history}'"
+
+    print(f"python3 call_assistant.py --chat_history {chat_history}")
     process = subprocess.Popen(
         ["python3", "call_assistant.py", "--chat_history", chat_history],
         stdout=subprocess.PIPE,
@@ -271,24 +385,25 @@ def run_chainlit_mock(chat_history: str) -> str:
     print(process)
     while True:
         output = process.stdout.readline()
-        print(output)
         if output == b"" and process.poll() is not None:
             print(
                 "Process finished with No output, try running call_assistant by hand to debug."
             )
+            dump_stderr(process)
             break
         if output:
             all_output += output.decode("utf-8")
             print(output.strip())
             if FINISH_PHRASE in str(output).lower():
-                print(FINISH_PHRASE)
                 print("Killing process")
                 os.kill(process.pid, signal.SIGKILL)
-                print(OUTPUT_TAG)
                 if OUTPUT_TAG in all_output:
                     result = all_output.split(OUTPUT_TAG)[1].strip()
+                    result = process_images(result)
+                    dump_stderr(process)
                     print("Result:", result)
                 else:
+                    dump_stderr(process)
                     result = "Unparsable output"
                 break
         time.sleep(0.1)
@@ -330,6 +445,7 @@ async def test_using_app_code_async(chat_history, timeout=5):
 
     app.run_sync = run_sync
     app.cl = cl_mock
+    app.images_loc = IMAGE_DIR + "/"
 
     await app.start_chat()
 
@@ -337,6 +453,8 @@ async def test_using_app_code_async(chat_history, timeout=5):
 
     # Here build history
     chat_history = chat_history.replace("\\", "")
+    # Extract test between []
+    chat_history = chat_history[chat_history.find("[") : chat_history.rfind("]") + 1]
     print(">>>>>>>> Chat history:", chat_history)
     history = json.loads(chat_history)
     last_message = history[-1]
@@ -354,7 +472,13 @@ async def test_using_app_code_async(chat_history, timeout=5):
     await app.process_message(msg)
 
     messages = app.sync_openai_client.beta.threads.messages.list(thread_id)
-    result = messages.data[0].content[0].text.value
+    print("Messages:", messages.data[0].content[0])
+    if messages.data[0].content[0].type == "image_file":
+        file_id = messages.data[0].content[0].image_file.file_id
+        file_path = f"{IMAGE_DIR}/{file_id}.png"
+        result = file_path
+    else:
+        result = messages.data[0].content[0].text.value
 
     return result
 
@@ -365,23 +489,6 @@ def test_using_app_code(chat_history):
     result = loop.run_until_complete(test_using_app_code_async(chat_history))
     loop.close()
     return result
-
-
-def main_direct_function():
-    """
-    TODO
-    For testing direct function call, which hangs even though finished because of
-    some issue with async. Left here for future reference for somebody to fix so
-    the script execution and kill hack can be retired.
-
-    """
-    # chat_history = '[{\"author\": \"user\",\"content\": \"Hi\"},{\"author\":\"assistant\content\": \"Hello! How can I help you today?\"},{\"author\": \"assistant\",\"content\": \"What is the total population of Mali?\"}]'
-    chat_history = '[{"author": "user","content": "Hi"}'
-
-    result = test_using_app_code(chat_history)
-    print("OUTPUT")
-    print(result)
-    print("OUTPUT")
 
 
 def main():
@@ -405,6 +512,7 @@ def main():
     chat_history = args.chat_history
 
     if chat_history:
+        print("Running app code ...")
         result = test_using_app_code(chat_history)
         print(OUTPUT_TAG)
         print(result)
@@ -415,5 +523,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # main_direct_function()
     main()
