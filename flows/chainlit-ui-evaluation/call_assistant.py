@@ -239,6 +239,21 @@ def setup_mock_class():
                 "image_path": image_path,
             }
 
+        def instrument_openai(self):
+            """
+            Instruments the OpenAI MOCK.
+
+            This method is responsible for instrumenting the OpenAI MOCK.
+            It prints a message indicating that the OpenAI MOCK is being instrumented.
+
+            Parameters:
+                None
+
+            Returns:
+                None
+            """
+            print("Instrumenting OpenAI MOCK")
+
     cl_mock = MockChainlit()
 
     return cl_mock
@@ -449,6 +464,8 @@ async def test_using_app_code_async(chat_history, timeout=5):
 
     await app.start_chat()
 
+    sync_openai_client = app.cl.user_session.get("sync_openai_client")
+
     thread_id = app.cl.user_session.get("thread_id")
 
     # Here build history
@@ -471,7 +488,7 @@ async def test_using_app_code_async(chat_history, timeout=5):
     msg = cl_mock.Message(author="user", content=last_message["content"], elements=[])
     await app.process_message(msg)
 
-    messages = app.sync_openai_client.beta.threads.messages.list(thread_id)
+    messages = sync_openai_client.beta.threads.messages.list(thread_id)
     print("Messages:", messages.data[0].content[0])
     if messages.data[0].content[0].type == "image_file":
         file_id = messages.data[0].content[0].image_file.file_id
