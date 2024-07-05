@@ -95,6 +95,7 @@ jobs:
 
         - run: |
             cd tests/
+            cp -r ../utils/ .
             echo "Running tests ..."
             pytest 
 
