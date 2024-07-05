@@ -25,5 +25,6 @@ management/work/
 server/robocorp/actions_plugins/recipe-server/utils
 data
 server/fastapi/recipes/
-assistants/chat_ui/files/custom
+assistants/chat_ui/files/file_search/custom
+assistants/chat_ui/files/code_interpreter/custom
 
