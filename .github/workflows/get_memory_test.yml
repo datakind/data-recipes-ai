@@ -89,11 +89,7 @@ jobs:
           with:
             python-version: "3.11.4"
         - run: |
-            pip3 install pytest
-
-        - run: |
             cd tests/
-            chmod -R 755 .
             echo "Running tests ..."
             pytest 
 
