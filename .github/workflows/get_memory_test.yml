@@ -94,11 +94,9 @@ jobs:
             pip3 install python-dotenv==1.0.1
 
         - run: |
-            echo "Preparing folder structure"
-            cd tests/
-            mkdir -p ./utils
-            cp ../utils/* ./utils
-            echo "Running tests ..."
-            pytest 
-
+            echo "exec into container ..."
+            docker exec -it recipes-ai-server /bin/bash
+            cd ./app/tests
+            ls
+            pytest
  
