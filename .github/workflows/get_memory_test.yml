@@ -96,7 +96,7 @@ jobs:
         - run: |
             cd tests/
             ls
-            ls ./utils
+            ls ./utils/
             echo "Running tests ..."
             pytest 
 
