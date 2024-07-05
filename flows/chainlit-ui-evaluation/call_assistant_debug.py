@@ -1,3 +1,5 @@
+import sys
+
 from call_assistant import run_chainlit_mock
 
 #
@@ -17,6 +19,8 @@ def main():
 
     # Assistant smalltalk
     run_chainlit_mock('[{"author": "user","content": "Hi"}]')
+
+    sys.exit(0)
 
     # Memories, text output
     run_chainlit_mock(
