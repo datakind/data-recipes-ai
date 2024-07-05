@@ -28,3 +28,4 @@ robocorp-actions
 robocorp-truststore
 seaborn==0.13.2
 sqlalchemy==2.0.30
+pytest==8.2.2

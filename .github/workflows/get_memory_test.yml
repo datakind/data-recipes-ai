@@ -1,0 +1,96 @@
+name: Recipes server tests
+
+on: [push]
+
+jobs:
+  test:
+      runs-on: ubuntu-latest
+      environment: "GitHub Actions 1"
+      env: 
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ASSISTANTS_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ASSISTANTS_API_TYPE: ${{ secrets.ASSISTANTS_API_TYPE }}
+        ASSISTANTS_ID: ${{ secrets.ASSISTANTS_ID }} 
+        ASSISTANTS_BASE_URL: ${{ secrets.ASSISTANTS_BASE_URL }} 
+        ASSISTANTS_MODEL: ${{ secrets.ASSISTANTS_MODEL }} 
+        ASSISTANTS_BOT_NAME: ${{ secrets.ASSISTANTS_BOT_NAME }} 
+
+        POSTGRES_DATA_HOST: ${{ secrets.POSTGRES_DATA_HOST }} 
+        POSTGRES_DATA_PORT: ${{ secrets.POSTGRES_DATA_PORT }} 
+        POSTGRES_DATA_DB: ${{ secrets.POSTGRES_DATA_DB }} 
+        POSTGRES_DATA_USER: ${{ secrets.POSTGRES_DATA_USER }} 
+        POSTGRES_DATA_PASSWORD: ${{ secrets.POSTGRES_DATA_PASSWORD }} 
+
+        DATA_DB_CONN_STRING: ${{ secrets.DATA_DB_CONN_STRING }}
+
+        POSTGRES_RECIPE_HOST: ${{ secrets.POSTGRES_RECIPE_HOST }} 
+        POSTGRES_RECIPE_PORT: ${{ secrets.POSTGRES_RECIPE_PORT }} 
+        POSTGRES_RECIPE_DB: ${{ secrets.POSTGRES_RECIPE_DB }} 
+        POSTGRES_RECIPE_USER: ${{ secrets.POSTGRES_RECIPE_USER }} 
+        POSTGRES_RECIPE_PASSWORD: ${{ secrets.POSTGRES_RECIPE_PASSWORD }} 
+
+        RECIPE_DB_CONN_STRING: "postgresql://${{ secrets.POSTGRES_RECIPE_USER }}:${{ secrets.POSTGRES_RECIPE_PASSWORD }}@${{ secrets.POSTGRES_RECIPE_HOST }}:${{ secrets.POSTGRES_RECIPE_PORT }}/${{ secrets.POSTGRES_RECIPE_DB }}"
+
+        RECIPES_OPENAI_API_TYPE: ${{ secrets.RECIPES_OPENAI_API_TYPE }} 
+        RECIPES_OPENAI_API_KEY: ${{ secrets.RECIPES_OPENAI_API_KEY }} 
+        RECIPES_MODEL: ${{ secrets.RECIPES_MODEL }} 
+        RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME: ${{ secrets.RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME }} 
+        RECIPES_MEMORY_SIMILARITY_CUTOFF: ${{ secrets.RECIPES_MEMORY_SIMILARITY_CUTOFF }} 
+        RECIPES_RECIPE_SIMILARITY_CUTOFF: ${{ secrets.RECIPES_RECIPE_SIMILARITY_CUTOFF }} 
+        RECIPES_HELPER_FUNCTION_SIMILARITY_CUTOFF: ${{ secrets.RECIPES_HELPER_FUNCTION_SIMILARITY_CUTOFF }} 
+        RECIPES_MODEL_TEMP: ${{ secrets.RECIPES_MODEL_TEMP }} 
+        RECIPES_MODEL_MAX_TOKENS: ${{ secrets.RECIPES_MODEL_MAX_TOKENS }} 
+
+        IMAGE_HOST: ${{ secrets.IMAGE_HOST }} 
+        RECIPE_SERVER_API: ${{ secrets.RECIPE_SERVER_API }} 
+
+        CHAINLIT_AUTH_SECRET: ${{ secrets.CHAINLIT_AUTH_SECRET }} 
+        USER_LOGIN: ${{ secrets.USER_LOGIN }} 
+        USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
+
+        COLUMNS: 150
+
+      steps:
+
+        - name: Checkout
+          uses: actions/checkout@v3
+
+        #- name: Checkout integration tests data
+        #  uses: actions/checkout@master
+        #  with:
+        #    repository: datakind/recipes-ai-test-data
+        #    ssh-key: ${{ secrets.GITHUB_SSH_PRIVATE_KEY}} 
+        #    path: recipes-ai-test-data
+
+        - name: Expose GitHub Runtime
+          uses: crazy-max/ghaction-github-runtime@v2
+            
+        - name: Spin up DB and recipes server
+          run: |
+            env > .env 
+
+            echo "Installing demo data ..."
+            pip3 install gdown==5.2.0
+            cd data && python3 download_demo_data.py && cd ..
+            ls data/datadb
+            
+            echo "Starting docker containers for dbs and server ..."
+            docker-compose -f ./docker-compose-github.yml pull
+            docker-compose -f ./docker-compose-github.yml up -d --build 
+            echo "logs datadb ..."
+            docker-compose -f docker-compose-github.yml  logs datadb
+            docker ps
+
+        - name: Run tests
+          uses: actions/setup-python@v4
+          with:
+            python-version: "3.11.4"
+        - run: |
+            pip3 install pytest==8.2.2
+            pip3 install requests==2.32.3
+            pip3 install python-dotenv==1.0.1
+
+        - run: |
+            echo "exec into container ..."
+            docker exec recipes-ai-server bash -c "cd tests/ && pytest"
+ 
