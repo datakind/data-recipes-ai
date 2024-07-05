@@ -89,11 +89,12 @@ jobs:
           with:
             python-version: "3.11.4"
         - run: |
-            pip3 install pytest
+            pip3 install pytest==8.2.2
+            pip3 install requests==2.32.3
+            pip3 install python-dotenv==1.0.1
 
         - run: |
             cd tests/
-            ls 
             echo "Running tests ..."
             pytest 
 
