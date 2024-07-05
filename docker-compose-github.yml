@@ -67,7 +67,7 @@ services:
        - ./utils:/app/utils
        - ./management/skills.py:/app/recipes/skills.py
        - ./tests:/app/tests
-       - ./utils:/app/test/utils
+       - ./utils:/app/tests/utils
 
 volumes:
   pgdata2:
