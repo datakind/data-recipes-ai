@@ -201,26 +201,27 @@ def get_event_handler(cl, assistant_name, sync_openai_client):  # noqa: C901
                 None
             """
 
-            # If there were citations, replace streamed content with content that has citations
-            message_content = message.content[0].text
-            annotations = message_content.annotations
-            citations = []
-            if annotations:
+            # Check for citations
+            if hasattr(message.content[0], "text"):
                 message_content = message.content[0].text
                 annotations = message_content.annotations
-                for index, annotation in enumerate(annotations):
-                    message_content.value = message_content.value.replace(
-                        annotation.text, f"[{index}]"
-                    )
-                if file_citation := getattr(annotation, "file_citation", None):
-                    cited_file = self.sync_openai_client.files.retrieve(
-                        file_citation.file_id
-                    )
-                    citations.append(f"[{index}] {cited_file.filename}")
+                citations = []
+                if annotations:
+                    message_content = message.content[0].text
+                    annotations = message_content.annotations
+                    for index, annotation in enumerate(annotations):
+                        message_content.value = message_content.value.replace(
+                            annotation.text, f"[{index}]"
+                        )
+                    if file_citation := getattr(annotation, "file_citation", None):
+                        cited_file = self.sync_openai_client.files.retrieve(
+                            file_citation.file_id
+                        )
+                        citations.append(f"[{index}] {cited_file.filename}")
 
-                print(message_content.value)
-                content = message_content.value
-                self.current_message.content = content
+                    print(message_content.value)
+                    content = message_content.value
+                    self.current_message.content = content
 
             # Add footer to self message. We have to start a new message so it's in right order
             # TODO combine streaming with image and footer
