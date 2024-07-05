@@ -5,7 +5,6 @@ import re
 import sys
 import warnings
 
-import pandas as pd
 import requests
 from dotenv import load_dotenv
 
