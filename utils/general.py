@@ -157,7 +157,9 @@ def call_get_memory_recipe_api(user_input, history, generate_intent="true"):
     if isinstance(result, bytes):
         result = result.decode("utf-8")
 
+    if isinstance(result, str):
+        result = json.loads(result)
+
     print("IN API CALL", result)
-    result = json.loads(result)
 
     return result

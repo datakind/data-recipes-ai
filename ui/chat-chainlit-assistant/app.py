@@ -117,6 +117,10 @@ def get_event_handler(cl, assistant_name, sync_openai_client):  # noqa: C901
             self.sync_openai_client = sync_openai_client
 
         @override
+        def on_message_done(self, message) -> None:
+            self.handle_message_completed(message)
+
+        @override
         def on_event(self, event):
             """
             Handles the incoming event and performs the necessary actions based on the event type.
@@ -127,19 +131,21 @@ def get_event_handler(cl, assistant_name, sync_openai_client):  # noqa: C901
             Returns:
                 None
             """
-            # print(event.event)
+            print(event.event)
             run_id = event.data.id
             if event.event == "thread.message.created":
                 self.current_message = self.cl.Message(content="")
                 self.current_message = run_sync(self.current_message.send())
                 self.current_message_text = ""
                 print("Run started")
-            if event.event == "thread.message.completed":
-                self.handle_message_completed(event.data, run_id)
+            # if event.event == "thread.message.completed":
+            #    self.handle_message_completed(event.data, run_id)
             elif event.event == "thread.run.requires_action":
                 self.handle_requires_action(event.data, run_id)
             elif event.event == "thread.message.delta":
                 self.handle_message_delta(event.data)
+            elif event.event == "thread.run.step.completed":
+                print("Message done")
             elif event.event == "thread.run.step.delta":
                 # TODO Here put code to stream code_interpreter output to the chat.
                 # When chainlit openai async supports functions
@@ -183,17 +189,39 @@ def get_event_handler(cl, assistant_name, sync_openai_client):  # noqa: C901
                 else:
                     print(f"Unhandled delta type: {content.type}")
 
-        def handle_message_completed(self, data, run_id):
+        def handle_message_completed(self, message):
             """
             Handles the completion of a message.
 
             Args:
-                data: The data associated with the completed message.
-                run_id: The ID of the message run.
+                message: The message object.
+                citations: The citations to be added to the message.
 
             Returns:
                 None
             """
+
+            # If there were citations, replace streamed content with content that has citations
+            message_content = message.content[0].text
+            annotations = message_content.annotations
+            citations = []
+            if annotations:
+                message_content = message.content[0].text
+                annotations = message_content.annotations
+                for index, annotation in enumerate(annotations):
+                    message_content.value = message_content.value.replace(
+                        annotation.text, f"[{index}]"
+                    )
+                if file_citation := getattr(annotation, "file_citation", None):
+                    cited_file = self.sync_openai_client.files.retrieve(
+                        file_citation.file_id
+                    )
+                    citations.append(f"[{index}] {cited_file.filename}")
+
+                print(message_content.value)
+                content = message_content.value
+                self.current_message.content = content
+
             # Add footer to self message. We have to start a new message so it's in right order
             # TODO combine streaming with image and footer
             run_sync(self.current_message.update())
@@ -203,7 +231,12 @@ def get_event_handler(cl, assistant_name, sync_openai_client):  # noqa: C901
 
             word_count = len(self.current_message_text.split())
             if word_count > 10:
-                run_sync(self.current_message.stream_token(llm_footer))
+                if citations is not None:
+                    citations = "; Sources: " + "; ".join(citations)
+                else:
+                    citations = ""
+                run_sync(self.current_message.stream_token(llm_footer + citations))
+
             run_sync(self.current_message.update())
 
         def handle_requires_action(self, data, run_id):
@@ -562,6 +595,7 @@ def check_memories_recipes(user_input: str, history=[]) -> str:
                 if len(data) > 50:
                     data = data[:50]
                     data.append(["..."])
+
                 data = str(data)
 
                 elements.append(cl.Text(name="", content=data, display="inline"))

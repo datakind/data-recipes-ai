@@ -87,6 +87,8 @@ services:
        - ./utils:/app/utils
        - ./server/robocorp/actions_plugins/recipe-server/actions.py:/app/actions.py
        - ./ingestion/ingestion.config:/app/ingestion.config
+       - ./assistants/chat_ui/create_update_assistant.py:/app/create_update_assistant.py
+       - ./assistants/chat_ui/files:/app/files
   ingestion:
     container_name: recipes-ai-ingestion
     build:
