@@ -47,7 +47,12 @@ This repo contains a docker-compose environment that will run the following comp
     - Assistant Settings - Set to your LLM deployment accordingly
 2. `cd data && python3 download_demo_data.py && cd ..`
 3. `docker compose up -d --build`
-4. Go to [http://localhost:8000/](http://localhost:8000/)
+4. `docker compose exec chat python create_update_assistant.py`
+5. Update `.env` file and set ASSISTANTS_ID to the value returned from the previous step
+6. `docker compose up -d`
+7. Go to [http://localhost:8000/](http://localhost:8000/)
+
+
 
 
 ## Using Recipes
@@ -56,9 +61,20 @@ We are in a phase of research to identify and improve recipes, but for now the s
 
 ## Additional Features 
 
+### Adding your own files for the assistant to analyze
+
+The assistant can be configured to analyze your own files, either in searching them or using them when analyzing data on-the-fly. To add your won files, place them in one of the following folders:
+
+`./assistants/chat_ui/files/file_search/custom` : The assistant will search these files
+`./assistants/chat_ui/files/code_interpreter/custom` : The assistant can use these files when generating and running code
+
+Once you have put your files in the above folders, you can update your assistant by running ...
+
+`docker compose exec chat python create_update_assistant.py`
+
 ### Analysis on Ingested Data 
 
-To run the ingestion module for ingested datasets, so assistants and plugins can analysis data on-the-fly as an experimental feature:
+By default, the repo comes with some demo HAPI data. To run the ingestion module for ingested datasets yourself, so assistants and plugins can analysis data on-the-fly as an experimental feature:
 
 1. `docker exec -it haa-ingestion /bin/bash`
 2. `python3 ingest.py`
