@@ -187,9 +187,9 @@ To activate:
 
 1. Go to [http://localhost:8091/](http://localhost:8091/)
 2. Click on 'Build'
-3. Click 'Skills' on left, top right click '...' and import the skill in `./assets`
-4. Click 'Agents' on left, top right click '...' and import the skill in `./assets`
-5. Click 'Workflows' on left, top right click '...' and import the skill in `./assets`
+3. Click 'Skills' on left, top right click '...' and import the skill in `./assistants/recipes_agents/autogen_team/`
+4. Click 'Agents' on left, top right click '...' and import the agent in `assistants/recipes_agents/autogen_team/`
+5. Click 'Workflows' on left, top right click '...' and import the workflow in `assistants/recipes_agents/autogen_team/`
 6. Go to playground and start a new session, select the 'Recipes data Analysis' workflow
 7. Ask 'What is the total population of Mali?'
 
