@@ -71,7 +71,7 @@ jobs:
         - name: Expose GitHub Runtime
           uses: crazy-max/ghaction-github-runtime@v2
             
-        - name: Spin up DB and recipes server
+        - name: Spin up Docker containers
           run: |
             env > .env 
 
@@ -91,51 +91,61 @@ jobs:
             docker-compose -f docker-compose-github.yml  logs datadb
             docker ps
 
-        # TODO The promptflow docker build wasn't working in GH actions, so deploying promptflow to host for now
-        - name: Set up promtpflow and run tests
-          uses: actions/setup-python@v4
-          with:
-            python-version: "3.11.4"
-        - run: |
-            echo "Installing promptflow packages ..."
-            pip3 install promptflow==1.12.0
-            pip3 install promptflow-tools==1.4.0
-            pip3 install chainlit==1.1.305
-            pip3 install langchain==0.2.1
-            pip3 install langchain_openai==0.1.7
-            pip3 install psycopg2_binary==2.9.9
-            pip3 install keyrings.alt
-            pip3 list
-        - run: |
-
-            echo "Setting up folders ..."
-            cd flows/chainlit-ui-evaluation/
-            cp ../../ui/chat-chainlit-assistant/app.py .
-            cp -r ../../utils .
-            cp -r ../../templates .
-            cp ../../management/skills.py .
+        - name: Spin up Docker containers
+        run: |
+            env > .env 
 
             echo "Setting up Promptflow connections ..."
-            pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
-            pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
+            docker compose -f docker-compose-github.yml exec promptflow pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
+        #     pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
 
-            # Test running one node with default inputs. Good for debugging GH actions
-            #pf flow test --flow . --node call_assistant
-            #python3 call_assistant.py --chat_history '[{"author": "user","content": "Hi!"}, {"author": "user","content": "What is the total population of Mali"}]'
-            #python3 call_assistant.py --chat_history '[{"author": "user","content": "plot a line chart of fatalities by month for Chad using HDX data as an image"}]'
-            # This runs a few, with the script kill, like promptflow, but prints all debug. Good for testing.
-            # python3 call_assistant_debug.py
 
-            echo "Starting Promptflow batch run  using data.jsonl ..."
-            pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
-        - run: |
-            echo "Promptflow results ..."
-            cd flows/chainlit-ui-evaluation/
-            pf run show-details -n base_run
-            echo "Getting metrics ..."
-            pf run show-metrics -n base_run
-            ##pf run visualize -n base_run
-            echo "Checking results ..."
-            python3 check_evaluation_results.py
+        # # TODO The promptflow docker build wasn't working in GH actions, so deploying promptflow to host for now
+        # - name: Set up promtpflow and run tests
+        #   uses: actions/setup-python@v4
+        #   with:
+        #     python-version: "3.11.4"
+        # - run: |
+        #     echo "Installing promptflow packages ..."
+        #     pip3 install promptflow==1.12.0
+        #     pip3 install promptflow-tools==1.4.0
+        #     pip3 install chainlit==1.1.305
+        #     pip3 install langchain==0.2.1
+        #     pip3 install langchain_openai==0.1.7
+        #     pip3 install psycopg2_binary==2.9.9
+        #     pip3 install keyrings.alt
+        #     pip3 list
+        # - run: |
+
+        #     echo "Setting up folders ..."
+        #     cd flows/chainlit-ui-evaluation/
+        #     cp ../../ui/chat-chainlit-assistant/app.py .
+        #     cp -r ../../utils .
+        #     cp -r ../../templates .
+        #     cp ../../management/skills.py .
+
+        #     echo "Setting up Promptflow connections ..."
+        #     pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
+        #     pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
+
+        #     # Test running one node with default inputs. Good for debugging GH actions
+        #     #pf flow test --flow . --node call_assistant
+        #     #python3 call_assistant.py --chat_history '[{"author": "user","content": "Hi!"}, {"author": "user","content": "What is the total population of Mali"}]'
+        #     #python3 call_assistant.py --chat_history '[{"author": "user","content": "plot a line chart of fatalities by month for Chad using HDX data as an image"}]'
+        #     # This runs a few, with the script kill, like promptflow, but prints all debug. Good for testing.
+        #     # python3 call_assistant_debug.py
+
+        #     echo "Starting Promptflow batch run  using data.jsonl ..."
+        #     pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
+
+        # - run: |
+        #     echo "Promptflow results ..."
+        #     cd flows/chainlit-ui-evaluation/
+        #     pf run show-details -n base_run
+        #     echo "Getting metrics ..."
+        #     pf run show-metrics -n base_run
+        #     ##pf run visualize -n base_run
+        #     echo "Checking results ..."
+        #     python3 check_evaluation_results.py
  
