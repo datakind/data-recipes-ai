@@ -80,8 +80,6 @@ jobs:
             cd data && python3 download_demo_data.py && cd ..
             ls data/datadb
 
-            mkdir -p ./flows/chainlit-ui-evaluation/recipes/public
-            
             # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
             # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
             echo "Starting docker containers for dbs and server ..."
