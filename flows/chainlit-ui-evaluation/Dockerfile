@@ -1,5 +1,5 @@
 # See here: https://microsoft.github.io/promptflow/cloud/azureai/runtime-change-log.html#v4
-FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime-stable:latest
+FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime-stable:20240411.v4
 
 ARG OPENAI_API_KEY
 ENV OPENAI_API_KEY=$OPENAI_API_KEY
