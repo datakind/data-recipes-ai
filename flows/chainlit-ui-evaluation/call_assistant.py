@@ -241,13 +241,13 @@ def login(driver):
 
 
 @tool
-def call_assistant(user_input, history):
+def call_assistant(query, history):
     """
     Calls the assistant using the provided user input and history.
 
     Args:
-        user_input (str): The user input to send to the assistant.
-        history (list): A list of previous messages exchanged with the assistant.
+        query (str): The user input to send to the assistant.
+        history (list): A list of previous messages sent to the assistant.
 
     Returns:
         str: The response from the assistant.
@@ -263,7 +263,7 @@ def call_assistant(user_input, history):
         send_message(driver, message)
 
     # Now send the user input
-    response = send_message(driver, user_input)
+    response = send_message(driver, query)
 
     return response
 

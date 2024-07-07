@@ -40,7 +40,6 @@ nodes:
     path: call_assistant.py
   inputs:
     query: ${inputs.query}
-    chat_history: ${inputs.chat_history}
 - name: groundedness_score
   type: llm
   source:
