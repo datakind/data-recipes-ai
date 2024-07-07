@@ -1,3 +1,4 @@
+# See here: https://microsoft.github.io/promptflow/cloud/azureai/runtime-change-log.html#v4
 FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime-stable:latest
 
 ARG OPENAI_API_KEY
@@ -31,20 +32,20 @@ RUN which python
 
 # # ======= SELENIUM BEGIN ========
 
-# # Update package lists for the Ubuntu system
-# RUN apt-get update
+# Update package lists for the Ubuntu system
+RUN apt-get update
 
-# # Download Chrome Debian package
-# RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb 
+# Download Chrome Debian package
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb 
 
-# # Install the Chrome Debian package
-# RUN apt install ./google-chrome-stable_current_amd64.deb -y
+# Install the Chrome Debian package
+RUN apt install ./google-chrome-stable_current_amd64.deb -y
 
-# # Print the version of Google Chrome installed
-# RUN google-chrome --version
+# Print the version of Google Chrome installed
+RUN google-chrome --version
 
-# RUN pip install selenium==4.22.0
-# RUN pip install chromedriver-py==126.0.6478.126
+RUN pip install selenium==4.22.0
+RUN pip install chromedriver-py==126.0.6478.126
 
 # # ======= SELENIUM END ========
 
