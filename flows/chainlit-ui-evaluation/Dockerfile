@@ -47,3 +47,5 @@ RUN which python
 # RUN pip install chromedriver-py==126.0.6478.126
 
 # # ======= SELENIUM END ========
+
+ENV PATH="{PATH}:/azureml-envs/prompt-flow/runtime/bin" 
