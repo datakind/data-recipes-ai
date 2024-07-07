@@ -70,5 +70,22 @@ services:
        - ./tests:/app/tests
        - ./utils:/app/tests/utils
 
+  chat:
+     platform: linux/amd64
+     container_name: recipes-ai-chat
+     build:
+       context: .
+       dockerfile: ./ui/chat-chainlit-assistant/Dockerfile
+     ports:
+       - 8000:8000
+     env_file:
+       - .env
+     volumes:
+       - ./ui/chat-chainlit-assistant:/app
+       - shared-data:/app/public/images
+       - ./templates:/app/templates
+       - ./utils:/app/utils
+       - ./server/robocorp/actions_plugins/recipe-server/actions.py:/app/actions.py
+
 volumes:
   pgdata2:
