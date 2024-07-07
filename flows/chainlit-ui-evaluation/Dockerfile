@@ -1,5 +1,5 @@
 # See here: https://microsoft.github.io/promptflow/cloud/azureai/runtime-change-log.html#v4
-FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime-stable:20240411.v4
+FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime-stable:20240411.v4 
 
 ARG OPENAI_API_KEY
 ENV OPENAI_API_KEY=$OPENAI_API_KEY
@@ -51,6 +51,4 @@ RUN pip install chromedriver-py==126.0.6478.126
 
 # # ======= SELENIUM END ========
 
-ENTRYPOINT [ "/service/scripts/start.sh" ]
-
-#ENV PATH="{PATH}:/azureml-envs/prompt-flow/runtime/bin" 
+ENV PATH=$PATH:/azureml-envs/prompt-flow/runtime/bin:/opt/miniconda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
