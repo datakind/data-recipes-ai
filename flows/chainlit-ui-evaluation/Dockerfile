@@ -21,27 +21,29 @@ RUN pip3 install chainlit==1.1.305
 RUN pip3 install langchain==0.2.1
 RUN pip3 install langchain_openai==0.1.7
 RUN pip3 install psycopg2_binary==2.9.9
-RUN pip install keyrings.alt
+RUN pip3 install keyrings.alt
 
 # Set up Connections
 RUN pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
 RUN pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
 
-# ======= SELENIUM BEGIN ========
+RUN which python
 
-# Update package lists for the Ubuntu system
-RUN apt-get update
+# # ======= SELENIUM BEGIN ========
 
-# Download Chrome Debian package
-RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb 
+# # Update package lists for the Ubuntu system
+# RUN apt-get update
 
-# Install the Chrome Debian package
-RUN apt install ./google-chrome-stable_current_amd64.deb -y
+# # Download Chrome Debian package
+# RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb 
 
-# Print the version of Google Chrome installed
-RUN google-chrome --version
+# # Install the Chrome Debian package
+# RUN apt install ./google-chrome-stable_current_amd64.deb -y
 
-RUN pip install selenium==4.22.0
-RUN pip install chromedriver-py==126.0.6478.126
+# # Print the version of Google Chrome installed
+# RUN google-chrome --version
 
-# ======= SELENIUM END ========
+# RUN pip install selenium==4.22.0
+# RUN pip install chromedriver-py==126.0.6478.126
+
+# # ======= SELENIUM END ========
