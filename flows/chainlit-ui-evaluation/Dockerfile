@@ -30,7 +30,7 @@ RUN pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KE
 
 RUN echo "DEBUG DOCKER"
 RUN which python
-RUN echo $SHELL
+RUN env
 
 # # ======= SELENIUM BEGIN ========
 
