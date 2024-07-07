@@ -30,7 +30,7 @@ MARKDOWN_BODY_CLASS = "markdown-body"
 MESSAGES_CLASS = "message-content"
 
 TMP_IMAGE = "temp.png"
-CHAT_URL = "http://chat:8000/"
+CHAT_URL = os.getenv("CHAT_URL")
 
 IMAGE_SUMMARIZATION_PROMPT = "Summarize the image"
 
