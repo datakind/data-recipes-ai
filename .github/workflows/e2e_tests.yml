@@ -63,13 +63,6 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v3
 
-        # Get ssh connection details for runner
-        # See here https://github.com/marketplace/actions/debugging-with-ssh
-        # Basically, uncomment this, then get connection string in actions output, then connect with
-        # ssh -i <YOUR GITHUB SSH KEY> <CONN STRING ON ACTIONS>
-        #- name: Setup upterm session
-        #  uses: lhotari/action-upterm@v1
-
         - name: Expose GitHub Runtime
           uses: crazy-max/ghaction-github-runtime@v2
             
@@ -106,12 +99,19 @@ jobs:
             env > .env 
             docker-compose -f ./docker-compose-github.yml exec -T promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
-        - name: Show results
-          run: |
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-details -n base_run
-            echo "Getting metrics ..."
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-metrics -n base_run
-            ##docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run visualize -n base_run
-            echo "Checking results ..."
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow  python3 check_evaluation_results.py
+        # Get ssh connection details for runner
+        # See here https://github.com/marketplace/actions/debugging-with-ssh
+        # Basically, uncomment this, then get connection string in actions output, then connect with
+        # ssh -i <YOUR GITHUB SSH KEY> <CONN STRING ON ACTIONS>
+        - name: Setup upterm session
+          uses: lhotari/action-upterm@v1
+
+        # - name: Show results
+        #   run: |
+        #     docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-details -n base_run
+        #     echo "Getting metrics ..."
+        #     docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-metrics -n base_run
+        #     ##docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run visualize -n base_run
+        #     echo "Checking results ..."
+        #     docker-compose -f ./docker-compose-github.yml exec -T promptflow  python3 check_evaluation_results.py
  
