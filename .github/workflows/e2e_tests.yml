@@ -82,7 +82,7 @@ jobs:
             docker-compose -f docker-compose-github.yml  logs datadb
             docker ps
 
-        - name: Spin up Docker containers
+        - name: Run tests
           run: |
             env > .env 
 
