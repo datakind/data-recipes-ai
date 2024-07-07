@@ -87,16 +87,7 @@ jobs:
         - name: Run tests
           run: |
             env > .env 
-
-            echo "Setting up Promptflow connections ..."
-            echo $CMD
-
-            $CMD echo $OPENAI_API_KEY
-
-            $CMD pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
-            $CMD pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
-
-            $CMD pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
+            docker-compose -f ./docker-compose-github.yml exec promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
         - run: |
             echo "Promptflow results ..."

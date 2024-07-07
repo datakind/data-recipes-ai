@@ -15,7 +15,7 @@ COPY ./ui/chat-chainlit-assistant/app.py /app/chainlit-ui-evaluation/app.py
 RUN pip3 install --upgrade pip
 
 # Needed for running chainlit code if using Mock tests
-RUN pip3 install chainlit==1.1.305
+# RUN pip3 install chainlit==1.1.305
 RUN pip3 install langchain==0.2.1
 RUN pip3 install langchain_openai==0.1.7
 RUN pip3 install psycopg2_binary==2.9.9
