@@ -86,7 +86,7 @@ jobs:
             docker-compose -f docker-compose-github.yml logs datadb
 
             # TODO: For some reason, maybe buildkit, in Github docker compose builds the image differently, and it doesn't work. Local build works.
-            docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT --no-cache -t promptflow -f ./flows/chainlit-ui-evaluation/Dockerfile  .
+            docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg CHAT_URL=$CHAT_URL --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT --no-cache -t promptflow -f ./flows/chainlit-ui-evaluation/Dockerfile  .
             docker run -d --name promptflow promptflow 
 
             docker ps
