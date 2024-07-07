@@ -10,8 +10,7 @@ on: [push]
 
 jobs:
   test:
-      #runs-on: ubuntu-latest
-      runs-on: macos-latest
+      runs-on: ubuntu-latest 
       environment: "GitHub Actions 1"
       env: 
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -57,7 +56,7 @@ jobs:
 
         COLUMNS: 150
 
-        CMD: "docker compose -f ./docker compose-github.yml exec promptflow"
+        CMD: "docker-compose -f ./docker-compose-github.yml exec promptflow"
 
       steps:
 
@@ -73,48 +72,41 @@ jobs:
 
             echo "Installing demo data ..."
 
-            # Activate virtual environment
-            python3 -m venv venv
-            source venv/bin/activate
-
             # Get demo data
             pip3 install gdown==5.2.0
             cd data && python3 download_demo_data.py && cd ..
             ls data/datadb
 
-            brew install docker
-            colima start
-            
-            # For testcontainers to find the Colima socket
-            # https://github.com/abiosoft/colima/blob/main/docs/FAQ.md#cannot-connect-to-the-docker-daemon-at-unixvarrundockersock-is-the-docker-daemon-running
-            sudo ln -sf $HOME/.colima/default/docker.sock /var/run/docker.sock
-
             # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
-            # TODO docker compose files should be refactored to use scopes instead of different versions for each environment
+            # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
             echo "Starting docker containers for dbs and server ..."
-            docker compose -f ./docker compose-github.yml pull
-            docker compose -f ./docker compose-github.yml up -d --build 
+            docker-compose -f ./docker-compose-github.yml pull
+            docker-compose -f ./docker-compose-github.yml up -d --build 
             echo "logs datadb ..."
-            docker compose -f docker compose-github.yml logs datadb
+            docker-compose -f docker-compose-github.yml logs datadb
             echo "logs promptflow ..."
-            docker compose -f docker compose-github.yml logs promptflow
+            docker-compose -f docker-compose-github.yml logs promptflow
             docker ps
 
             # Debug
-            docker compose -f ./docker compose-github.yml exec -T promptflow /bin/bash -c "echo 'hi' && echo $PATH && which python3 && which pf"
-            docker compose -f ./docker compose-github.yml exec -T promptflow which pf
+            echo "BASH ..."
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow /bin/bash -c "echo 'hi' && echo $PATH && which python3"
+            echo "SH ..."
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow /bin/sh -c "echo 'hi' && echo $PATH && which python3"
+
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow which pf
 
         - name: Run tests
           run: |
             env > .env 
-            docker compose -f ./docker compose-github.yml exec -T promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
         - name: Show results
           run: |
-            docker compose -f ./docker compose-github.yml exec -T promptflow  pf run show-details -n base_run
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-details -n base_run
             echo "Getting metrics ..."
-            docker compose -f ./docker compose-github.yml exec -T promptflow  pf run show-metrics -n base_run
-            ##docker compose -f ./docker compose-github.yml exec -T promptflow  pf run visualize -n base_run
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-metrics -n base_run
+            ##docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run visualize -n base_run
             echo "Checking results ..."
-            docker compose -f ./docker compose-github.yml exec -T promptflow  python3 check_evaluation_results.py
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow  python3 check_evaluation_results.py
  
