@@ -93,10 +93,10 @@ jobs:
         - run: |
             echo "Promptflow results ..."
             cd flows/chainlit-ui-evaluation/
-            docker-compose -f ./docker-compose-github.yml exec promptflow  pf run show-details -n base_run
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-details -n base_run
             echo "Getting metrics ..."
-            docker-compose -f ./docker-compose-github.yml exec promptflow  pf run show-metrics -n base_run
-            ##docker-compose -f ./docker-compose-github.yml exec promptflow  pf run visualize -n base_run
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-metrics -n base_run
+            ##docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run visualize -n base_run
             echo "Checking results ..."
-            docker-compose -f ./docker-compose-github.yml exec promptflow  python3 check_evaluation_results.py
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow  python3 check_evaluation_results.py
  
