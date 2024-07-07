@@ -10,7 +10,8 @@ on: [push]
 
 jobs:
   test:
-      runs-on: ubuntu-latest
+      #runs-on: ubuntu-latest
+      runs-on: macos-latest
       environment: "GitHub Actions 1"
       env: 
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
