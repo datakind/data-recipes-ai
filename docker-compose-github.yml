@@ -63,6 +63,7 @@ services:
        - .env
      volumes:
        - ./server/fastapi:/app
+       - shared-data:/app/recipes/public
        - ./flows/chainlit-ui-evaluation/recipes/public:/app/recipes/public
        - ./templates:/app/templates
        - ./utils:/app/utils
@@ -82,10 +83,11 @@ services:
        - .env
      volumes:
        - ./ui/chat-chainlit-assistant:/app
-       #- shared-data:/app/public/images
+       - shared-data:/app/public/images
        - ./templates:/app/templates
        - ./utils:/app/utils
        - ./server/robocorp/actions_plugins/recipe-server/actions.py:/app/actions.py
 
 volumes:
   pgdata2:
+  shared-data:
