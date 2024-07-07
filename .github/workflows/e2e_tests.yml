@@ -91,8 +91,6 @@ jobs:
             docker-compose -f ./docker-compose-github.yml exec -T promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
         - run: |
-            echo "Promptflow results ..."
-            cd flows/chainlit-ui-evaluation/
             docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-details -n base_run
             echo "Getting metrics ..."
             docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-metrics -n base_run
