@@ -91,20 +91,15 @@ jobs:
             echo "logs datadb ..."
             docker-compose -f docker-compose-github.yml logs datadb
 
+            # TODO: For some reason, maybe buildkit, in Github docker compose builds the image differently, and it doesn't work. Local build works.
             docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT --no-cache -t promptflow -f ./flows/chainlit-ui-evaluation/Dockerfile  .
             docker run -d --name promptflow promptflow 
 
-            echo "logs promptflow ..."
-            docker-compose -f docker-compose-github.yml logs promptflow
             docker ps
 
-            # Debug
-            echo "BASH ..."
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow /bin/bash -c "echo 'hi' && echo $PATH && which python3"
-            echo "SH ..."
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow /bin/sh -c "echo 'hi' && echo $PATH && which python3"
-
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow ls /service/scripts/start.sh
+            echo "logs promptflow ..."
+            docker logs promptflow
+            docker ps
 
         - name: Run tests
           run: |
