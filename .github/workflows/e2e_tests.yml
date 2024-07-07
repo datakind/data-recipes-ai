@@ -87,6 +87,7 @@ jobs:
             docker ps
 
             docker-compose -f ./docker-compose-github.yml exec -T promptflow /bin/bash -c "echo 'hi' && echo $PATH && which python3 && which pf"
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow which pf
 
         - name: Run tests
           run: |
