@@ -98,7 +98,7 @@ jobs:
         # Get ssh connection details for runner
         # See here https://github.com/marketplace/actions/debugging-with-ssh
         # Basically, uncomment this, then get connection string in actions output, then connect with
-        ssh -i <YOUR GITHUB SSH KEY> <CONN STRING ON ACTIONS>
+        #ssh -i <YOUR GITHUB SSH KEY> <CONN STRING ON ACTIONS>
         - name: Setup upterm session
           uses: lhotari/action-upterm@v1
 
