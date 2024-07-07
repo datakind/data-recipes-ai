@@ -87,15 +87,16 @@ jobs:
         - name: Run tests
           run: |
             env > .env 
+            echo "Runnign tests ..."
             docker-compose -f ./docker-compose-github.yml exec promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
         - run: |
             echo "Promptflow results ..."
             cd flows/chainlit-ui-evaluation/
-            $CMD pf run show-details -n base_run
+            docker-compose -f ./docker-compose-github.yml exec promptflow  pf run show-details -n base_run
             echo "Getting metrics ..."
-            $CMD pf run show-metrics -n base_run
-            ##pf run visualize -n base_run
+            docker-compose -f ./docker-compose-github.yml exec promptflow  pf run show-metrics -n base_run
+            ##docker-compose -f ./docker-compose-github.yml exec promptflow  pf run visualize -n base_run
             echo "Checking results ..."
-            python3 check_evaluation_results.py
+            docker-compose -f ./docker-compose-github.yml exec promptflow  python3 check_evaluation_results.py
  
