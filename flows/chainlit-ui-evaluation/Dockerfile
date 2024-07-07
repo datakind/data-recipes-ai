@@ -1,11 +1,27 @@
 # See here: https://microsoft.github.io/promptflow/cloud/azureai/runtime-change-log.html#v4
 FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime-stable:20240411.v4 
 
+# Directly:
+# docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT --no-cache -t test -f ./flows/chainlit-ui-evaluation/Dockerfile  .
+# docker run -d --name test test
+# docker exec -it test /bin/bash
+#
+# Docker compose:
+# docker-compose -f docker-compose-github.yml build promptflow
+# docker-compose -f docker-compose-github.yml up -d promptflow
+# docker-compose exec -f docker-compose-github.yml -it promptflow /bin/bash
+#
+# export DOCKER_BUILDKIT=0
+#
+
 ARG OPENAI_API_KEY
 ENV OPENAI_API_KEY=$OPENAI_API_KEY
 
 ARG OPENAI_API_ENDPOINT
 ENV OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT
+
+ARG CHAT_URL
+ENV CHAT_URL=$CHAT_URL
 
 COPY ./flows /app
 COPY ./utils /app/chainlit-ui-evaluation/utils
