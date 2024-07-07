@@ -91,8 +91,8 @@ jobs:
             echo "logs datadb ..."
             docker-compose -f docker-compose-github.yml logs datadb
 
-            docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT --no-cache -t test -f ./flows/chainlit-ui-evaluation/Dockerfile  .
-            docker run -d --name test test
+            docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT --no-cache -t promptflow -f ./flows/chainlit-ui-evaluation/Dockerfile  .
+            docker run -d --name promptflow promptflow 
 
             echo "logs promptflow ..."
             docker-compose -f docker-compose-github.yml logs promptflow
