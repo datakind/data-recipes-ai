@@ -64,52 +64,55 @@ jobs:
           uses: actions/checkout@v3
 
         # Get ssh connection details for runner
+        # See here https://github.com/marketplace/actions/debugging-with-ssh
+        # Basically, uncomment this, then get connection string in actions output, then connect with
+        # ssh -i <YOUR GITHUB SSH KEY> <CONN STRING ON ACTIONS
         - name: Setup upterm session
           uses: lhotari/action-upterm@v1
 
-        - name: Expose GitHub Runtime
-          uses: crazy-max/ghaction-github-runtime@v2
+        # - name: Expose GitHub Runtime
+        #   uses: crazy-max/ghaction-github-runtime@v2
             
-        - name: Spin up Docker containers
-          run: |
-            env > .env 
+        # - name: Spin up Docker containers
+        #   run: |
+        #     env > .env 
 
-            echo "Installing demo data ..."
+        #     echo "Installing demo data ..."
 
-            # Get demo data
-            pip3 install gdown==5.2.0
-            cd data && python3 download_demo_data.py && cd ..
+        #     # Get demo data
+        #     pip3 install gdown==5.2.0
+        #     cd data && python3 download_demo_data.py && cd ..
 
-            # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
-            # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
-            echo "Starting docker containers for dbs and server ..."
-            docker-compose -f ./docker-compose-github.yml pull
-            docker-compose -f ./docker-compose-github.yml up -d --build 
-            echo "logs datadb ..."
-            docker-compose -f docker-compose-github.yml logs datadb
-            echo "logs promptflow ..."
-            docker-compose -f docker-compose-github.yml logs promptflow
-            docker ps
+        #     # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
+        #     # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
+        #     echo "Starting docker containers for dbs and server ..."
+        #     docker-compose -f ./docker-compose-github.yml pull
+        #     docker-compose -f ./docker-compose-github.yml up -d --build 
+        #     echo "logs datadb ..."
+        #     docker-compose -f docker-compose-github.yml logs datadb
+        #     echo "logs promptflow ..."
+        #     docker-compose -f docker-compose-github.yml logs promptflow
+        #     docker ps
 
-            # Debug
-            echo "BASH ..."
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow /bin/bash -c "echo 'hi' && echo $PATH && which python3"
-            echo "SH ..."
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow /bin/sh -c "echo 'hi' && echo $PATH && which python3"
+        #     # Debug
+        #     echo "BASH ..."
+        #     docker-compose -f ./docker-compose-github.yml exec -T promptflow /bin/bash -c "echo 'hi' && echo $PATH && which python3"
+        #     echo "SH ..."
+        #     docker-compose -f ./docker-compose-github.yml exec -T promptflow /bin/sh -c "echo 'hi' && echo $PATH && which python3"
 
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow ls /service/scripts/start.sh
+        #     docker-compose -f ./docker-compose-github.yml exec -T promptflow ls /service/scripts/start.sh
 
-        - name: Run tests
-          run: |
-            env > .env 
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
+        # - name: Run tests
+        #   run: |
+        #     env > .env 
+        #     docker-compose -f ./docker-compose-github.yml exec -T promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
-        - name: Show results
-          run: |
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-details -n base_run
-            echo "Getting metrics ..."
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-metrics -n base_run
-            ##docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run visualize -n base_run
-            echo "Checking results ..."
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow  python3 check_evaluation_results.py
+        # - name: Show results
+        #   run: |
+        #     docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-details -n base_run
+        #     echo "Getting metrics ..."
+        #     docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run show-metrics -n base_run
+        #     ##docker-compose -f ./docker-compose-github.yml exec -T promptflow  pf run visualize -n base_run
+        #     echo "Checking results ..."
+        #     docker-compose -f ./docker-compose-github.yml exec -T promptflow  python3 check_evaluation_results.py
  
