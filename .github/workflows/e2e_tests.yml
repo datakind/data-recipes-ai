@@ -88,7 +88,7 @@ jobs:
           run: |
             env > .env 
             echo "Runnign tests ..."
-            docker-compose -f ./docker-compose-github.yml exec promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
         - run: |
             echo "Promptflow results ..."
