@@ -83,7 +83,7 @@ jobs:
             echo "logs datadb ..."
             docker-compose -f docker-compose-github.yml logs datadb
             echo "logs promptflow ..."
-            docker-compose -f docker-compose-github.yml logs promptfloe
+            docker-compose -f docker-compose-github.yml logs promptflow
             docker ps
 
             docker-compose -f ./docker-compose-github.yml exec -T promptflow /bin/bash -c "echo 'hi' && echo $PATH"
