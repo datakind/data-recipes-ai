@@ -93,7 +93,7 @@ jobs:
             echo "SH ..."
             docker-compose -f ./docker-compose-github.yml exec -T promptflow /bin/sh -c "echo 'hi' && echo $PATH && which python3"
 
-            docker-compose -f ./docker-compose-github.yml exec -T promptflow which pf
+            docker-compose -f ./docker-compose-github.yml exec -T promptflow ls /service/scripts/start.sh
 
         - name: Run tests
           run: |
