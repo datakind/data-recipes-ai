@@ -49,6 +49,7 @@ jobs:
 
         IMAGE_HOST: ${{ secrets.IMAGE_HOST }} 
         RECIPE_SERVER_API: ${{ secrets.RECIPE_SERVER_API }} 
+        CHAT_URL: ${{ secrets.CHAT_URL }}
 
         CHAINLIT_AUTH_SECRET: ${{ secrets.CHAINLIT_AUTH_SECRET }} 
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
