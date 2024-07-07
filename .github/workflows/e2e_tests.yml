@@ -1,4 +1,4 @@
-name: End-to-End Tests
+name: End-to-End tests
 
 #on: [push, pull_request]
 
@@ -90,8 +90,9 @@ jobs:
 
             echo "Setting up Promptflow connections ..."
             echo $CMD
-            echo $OPENAI_API_KEY
-            
+
+            $CMD echo echo $OPENAI_API_KEY
+
             $CMD pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
             $CMD pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
 
