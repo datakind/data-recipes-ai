@@ -61,13 +61,6 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v3
 
-        #- name: Checkout integration tests data
-        #  uses: actions/checkout@master
-        #  with:
-        #    repository: datakind/recipes-ai-test-data
-        #    ssh-key: ${{ secrets.GITHUB_SSH_PRIVATE_KEY}} 
-        #    path: recipes-ai-test-data
-
         - name: Expose GitHub Runtime
           uses: crazy-max/ghaction-github-runtime@v2
             
@@ -92,13 +85,14 @@ jobs:
             docker ps
 
         - name: Spin up Docker containers
-        run: |
+          run: |
             env > .env 
 
-            echo "Setting up Promptflow connections ..."
-            docker compose -f docker-compose-github.yml exec promptflow pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
-        #     pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
+            export CMD="docker-compose -f ./docker-compose-github.yml exec promptflow"
 
+            echo "Setting up Promptflow connections ..."
+            $CMD pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
+            $CMD pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
 
 
         # # TODO The promptflow docker build wasn't working in GH actions, so deploying promptflow to host for now
