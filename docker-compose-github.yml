@@ -1,5 +1,6 @@
 services:
   promptflow:
+    platform: linux/amd64
     build:
       context: .
       dockerfile: ./flows/chainlit-ui-evaluation/Dockerfile
