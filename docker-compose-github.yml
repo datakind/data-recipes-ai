@@ -64,7 +64,7 @@ services:
      volumes:
        - ./server/fastapi:/app
        - shared-data:/app/recipes/public
-       - ./flows/chainlit-ui-evaluation/recipes/public:/app/recipes/public
+       #- ./flows/chainlit-ui-evaluation/recipes/public:/app/recipes/public
        - ./templates:/app/templates
        - ./utils:/app/utils
        - ./management/skills.py:/app/recipes/skills.py
