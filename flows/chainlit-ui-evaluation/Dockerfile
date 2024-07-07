@@ -28,7 +28,9 @@ RUN pip3 install keyrings.alt
 RUN pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
 RUN pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
 
+RUN echo "DEBUG DOCKER"
 RUN which python
+RUN echo $SHELL
 
 # # ======= SELENIUM BEGIN ========
 
