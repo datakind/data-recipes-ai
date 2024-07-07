@@ -72,6 +72,7 @@ jobs:
             env > .env 
 
             echo "Installing demo data ..."
+            brew install python@3.11.4
             pip3 install gdown==5.2.0
             cd data && python3 download_demo_data.py && cd ..
             ls data/datadb
