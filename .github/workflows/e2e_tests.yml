@@ -82,8 +82,12 @@ jobs:
             cd data && python3 download_demo_data.py && cd ..
             ls data/datadb
 
-            echo "Deactivating venv ..."
-            deactivate
+            brew install docker
+            colima start
+            
+            # For testcontainers to find the Colima socket
+            # https://github.com/abiosoft/colima/blob/main/docs/FAQ.md#cannot-connect-to-the-docker-daemon-at-unixvarrundockersock-is-the-docker-daemon-running
+            sudo ln -sf $HOME/.colima/default/docker.sock /var/run/docker.sock
 
             # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
             # TODO docker compose files should be refactored to use scopes instead of different versions for each environment
