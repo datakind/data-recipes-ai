@@ -272,8 +272,24 @@ def call_assistant(query, chat_history):
 
 if __name__ == "__main__":
 
-    user_input = "Hi"
-    call_assistant(user_input, "[]")
+    #user_input = "How many rows does the population table have for Nigeria"
+    #call_assistant(user_input, "[]")
+    #sys.exit()
 
-    #user_input = "plot a graph showing how avergae food prices have changed in Chad"
-    #call_assistant(user_input, ["hi"])
+    # read data.jsonl
+    with open("data.jsonl") as f:
+        data = f.readlines()
+
+    data_new = []
+    for d in data:
+        d = json.loads(d)
+        user_input = d["query"]
+        chat_history = d["chat_history"]
+        output = call_assistant(user_input, "[]")
+        d["output"] = str(output)
+        data_new.append(d)
+
+    with open("data.jsonl", "w") as f:
+        for d in data_new:
+            f.write(json.dumps(d) + "\n")
+
