@@ -17,7 +17,7 @@ from utils.llm import call_llm
 POLL_TIME = 1
 
 # TIme waiting for response before exiting
-TIMEOUT_TIME = 30
+TIMEOUT_TIME = 120
 
 # Web elements used
 LOGIN_EMAIL_FIELD = "email"
@@ -119,7 +119,6 @@ def get_history(driver):
 
     return history
 
-
 def send_message(driver, message):
     """
     Sends a message to the chat box and retrieves the bot's response.
@@ -155,15 +154,13 @@ def send_message(driver, message):
     for i in range(num_new_outputs - 1, 0, -1):
         record = history[-1 * i]
 
-        try:
-            # Look for image
+        if check_element_exists(record, By.TAG_NAME, "img"):
             image = record.find_element(By.TAG_NAME, "img")
             url = image.get_attribute("src")
             output = get_image_summary(url)
-
-        except NoSuchElementException:
+        else:
             output = record.text
-
+            
         outputs.append(output)
 
         # Print the last response
@@ -272,9 +269,10 @@ def call_assistant(query, chat_history):
 
 if __name__ == "__main__":
 
-    # user_input = "How many rows does the population table have for Nigeria"
-    # call_assistant(user_input, "[]")
-    # sys.exit()
+    #user_input = "How many rows does the population table have for Nigeria"
+    #user_input="Plot f{x}=10"
+    #call_assistant(user_input, "[]")
+    #sys.exit()
 
     # read data.jsonl
     with open("data.jsonl") as f:
@@ -289,7 +287,8 @@ if __name__ == "__main__":
         d["output"] = str(output)
         data_new.append(d)
 
-    with open("data.jsonl", "w") as f:
+    with open("data.new.jsonl", "w") as f:
         for d in data_new:
             f.write(json.dumps(d) + "\n")
+        print("\n\nReview data.new.jsonl for the output and copy to data.jsonl if satisfied.")
 
