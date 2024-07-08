@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import json
 
 import requests
 from promptflow.core import tool
@@ -241,13 +242,13 @@ def login(driver):
 
 
 @tool
-def call_assistant(query, history):
+def call_assistant(query, chat_history):
     """
     Calls the assistant using the provided user input and history.
 
     Args:
         query (str): The user input to send to the assistant.
-        history (list): A list of previous messages sent to the assistant.
+        chat_history (str): A JSON list of previous messages sent to the assistant.
 
     Returns:
         str: The response from the assistant.
@@ -259,7 +260,8 @@ def call_assistant(query, history):
     login(driver)
 
     # First replay history
-    for message in history:
+    chat_history = json.loads(chat_history)
+    for message in chat_history:
         send_message(driver, message)
 
     # Now send the user input
@@ -270,5 +272,8 @@ def call_assistant(query, history):
 
 if __name__ == "__main__":
 
-    user_input = "plot a graph showing how avergae food prices have changed in Chad"
-    call_assistant(user_input, ["hi"])
+    user_input = "Hi"
+    call_assistant(user_input, "[]")
+
+    #user_input = "plot a graph showing how avergae food prices have changed in Chad"
+    #call_assistant(user_input, ["hi"])

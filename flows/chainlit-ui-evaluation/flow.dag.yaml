@@ -4,7 +4,7 @@ environment:
 inputs:
   query:
     type: string
-    default: plot f{x}=10
+    default: What is the total population of Mali
   context:
     type: string
     default: '"The answer is:\n\n            \n            The answer is:
@@ -22,7 +22,7 @@ inputs:
 outputs:
   agent_output:
     type: string
-    reference: ${call_assistant.output.response}
+    reference: ${call_assistant.output}
   groundedness_score:
     type: string
     reference: ${groundedness_score.output}
@@ -40,6 +40,7 @@ nodes:
     path: call_assistant.py
   inputs:
     query: ${inputs.query}
+    chat_history: ${inputs.chat_history}
 - name: groundedness_score
   type: llm
   source:
@@ -47,7 +48,7 @@ nodes:
     path: groundedness_score.jinja2
   inputs:
     deployment_name: gpt-4-turbo
-    answer: ${call_assistant.output.response}
+    answer: ${call_assistant.output}
     context: ${inputs.context}
     temperature: 1
     model: gpt-4-turbo-preview
