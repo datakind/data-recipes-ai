@@ -272,9 +272,9 @@ def call_assistant(query, chat_history):
 
 if __name__ == "__main__":
 
-    #user_input = "How many rows does the population table have for Nigeria"
-    #call_assistant(user_input, "[]")
-    #sys.exit()
+    # user_input = "How many rows does the population table have for Nigeria"
+    # call_assistant(user_input, "[]")
+    # sys.exit()
 
     # read data.jsonl
     with open("data.jsonl") as f:
