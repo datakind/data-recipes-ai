@@ -7,15 +7,18 @@ inputs:
     default: What is the total population of Mali
   context:
     type: string
-    default: '"The answer is:\n\n            \n            The answer is:
-      **17,907,114.0**\n\n            Metadata for the
-      answer:\n            {\"params\": {\"country_code\": \"MLI\"},
-      \"attribution\":
-      \"https://data.humdata.org/dataset/ce21c7db-d8f0-40f8-adc2-452d2d2d105c\",
-      \"data_url\":
-      \"https://data.humdata.org/dataset/ce21c7db-d8f0-40f8-adc2-452d2d2d105c/resource/6f243ba2-4d4a-4663-a7c4-e917dbbde73a/download/mli_pop_adm0_v2.csv\",
-      \"time_period\": {\"start\": \"2018-01-01\", \"end\":
-      \"2018-12-31T23:59:59\"}}"'
+    default: "\"The answer is:\\n\\n            \\n            The answer is:
+      **17,907,114.0**\\n\\n            Metadata for the
+      answer:\\n            {\\\"params\\\": {\\\"country_code\\\":
+      \\\"MLI\\\"}, \\\"attribution\\\":
+      \\\"https://data.humdata.org/dataset/ce21c7db-d8f0-40f8-adc2-452d2d2d105c\
+      \\\", \\\"data_url\\\":
+      \\\"https://data.humdata.org/dataset/ce21c7db-d8f0-40f8-adc2-452d2d2d105c\
+      /resource/6f243ba2-4d4a-4663-a7c4-e917dbbde73a/download/mli_pop_adm0_v2.c\
+      sv\\\", \\\"time_period\\\": {\\\"start\\\": \\\"2018-01-01\\\",
+      \\\"end\\\": \\\"2018-12-31T23:59:59\\\"}}\", \"output\": \"['The answer
+      is: 17,907,114.0', '\\u2705 A human approved this data recipe; Source; Raw
+      data; 2018-01-01 to 2018-12-31']\"}"
   chat_history:
     type: string
     default: "[]"
