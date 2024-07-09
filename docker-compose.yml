@@ -1,37 +1,38 @@
 #version: "3.4"
 
 services:
+
   datadb:
+    platform: linux/amd64
     image: postgis/postgis:12-3.4
-    platform: linux/amd64 
     container_name: recipes-ai-datadb
     environment:
       POSTGRES_DB: ${POSTGRES_DATA_DB}
       POSTGRES_USER: ${POSTGRES_DATA_USER}
       POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_DATA_PORT}
     restart: always
-    ports:
-      - 5433:5432
     volumes:
       - ./data/datadb:/var/lib/postgresql/data
-    env_file:
-      - .env
+    ports:
+      - 5433:5432
+
   recipedb:
+    platform: linux/amd64
     image: ankane/pgvector:latest
-    platform: linux/amd64 
     container_name: recipes-ai-recipesdb
     environment:
       POSTGRES_DB: ${POSTGRES_RECIPE_DB}
       POSTGRES_USER: ${POSTGRES_RECIPE_USER}
       POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_RECIPE_PORT}
     restart: always
     ports:
       - 5435:5432
     volumes:
       - ./db/recipedb:/docker-entrypoint-initdb.d
       - ./data/recipesdb:/var/lib/postgresql/data
-    env_file:
-      - .env
+
   # recipes-server:
   #   platform: linux/amd64
   #   container_name: recipes-ai-recipes-server
