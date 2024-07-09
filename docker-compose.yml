@@ -3,6 +3,7 @@
 services:
   datadb:
     image: postgis/postgis:12-3.4
+    platform: linux/amd64 
     container_name: recipes-ai-datadb
     environment:
       POSTGRES_DB: ${POSTGRES_DATA_DB}
@@ -17,6 +18,7 @@ services:
       - .env
   recipedb:
     image: ankane/pgvector:latest
+    platform: linux/amd64 
     container_name: recipes-ai-recipesdb
     environment:
       POSTGRES_DB: ${POSTGRES_RECIPE_DB}
@@ -70,6 +72,7 @@ services:
        - ./templates:/app/templates
        - ./utils:/app/utils
        - ./management/skills.py:/app/recipes/skills.py
+       - ./tests:/app/tests
   chat:
      platform: linux/amd64
      container_name: recipes-ai-chat
@@ -97,6 +100,7 @@ services:
   #   depends_on:
   #     - actions
   ingestion:
+    platform: linux/amd64 
     container_name: recipes-ai-ingestion
     build:
       context: .
