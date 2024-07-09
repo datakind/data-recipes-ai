@@ -108,6 +108,10 @@ jobs:
         #- name: Setup upterm session
         #  uses: lhotari/action-upterm@v1
 
+        - name: Run Selenium outside of promptflow
+          run: |
+            docker-compose exec -T promptflow python call_assistant.py
+
         - name: Run tests
           run: |
             env > .env 
