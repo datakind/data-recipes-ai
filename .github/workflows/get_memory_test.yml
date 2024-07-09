@@ -75,10 +75,10 @@ jobs:
             ls data/datadb
             
             echo "Starting docker containers for dbs and server ..."
-            docker-compose -f ./docker-compose-github.yml pull
-            docker-compose -f ./docker-compose-github.yml up -d --build 
+            docker-compose pull
+            docker-compose up -d --build 
             echo "logs datadb ..."
-            docker-compose -f docker-compose-github.yml  logs datadb
+            docker-compose logs datadb
             docker ps
 
         - name: Run tests
