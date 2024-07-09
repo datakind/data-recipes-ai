@@ -86,16 +86,9 @@ services:
        - ./templates:/app/templates
        - ./utils:/app/utils
        - ./server/robocorp/actions_plugins/recipe-server/actions.py:/app/actions.py
-  # # Init container 
-  # init:
-  #   image: busybox
-  #   container_name: recipes-ai-init
-  #   volumes:
-  #     - shared-data:/data
-  #   command: "sh -c 'chown -R 1000:1000 /data && chmod -R 775 /data'"
-  #   user: "root"
-  #   depends_on:
-  #     - actions
+       - ./ingestion/ingestion.config:/app/ingestion.config
+       - ./assistants/chat_ui/create_update_assistant.py:/app/create_update_assistant.py
+       - ./assistants/chat_ui/files:/app/files
   ingestion:
     container_name: recipes-ai-ingestion
     build:

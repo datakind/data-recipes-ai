@@ -101,6 +101,13 @@ def make_api_request(url, payload):
     response = requests.post(url, headers=headers, json=payload)
     print(f"API Response Status Code: {response.status_code}")
     response = response.content
+
+    try:
+        response = json.loads(response)
+        # response = json.dumps(response, indent=4)
+    except json.JSONDecodeError:
+        print("Error decoding JSON response")
+        pass
     print(f"API Response {response}")
     return response
 
@@ -118,6 +125,9 @@ def call_execute_query_api(sql):
     """
     data = {"query": f"{sql}"}
     print(f"Calling execute query API {execute_query_url} with {sql} ...")
+
+    make_api_request(execute_query_url, data)
+
     return make_api_request(execute_query_url, data)
 
 
@@ -146,7 +156,9 @@ def call_get_memory_recipe_api(user_input, history, generate_intent="true"):
     if isinstance(result, bytes):
         result = result.decode("utf-8")
 
+    if isinstance(result, str):
+        result = json.loads(result)
+
     print("IN API CALL", result)
-    result = json.loads(result)
 
     return result

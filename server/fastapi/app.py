@@ -9,6 +9,8 @@ from pydantic import BaseModel
 from utils.db import execute_query as db_execute_query
 from utils.recipes import get_memory_recipe
 
+MAX_RESULTS = 500
+
 
 class MemoryRecipeInput(BaseModel):
     """
@@ -69,20 +71,26 @@ def execute_query_route(data: ExecuteQueryInput):
     """
 
     try:
+
+        trailer = ""
+
         results = db_execute_query(data.query)
+        num_results = results.shape[0]
+
+        # TODO: Add code to send back a link, if results are too large
+        if num_results > MAX_RESULTS:
+            print("Results are too large to send back")
+            results = results[0:MAX_RESULTS]
+            trailer = "... etc"
+            trailer += f"\n\nToo many rows ({num_results}) in the SQL query results. Please try again with a different query."
+
+        results = results.to_json(orient="records")
+        results = json.dumps(json.loads(results), indent=4)
+        results += trailer
+
     except Exception as e:
         print(f"Error executing query: {e}")
         results = f"Error executing query: {e}"
         return results
 
-    # TODO: Add code to send back a link, in case results are too large
-    if results.shape[0] > 500:
-        print("Results are too large to send back")
-        rowcount = results.shape[0]
-        results = str(results[0:50])
-        results += "... etc"
-        results += f"\n\nToo many rows ({rowcount}) in the SQL query results. Please try again with a different query."
-    else:
-        results = str(results)
-
-    return str(results)
+    return results

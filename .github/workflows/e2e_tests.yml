@@ -48,7 +48,7 @@ jobs:
         RECIPES_MODEL_MAX_TOKENS: ${{ secrets.RECIPES_MODEL_MAX_TOKENS }} 
 
         IMAGE_HOST: ${{ secrets.IMAGE_HOST }} 
-        RECIPE_SERVER_API: ${{ secrets.RECIPE_SERVER_API }} 
+        RECIPE_SERVER_API: ${{ secrets.RECIPE_SERVER_API_FROM_GH_HOST }} 
 
         CHAINLIT_AUTH_SECRET: ${{ secrets.CHAINLIT_AUTH_SECRET }} 
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
@@ -124,7 +124,7 @@ jobs:
             #python3 call_assistant.py --chat_history '[{"author": "user","content": "Hi!"}, {"author": "user","content": "What is the total population of Mali"}]'
             #python3 call_assistant.py --chat_history '[{"author": "user","content": "plot a line chart of fatalities by month for Chad using HDX data as an image"}]'
             # This runs a few, with the script kill, like promptflow, but prints all debug. Good for testing.
-            # python3 call_assistant_debug.py
+            python3 call_assistant_debug.py
 
             echo "Starting Promptflow batch run  using data.jsonl ..."
             pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 

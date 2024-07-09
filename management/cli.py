@@ -15,7 +15,7 @@ sys.path.append(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )  # noqa: E402
 from utils.db import connect_to_db, execute_query  # noqa: E402
-from utils.llm import call_llm  # noqa: E402
+from utils.llm import call_llm, gen_sql  # noqa: E402
 
 llm_prompt_cap = 5000
 sql_rows_cap = 100
@@ -434,30 +434,6 @@ def get_data_info():
     data_info = json.dumps(json.loads(data_info), indent=4)
 
     return data_info
-
-
-def gen_sql(input, chat_history, stdout_output, stderr_output):
-
-    data_info = get_data_info()
-
-    gen_sql_template = environment.get_template("gen_sql_prompt.jinja2")
-    prompt = gen_sql_template.render(
-        input=input,
-        stderr_output=stderr_output,
-        stdout_output=stdout_output,
-        data_info=data_info,
-        chat_history=chat_history,
-    )
-
-    response = call_llm("", prompt)
-
-    query = response["code"]
-
-    query = query.replace(";", "") + f" \nLIMIT {sql_rows_cap};"
-
-    # print(query)
-
-    return query
 
 
 def gen_summarize_results(input, sql, stdout_output, stderr_output):

@@ -175,7 +175,7 @@ def call_llm(instructions, prompt, image=None):
         response = None
 
 
-async def gen_sql(input, chat_history, output):
+def gen_sql(input, chat_history, output):
     """
     Generate SQL query based on input, chat history, and output.
 
@@ -194,7 +194,7 @@ async def gen_sql(input, chat_history, output):
     global data_info
 
     if data_info is None:
-        data_info = await get_data_info()
+        data_info = get_data_info()
 
     prompt = sql_prompt_template.render(
         input=input,
