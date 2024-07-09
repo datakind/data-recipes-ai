@@ -106,9 +106,9 @@ jobs:
         #- name: DEBUG: Setup upterm session
         #  uses: lhotari/action-upterm@v1
 
-        # - name: DEBUG: Run Selenium outside of promptflow
-        #   run: |
-        #     docker exec promptflow python call_assistant.py
+        - name: DEBUG: Run Selenium outside of promptflow
+          run: |
+             docker exec promptflow python call_assistant.py
 
         - name: Run tests
           run: |
