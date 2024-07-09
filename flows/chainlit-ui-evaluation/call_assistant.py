@@ -267,7 +267,7 @@ def login(num_tries=0, tot_tries=3):
             return login(num_tries + 1, tot_tries)
         else:
             print(f"Failed to login after {tot_tries} tries")
-            return
+            sys.exit()
 
 
 @tool
