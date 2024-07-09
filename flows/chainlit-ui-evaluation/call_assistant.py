@@ -36,6 +36,7 @@ CHAT_URL = os.getenv("CHAT_URL")
 
 IMAGE_SUMMARIZATION_PROMPT = "Summarize the image"
 
+
 def set_chrome_options() -> Options:
     """Sets chrome options for Selenium.
     Chrome options for headless browser is enabled.
@@ -55,9 +56,9 @@ def check_element_exists(element, by, value):
     Checks if an element exists on a web page.
 
     Args:
-        driver: The WebDriver instance.
-        by: The method used to locate the element (e.g., By.ID, By.XPATH, etc.).
-        value: The value used to locate the element.
+        driver: The WebDriver instance
+        by: The method used to locate the element (e.g., By.ID, By.XPATH, etc.)
+        value: The value used to locate the element
 
     Returns:
         True if the element exists, False otherwise.
@@ -94,9 +95,11 @@ def poll_page(element_name=MARKDOWN_BODY_CLASS):
         markdown_body_elements = driver.find_elements(By.CLASS_NAME, element_name)
         tot_time += POLL_TIME
         if tot_time > TIMEOUT_TIME:
-            print(f"ERROR: Timed out waiting for new message to appear in {element_name}")
+            print(
+                f"ERROR: Timed out waiting for new message to appear in {element_name}"
+            )
             return False
-    
+
     return True
 
 
@@ -119,6 +122,7 @@ def get_history():
     history = history[1:]
 
     return history
+
 
 def send_message(message, num_tries=0, tot_tries=3):
     """
@@ -174,7 +178,7 @@ def send_message(message, num_tries=0, tot_tries=3):
             output = get_image_summary(url)
         else:
             output = record.text
-            
+
         outputs.append(output)
 
         # Print the last response
@@ -231,7 +235,7 @@ def login(num_tries=0, tot_tries=3):
 
     Args:
         num_tries: The number of times to try logging in.
-        tot_tries: The total number of times to try logging in. 
+        tot_tries: The total number of times to try logging in.
 
     Returns:
         None
@@ -308,14 +312,14 @@ if __name__ == "__main__":
         "plot a line chart of fatalities by month for Chad using HDX data as an image",
         "Plot population pyramids for Nigeria",
         "How many rows does the population table have for Nigeria",
-        "Plot f{x}=10"
+        "Plot f{x}=10",
     ]
-    
-    #user_input = chat_history[4]
-    #print(user_input)
-    #user_input="Plot f{x}=10"
-    #call_assistant(user_input, "[]")
-    #sys.exit()
+
+    # user_input = chat_history[4]
+    # print(user_input)
+    # user_input="Plot f{x}=10"
+    # call_assistant(user_input, "[]")
+    # sys.exit()
 
     # read data.jsonl
     with open("data.jsonl") as f:
@@ -333,5 +337,6 @@ if __name__ == "__main__":
     with open("data.new.jsonl", "w") as f:
         for d in data_new:
             f.write(json.dumps(d) + "\n")
-        print("\n\nReview data.new.jsonl for the output and copy to data.jsonl if satisfied.")
-
+        print(
+            "\n\nReview data.new.jsonl for the output and copy to data.jsonl if satisfied."
+        )
