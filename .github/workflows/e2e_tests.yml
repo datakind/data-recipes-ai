@@ -92,6 +92,10 @@ jobs:
 
             echo "logs promptflow ..."
             docker logs promptflow
+
+            echo "logs chat ..."
+            docker compose logs chat
+
             docker ps
 
             sleep 10
