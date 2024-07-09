@@ -82,15 +82,7 @@ jobs:
             docker ps
 
         - name: Run tests
-          uses: actions/setup-python@v4
-          with:
-            python-version: "3.11.4"
-        - run: |
-            pip3 install pytest==8.2.2
-            pip3 install requests==2.32.3
-            pip3 install python-dotenv==1.0.1
-
-        - run: |
+          run: |
             echo "exec into container ..."
-            docker exec recipes-ai-server bash -c "cd tests/ && pytest"
+            docker compose exec server bash -c "cd tests/ && pytest"
  
