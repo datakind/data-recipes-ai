@@ -80,13 +80,12 @@ jobs:
             # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
             # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
             echo "Starting docker containers for dbs and server ..."
-            docker-compose -f ./docker-compose-github.yml pull
-            docker-compose -f ./docker-compose-github.yml up -d --build 
+            docker-compose pull
+            docker-compose up -d --build 
 
             # TODO: For some reason, maybe buildkit, in Github docker compose builds the image differently, and it doesn't work. Individual image build works.
             docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg CHAT_URL=$CHAT_URL --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT --no-cache -t promptflow -f ./flows/chainlit-ui-evaluation/Dockerfile  .
             docker run --env RECIPES_MODEL_MAX_TOKENS=${RECIPES_MODEL_MAX_TOKENS} --env RECIPES_MODEL_TEMP=${RECIPES_MODEL_TEMP} --env RECIPES_OPENAI_API_TYPE=${ASSISTANTS_API_TYPE} --env RECIPES_OPENAI_API_KEY=${ASSISTANTS_API_KEY} --env RECIPES_MODEL=${RECIPES_MODEL} --env RECIPES_BASE_URL=${RECIPES_BASE_URL} --env USER_LOGIN=${USER_LOGIN} --env USER_PASSWORD=${USER_PASSWORD} --env CHAT_URL=${CHAT_URL} --network=data-recipes-ai_default -d --name promptflow promptflow 
-            # docker run --env-file .env --network=data-recipes-ai_default -d --name promptflow promptflow
 
             docker ps
 
@@ -105,12 +104,13 @@ jobs:
         # Basically, uncomment this, then get connection string in actions output, then connect with
         #
         # ssh -i <YOUR GITHUB SSH KEY> <CONN STRING ON ACTIONS>
-        #- name: Setup upterm session
+        #
+        #- name: DEBUG: Setup upterm session
         #  uses: lhotari/action-upterm@v1
 
-        # - name: Run Selenium outside of promptflow
+        # - name: DEBUG: Run Selenium outside of promptflow
         #   run: |
-        #     docker-compose -T promptflow python call_assistant.py
+        #     docker exec promptflow python call_assistant.py
 
         - name: Run tests
           run: |
