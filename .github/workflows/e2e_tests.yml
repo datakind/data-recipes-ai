@@ -108,7 +108,7 @@ jobs:
 
         - name: DEBUG: Run Selenium outside of promptflow
           run: |
-             docker exec promptflow python call_assistant.py
+            docker exec promptflow python call_assistant.py
 
         - name: Run tests
           run: |
