@@ -85,7 +85,7 @@ jobs:
             docker compose logs datadb
 
             echo "logs recipedb ..."
-            docker logs promptflow
+            docker logs recipedb
 
             echo "logs server ..."
             docker compose logs server
