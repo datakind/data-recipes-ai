@@ -129,5 +129,5 @@ jobs:
             docker exec promptflow  pf run show-metrics -n base_run
             ##docker exec promptflow  pf run visualize -n base_run
             echo "Checking results ..."
-            docker exec python3 check_evaluation_results.py
+            docker exec promptflow python3 check_evaluation_results.py
  
