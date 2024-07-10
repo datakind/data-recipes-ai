@@ -83,16 +83,17 @@ jobs:
             
         - name: Check logs
           run: |
+
+            docker ps
+
             echo "logs datadb ..."
             docker compose logs datadb
 
             echo "logs recipedb ..."
-            docker logs recipedb
+            docker compose logs recipedb
 
             echo "logs server ..."
             docker compose logs server
-
-            docker ps
 
             sleep 10
 
