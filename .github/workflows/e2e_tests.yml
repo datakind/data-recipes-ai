@@ -48,7 +48,7 @@ jobs:
         RECIPES_MODEL_MAX_TOKENS: ${{ secrets.RECIPES_MODEL_MAX_TOKENS }} 
 
         IMAGE_HOST: ${{ secrets.IMAGE_HOST }} 
-        RECIPE_SERVER_API: ${{ secrets.RECIPE_SERVER_API }} 
+        RECIPE_SERVER_API: ${{ secrets.RECIPE_SERVER_API_FROM_GH_HOST }} 
         CHAT_URL: ${{ secrets.CHAT_URL }}
 
         CHAINLIT_AUTH_SECRET: ${{ secrets.CHAINLIT_AUTH_SECRET }} 

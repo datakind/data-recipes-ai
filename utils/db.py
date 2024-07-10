@@ -103,7 +103,7 @@ def connect_to_db(instance="recipe"):
     return conn
 
 
-async def get_data_info():
+def get_data_info():
     """
     Get data info from the database.
 
@@ -126,6 +126,6 @@ async def get_data_info():
         --    countries is not null
         """
 
-    data_info = await call_execute_query_api(query)
+    data_info = call_execute_query_api(query)
 
     return data_info

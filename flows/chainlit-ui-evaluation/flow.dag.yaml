@@ -48,7 +48,7 @@ nodes:
   type: llm
   source:
     type: code
-    path: groundedness_score.jinja2
+    path: templates/groundedness_score.jinja2
   inputs:
     deployment_name: gpt-4-turbo
     answer: ${call_assistant.output}
