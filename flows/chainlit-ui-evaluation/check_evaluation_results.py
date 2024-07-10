@@ -1,4 +1,3 @@
-# This script runs after GitHub action to check promptflow evaluation
 import json
 import os
 import subprocess
@@ -19,7 +18,8 @@ def check_result(run_name="base_run", cutoff=100.0):
     Raises:
         SystemExit: If the evaluation result is below the cutoff value.
     """
-    cmd = f"{os.getenv('CMD')} pf run show-metrics -n {run_name}"
+
+    cmd = f"docker exec promptflow pf run show-metrics -n {run_name}"
     print(cmd)
     # Run cmd and capture output
     result = subprocess.check_output(cmd, shell=True, text=True)

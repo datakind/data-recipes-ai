@@ -76,10 +76,23 @@ jobs:
             
             echo "Starting docker containers for dbs and server ..."
             docker-compose pull
-            docker-compose up -d --build 
+            docker-compose up -d --build datadb recipedb server
+
+            
+        - name: Check logs
+          run: |
             echo "logs datadb ..."
-            docker-compose logs datadb
+            docker compose logs datadb
+
+            echo "logs recipedb ..."
+            docker logs promptflow
+
+            echo "logs server ..."
+            docker compose logs server
+
             docker ps
+
+            sleep 10
 
         - name: Run tests
           run: |

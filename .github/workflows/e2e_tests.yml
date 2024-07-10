@@ -85,6 +85,9 @@ jobs:
             docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg CHAT_URL=$CHAT_URL --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT --no-cache -t promptflow -f ./flows/chainlit-ui-evaluation/Dockerfile  .
             docker run --env RECIPES_MODEL_MAX_TOKENS=${RECIPES_MODEL_MAX_TOKENS} --env RECIPES_MODEL_TEMP=${RECIPES_MODEL_TEMP} --env RECIPES_OPENAI_API_TYPE=${ASSISTANTS_API_TYPE} --env RECIPES_OPENAI_API_KEY=${ASSISTANTS_API_KEY} --env RECIPES_MODEL=${RECIPES_MODEL} --env RECIPES_BASE_URL=${RECIPES_BASE_URL} --env USER_LOGIN=${USER_LOGIN} --env USER_PASSWORD=${USER_PASSWORD} --env CHAT_URL=${CHAT_URL} --network=data-recipes-ai_default -d --name promptflow promptflow 
 
+        - name: Check logs
+          run: |
+
             docker ps
 
             echo "logs datadb ..."
