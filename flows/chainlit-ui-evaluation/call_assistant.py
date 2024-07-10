@@ -256,6 +256,7 @@ def login(num_tries=0, tot_tries=3):
         # Check for login success
         if check_element_exists(driver, By.ID, CHAT_INPUT_CLASS):
             print("Login successful")
+            time.sleep(10)
         else:
             print("Login failed")
 
