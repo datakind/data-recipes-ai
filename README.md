@@ -42,89 +42,91 @@ This repo contains a docker-compose environment that will run the following comp
 # Quick start
 
 1. Install Docker if you don't have it already, see [here](https://www.docker.com/products/docker-desktop/)
-
 2. Check out the Data Recipes AI GitHub repo
 
-Go to the [repo](https://github.com/datakind/data-recipes-ai) in Github, and click the big green '<> Code' button. This provides a few options, you can download a zip file, or check the code out with git. If you have Git installed, a common method would be ...
+    Go to the [repo](https://github.com/datakind/data-recipes-ai) in Github, and click the big green '<> Code' button. This provides a few options, you can download a zip file, or check the code out with git. If you have Git installed, a common method would be ...
 
-`git clone https://github.com/datakind/data-recipes-ai.git`
+    `git clone https://github.com/datakind/data-recipes-ai.git`
 
 3. Populate your `.env` file with important settings to get started
 
-First, copy `.env.example` in your repo to `.env` in the same location, then adjust the following valriables.
+    First, copy `.env.example` in your repo to `.env` in the same location, then adjust the following valriables.
 
-If using **Azure OpenAI**, you will need to set these in your `.env` ...
+    If using **Azure OpenAI**, you will need to set these in your `.env` ...
 
-```
-RECIPES_OPENAI_API_TYPE=azure
-RECIPES_OPENAI_API_KEY=<The API key>
-RECIPES_OPENAI_API_ENDPOINT=<eg https://<YOUR DEPLOYMENT NAME>.openai.azure.com/>
-RECIPES_OPENAI_API_VERSION=<The API version in your deployment, eg 2024-02-15-preview>
-RECIPES_MODEL=<The deployment name you created in Azure, eg gpt-4o>
+    ```
+    RECIPES_OPENAI_API_TYPE=azure
+    RECIPES_OPENAI_API_KEY=<The API key>
+    RECIPES_OPENAI_API_ENDPOINT=<eg https://<YOUR DEPLOYMENT NAME>.openai.azure.com/>
+    RECIPES_OPENAI_API_VERSION=<The API version in your deployment, eg 2024-02-15-preview>
+    RECIPES_MODEL=<The deployment name you created in Azure, eg gpt-4o>
 
-ASSISTANTS_API_TYPE=azure  
-ASSISTANTS_API_KEY=<API Key as found on the Azure OpenAI resource>
-ASSISTANTS_ID=<ID of the assistant you created in OpenAI. Leave blank if you do not have one yet>
-ASSISTANTS_BASE_URL=<eg https://<YOUR DEPLOYMENT NAME>.openai.azure.com/>
-ASSISTANTS_API_VERSION=2024-02-15-preview
-ASSISTANTS_MODEL=<The deployment name of the model you created in Azure which the assitant uses, eg gpt-4o>
-ASSISTANTS_BOT_NAME=<Your assistant name, eg "Humanitarian AI Assistant">
+    ASSISTANTS_API_TYPE=azure  
+    ASSISTANTS_API_KEY=<API Key as found on the Azure OpenAI resource>
+    ASSISTANTS_ID=<ID of the assistant you created in OpenAI. Leave blank if you do not have one yet>
+    ASSISTANTS_BASE_URL=<eg https://<YOUR DEPLOYMENT NAME>.openai.azure.com/>
+    ASSISTANTS_API_VERSION=2024-02-15-preview
+    ASSISTANTS_MODEL=<The deployment name of the model you created in Azure which the assitant uses, eg gpt-4o>
+    ASSISTANTS_BOT_NAME=<Your assistant name, eg "Humanitarian AI Assistant">
 
-```
+    ```
 
-Note: In Azure Playground, you can view code for your assistant which provide most of the variables above
+    Note: In Azure Playground, you can view code for your assistant which provide most of the variables above
 
-If using **OpenAI directly***, you will instead need to set these ...
+    If using **OpenAI directly***, you will instead need to set these ...
 
-```
-RECIPES_OPENAI_API_TYPE=openai
-RECIPES_OPENAI_API_KEY=<The API key you created on OpenAI>
-RECIPES_MODEL=<model name, we recommend gpt-4o>
-RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME=text-embedding-ada-002
+    ```
+    RECIPES_OPENAI_API_TYPE=openai
+    RECIPES_OPENAI_API_KEY=<The API key you created on OpenAI>
+    RECIPES_MODEL=<model name, we recommend gpt-4o>
+    RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME=text-embedding-ada-002
 
-ASSISTANTS_API_TYPE=openai 
-OPENAI_API_KEY=<The API key you created on OpenAI>
-ASSISTANTS_API_KEY=${OPENAI_API_KEY}
-ASSISTANTS_ID=<ID of the assistant you created in OpenAI. Leave blank if you do not have one yet>
-ASSISTANTS_MODEL=<The model your assistant uses>
-ASSISTANTS_BOT_NAME=<Your assistant name, eg "Humanitarian AI Assistant">
-```
+    ASSISTANTS_API_TYPE=openai 
+    OPENAI_API_KEY=<The API key you created on OpenAI>
+    ASSISTANTS_API_KEY=${OPENAI_API_KEY}
+    ASSISTANTS_ID=<ID of the assistant you created in OpenAI. Leave blank if you do not have one yet>
+    ASSISTANTS_MODEL=<The model your assistant uses>
+    ASSISTANTS_BOT_NAME=<Your assistant name, eg "Humanitarian AI Assistant">
+    ```
 
-Not needed for quick start, but if you want to run ingestion of data with the new HDX API, then you will need to set ...
+    Not needed for quick start, but if you want to run ingestion of data with the new HDX API, then you will need to set ...
 
-`HAPI_API_TOKEN=<See https://hdx-hapi.readthedocs.io/en/latest/getting-started/>`
+    `HAPI_API_TOKEN=<See https://hdx-hapi.readthedocs.io/en/latest/getting-started/>`
 
 4. Download sample Humanitarian Data Exchange (HDX) API data
 
-For a quick start, we have prepared a sample dataset extracted from the new [HDX API](https://hdx-hapi.readthedocs.io/en/latest/). You can also run the ingestion yourself (see below), but this demo file should get you started quickly.
+    For a quick start, we have prepared a sample dataset extracted from the new [HDX API](https://hdx-hapi.readthedocs.io/en/latest/). You can also run the ingestion yourself (see below), but this demo file should get you started quickly.
 
-From [this Google folder](https://drive.google.com/drive/folders/1E4G9HM-QzxdXVNkgP3fQXsuNcABWzdus?usp=sharing), download the file starting with 'datadb' and save it into the 'data' folder of your repo.
+    From [this Google folder](https://drive.google.com/drive/folders/1E4G9HM-QzxdXVNkgP3fQXsuNcABWzdus?usp=sharing), download the file starting with 'datadb' and save it into the 'data' folder of your repo.
 
-Note: If you use python, you can also download this file by running this in your checked out repo top directory `pip3 install gdown && cd data && python3 download_demo_data.py && cd ..`
+    Note: If you use python, you can also download this file by running this in your checked out repo top directory `pip3 install gdown && cd data && python3 download_demo_data.py && cd ..`
 
 5. Start your environment
 
-`docker compose up -d --build`
+    `docker compose up -d --build`
 
 6. If you don't have one already, create an AI Assistant on Open AI (or Azure OpenAI)
 
-Data Recipes AI uses Open AI style assistants, which support running code, and searching user-supplied data. We have provided a script to automatically do everything for you. 
+    Data Recipes AI uses Open AI style assistants, which support running code, and searching user-supplied data. We have provided a script to automatically do everything for you. 
 
-In a terminal, navigate to the repo top folder and run `docker compose exec chat python create_update_assistant.py`
+    In a terminal, navigate to the repo top folder and run `docker compose exec chat python create_update_assistant.py`
 
-Make note of the assitant ID, then edit your `.env` file and using it set variable `ASSISTANTS_ID`.
+    Make note of the assitant ID, then edit your `.env` file and using it set variable `ASSISTANTS_ID`.
 
-Note: (i) If you rerun `create_update_assistant.py` once `ASSISTANTS_ID` is set, the script will update the assistant rather than create a new one; (ii) You can also add your own data, pdf, docx, csv, xlsx files for the assistant to use, see section 'Adding your own files for the assistant to analyze' below.
+    Note: (i) If you rerun `create_update_assistant.py` once `ASSISTANTS_ID` is set, the script will update the assistant rather than create a new one; (ii) You can also add your own data, pdf, docx, csv, xlsx files for the assistant to use, see section 'Adding your own files for the assistant to analyze' below.
 
 7. Restart so the assistant ID is set, `docker compose up -d`
 
 8. Go to [http://localhost:8000/](http://localhost:8000/) and sign-in using the values in your `.env` file for `USER_LOGIN` and `USER_PASSWORD`
 
+## Stoping/Starting the environment
+
 The steps above are mostly one-time. Going forward you only need to stop and start the environment as follows:
 
 - To stop the environment `docker compose stop`
 - To start the environment `docker compose up -d`, then go to [http://localhost:8000/](http://localhost:8000/)
-- To start with rebuild `docker compose up -d --build`
+- To start with rebuild `docker compose up -d --build` (for more details about development, see [CONTRIBUTION](CONTRIBUTION.md))
+
 
 ## Using Recipes
 
