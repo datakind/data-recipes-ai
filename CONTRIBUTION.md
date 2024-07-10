@@ -34,6 +34,8 @@ To run code quality tests, you can run `pre-commit run --all-files`
 
 ## Tests
 
+### Unit tests
+
 You should write tests for every feature you add or bug you solve in the code.
 Having automated tests for every line of our code lets us make big changes
 without worries: there will always be tests to verify if the changes introduced
@@ -51,7 +53,7 @@ You can use `pytest` to run your tests, no matter which type of test it is.
 
 GitHub has an action to run the pre-commit tests to ensure code adheres to standards. See folder `'github/workflows` for more details.
 
-### End-to-end tests (using Promptflow)
+### End-to-end tests (using Selenium and Promptflow)
 
 End-to-end tests have been configured in GitHub actions which use promptflow to call a wrapper around the chainlit UI, or order to test when memories/recipes are used as well as when the assistant does some on-the-fly analysis. To do this, the chainlit class is patched heavily, and there are limitations in how cleanly this could be done, so it isn't an exact replica of the true application, but does capture changes with the flow as well as test the assistant directly. The main body of integration tests will test recipes server and the assistant independently.
 
