@@ -70,9 +70,10 @@ def check_element_exists(element, by, value):
         return False
 
 
-def poll_page(element_name=MARKDOWN_BODY_CLASS):
+def poll_page(element_id=CHAT_INPUT_CLASS):
     """
     Polls the page for new messages until a new message appears or a timeout occurs.
+    It does this by monitoring the chat box to see when it becomes enabled.
 
     Args:
         driver: The WebDriver instance used to interact with the web page.
@@ -84,20 +85,20 @@ def poll_page(element_name=MARKDOWN_BODY_CLASS):
     Returns:
         None
     """
-    markdown_body_elements = driver.find_elements(By.CLASS_NAME, element_name)
-    chats = len(markdown_body_elements)
 
-    # Loop waiting for the new message to appear, or timeout
+    chat_box = driver.find_element(By.ID, element_id)
+    is_disabled = chat_box.get_attribute("disabled")
+
+    # Loop waiting for the chat box to become enabled, indicating agent output complete
     tot_time = 0
-    while len(markdown_body_elements) == chats:
+    while is_disabled is not None:
         print(f"         ... {tot_time} s")
         time.sleep(POLL_TIME)
-        markdown_body_elements = driver.find_elements(By.CLASS_NAME, element_name)
+        chat_box = driver.find_element(By.ID, element_id)
+        is_disabled = chat_box.get_attribute("disabled")
         tot_time += POLL_TIME
         if tot_time > TIMEOUT_TIME:
-            print(
-                f"ERROR: Timed out waiting for new message to appear in {element_name}"
-            )
+            print(f"ERROR: Timed out waiting for chat box {element_id} to re-enable ")
             return False
 
     return True
@@ -154,11 +155,8 @@ def send_message(message, num_tries=0, tot_tries=3):
             print(f"Failed to send message after {tot_tries} tries")
             return ["ERROR: TIMED OUT SENDING MESSAGE"]
 
-    # Poll for the new message to appear, or timeout
-    status = poll_page(MARKDOWN_BODY_CLASS)
-    if status is False:
-        print("Failed to get response")
-        return ["ERROR: TIMED OUT WAITING FOR RESPONSE"]
+    # Poll page waiting for output to complete
+    poll_page(CHAT_INPUT_CLASS)
 
     history = get_history()
     len_history_new = len(history)
@@ -310,18 +308,18 @@ def call_assistant(query, chat_history):
 
 if __name__ == "__main__":
 
-    chat_history = [
-        "Hello! How can I assist you today?",
-        "What is the total population of Mali",
-        "plot a line chart of fatalities by month for Chad using HDX data as an image",
-        "Plot population pyramids for Nigeria",
-        "How many rows does the population table have for Nigeria",
-        "Plot f{x}=10",
-    ]
-
+    # chat_history = [
+    #    "Hello! How can I assist you today?",
+    #    "What is the total population of Mali",
+    #    "plot a line chart of fatalities by month for Chad using HDX data as an image",
+    #    "Plot population pyramids for Nigeria",
+    #    "How many rows does the population table have for Nigeria",
+    #    "Plot f{x}=10",
+    # ]
     # user_input = chat_history[4]
     # print(user_input)
-    # user_input="Plot f{x}=10"
+
+    # user_input="Is your data updated in real time?"
     # call_assistant(user_input, "[]")
     # sys.exit()
 
