@@ -66,6 +66,29 @@ The tests work using promptflow evaluation and a call to an LLM to guage grounde
 
 See "Evaluating with Promptflow" below to see how to run e2e tests locally.
 
+#### Running Promptflow evaluation locally
+
+First, you will need to build the environment to include Prompt Flow ...
+
+`docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d --build`
+
+Then ...
+
+1. Install the DevContainers VSCode extension 
+2. Build data recipes using the `docker compose` command mentioned above
+3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
+
+   `Dev Containers: Attach to remote container`. 
+
+   Select the promptflow container. This opens a new VSCode window - use it for the next steps.
+4. Install Promptflow add-in
+5. Open folder `/app`
+6. Click on `flow.dag.yaml`
+7. Top left of main pane, click on 'Visual editor'
+     - If you are taken to the promptflow 'Install dependencies'' screen, change the Python runtime to be ` /azureml-envs/prompt-flow/runtime/bin/python` 'runtime', then close and re-open `flow.dag.yaml`
+8. On the Groundedness node, select your new connection
+9. You can no run by clicking the play icon. See Promptflow documentation for more details
+
 ## GitHub Workflow
 
 As many other open source projects, we use the famous
@@ -147,30 +170,6 @@ To download demo data ...
 1. `docker exec -it haa-libre-chat  /bin/sh`
 2. To test the SQL query action, run `curl -X POST -H "Content-Type: application/json"  -d '{"query": "select 1"}' "http://actions:8080/api/actions/postgresql-universal-actions/execute-query/run"`
 3. To get get-memory action, run ... `curl -X POST -H "Content-Type: application/json"  -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}'  "http://actions:8080/api/actions/get-data-recipe-memory/get-memory-recipe/run"`
-
-
-# Running Promptflow evaluation locally
-
-First, you will need to build the environment to include Prompt Flow ...
-
-`docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d --build`
-
-Then ...
-
-1. Install the DevContainers VSCode extension 
-2. Build data recipes using the `docker compose` command mentioned above
-3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
-
-   `Dev Containers: Attach to remote container`. 
-
-   Select the promptflow container. This opens a new VSCode window - use it for the next steps.
-4. Install Promptflow add-in
-5. Open folder `/app`
-6. Click on `flow.dag.yaml`
-7. Top left of main pane, click on 'Visual editor'
-     - If you are taken to the promptflow 'Install dependencies'' screen, change the Python runtime to be ` /azureml-envs/prompt-flow/runtime/bin/python` 'runtime', then close and re-open `flow.dag.yaml`
-8. On the Groundedness node, select your new connection
-9. You can no run by clicking the play icon. See Promptflow documentation for more details
 
 # Deployment
 
