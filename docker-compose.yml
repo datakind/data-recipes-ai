@@ -74,6 +74,7 @@ services:
        - ./utils:/app/utils
        - ./management/skills.py:/app/recipes/skills.py
        - ./tests:/app/tests
+       - ./utils:/app/tests/utils
   chat:
      platform: linux/amd64
      container_name: recipes-ai-chat
