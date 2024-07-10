@@ -296,6 +296,8 @@ def call_assistant(query, chat_history):
     for message in chat_history:
         send_message(message)
 
+    time.sleep(10)
+
     # Now send the user input
     response = send_message(query)
 
