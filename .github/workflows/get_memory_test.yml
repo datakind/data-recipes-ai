@@ -76,7 +76,7 @@ jobs:
             
             echo "Starting docker containers for dbs and server ..."
             docker-compose pull
-            docker-compose up -d --build datadb recipedb server
+            docker-compose up -d --build datadb recipedb server datadb
 
             
         - name: Check logs
