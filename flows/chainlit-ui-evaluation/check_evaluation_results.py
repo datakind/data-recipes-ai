@@ -19,7 +19,7 @@ def check_result(run_name="base_run", cutoff=100.0):
         SystemExit: If the evaluation result is below the cutoff value.
     """
 
-    cmd = f"docker exec promptflow pf run show-metrics -n {run_name}"
+    cmd = f"pf run show-metrics -n {run_name}"
     print(cmd)
     # Run cmd and capture output
     result = subprocess.check_output(cmd, shell=True, text=True)
