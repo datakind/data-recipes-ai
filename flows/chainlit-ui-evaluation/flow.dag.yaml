@@ -54,7 +54,7 @@ nodes:
     answer: ${call_assistant.output}
     context: ${inputs.context}
     temperature: 1
-    model: gpt-4-turbo-preview
+    model: gpt-4o
   connection: open_ai_connection
   api: chat
 - name: concat_scores
