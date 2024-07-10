@@ -40,20 +40,32 @@ images_loc = "./public/images/"
 user = os.environ.get("USER_LOGIN")
 password = os.environ.get("USER_PWD")
 
-if os.environ.get("ASSISTANTS_API_TYPE") == "openai":
-    async_openai_client = AsyncOpenAI(api_key=os.environ.get("ASSISTANTS_API_KEY"))
-    sync_openai_client = OpenAI(api_key=os.environ.get("ASSISTANTS_API_KEY"))
-else:
-    async_openai_client = AsyncAzureOpenAI(
-        azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
-        api_key=os.getenv("ASSISTANTS_API_KEY"),
-        api_version=os.getenv("ASSISTANTS_API_VERSION"),
-    )
-    sync_openai_client = AzureOpenAI(
-        azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
-        api_key=os.getenv("ASSISTANTS_API_KEY"),
-        api_version=os.getenv("ASSISTANTS_API_VERSION"),
-    )
+
+def setup(cl):
+    """
+    Sets up the assistant and OpenAI API clients based on the environment variables.
+
+    Args:
+        cl: The ChatLabs instance.
+
+    Returns:
+        tuple: A tuple containing the assistant, async OpenAI API client, and sync OpenAI API client.
+    """
+
+    if os.environ.get("ASSISTANTS_API_TYPE") == "openai":
+        async_openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        sync_openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    else:
+        async_openai_client = AsyncAzureOpenAI(
+            azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
+            api_key=os.getenv("ASSISTANTS_API_KEY"),
+            api_version=os.getenv("ASSISTANTS_API_VERSION"),
+        )
+        sync_openai_client = AzureOpenAI(
+            azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
+            api_key=os.getenv("ASSISTANTS_API_KEY"),
+            api_version=os.getenv("ASSISTANTS_API_VERSION"),
+        )
 
     cl.instrument_openai()  # Instrument the OpenAI API client
 
