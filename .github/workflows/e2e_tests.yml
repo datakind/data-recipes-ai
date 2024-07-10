@@ -55,8 +55,6 @@ jobs:
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
 
-        COLUMNS: 150
-
       steps:
 
         - name: Checkout
@@ -127,7 +125,7 @@ jobs:
 
         - name: Show results
           run: |
-            docker exec promptflow  pf run show-details -n base_run
+            docker exec promptflow export COLUMNS=150 && pf run show-details -n base_run
             echo "Getting metrics ..."
             docker exec promptflow  pf run show-metrics -n base_run
             ##docker exec promptflow  pf run visualize -n base_run
