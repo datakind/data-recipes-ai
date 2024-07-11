@@ -91,6 +91,10 @@ Then ...
 8. On the Groundedness node, select your new connection
 9. You can no run by clicking the play icon. See Promptflow documentation for more details
 
+#### Changing between Azure OpenAI <> OpenAI
+
+As noted in the README, the repo supports assistants on OpenAI or Azure OpenAI. The README has instructions on how to change in the `.env` file, but you will also have to change the connection in the promptflow groundedness node accordingly.
+
 ## GitHub Workflow
 
 As many other open source projects, we use the famous

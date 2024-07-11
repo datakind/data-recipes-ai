@@ -50,12 +50,12 @@ nodes:
     type: code
     path: templates/groundedness_score.jinja2
   inputs:
-    deployment_name: gpt-4-turbo
+    deployment_name: gpt4-o
     answer: ${call_assistant.output}
     context: ${inputs.context}
-    temperature: 1
+    temperature: 0
     model: gpt-4o
-  connection: open_ai_connection
+  connection: azure_open_ai_connection
   api: chat
 - name: concat_scores
   type: python
