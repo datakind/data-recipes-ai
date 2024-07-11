@@ -138,7 +138,7 @@ def upload_files_to_vector_store(vector_store_name, client):
 
     print(f"Uploading {file_paths} to vector store {vector_store_name} ...")
 
-    # Create a vector store caled "Financial Statements"
+    # Create a vector store
     vector_store = client.beta.vector_stores.create(name=vector_store_name)
 
     # Ready the files for upload to OpenAI
