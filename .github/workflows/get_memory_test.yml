@@ -107,4 +107,16 @@ jobs:
           run: |
             echo "exec into container ..."
             docker compose exec server bash -c "cd tests/ && pytest -vv"
- 
+
+        - name: Check logs after tests
+          run: |
+            docker ps
+
+            echo "logs datadb ..."
+            docker compose logs datadb
+
+            echo "logs recipedb ..."
+            docker compose logs recipedb
+
+            echo "logs server ..."
+            docker compose logs server
