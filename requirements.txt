@@ -12,8 +12,8 @@ hdx-python-country==3.6.9
 hdx-python-utilities==3.6.6
 hdx_python_api==6.2.4
 kaleido==0.2.1
-langchain-community==0.2.1
-langchain==0.2.1
+langchain-community==0.2.5
+langchain==0.2.5
 langchain_openai==0.1.7
 literalai==0.0.604
 matplotlib==3.9.0
