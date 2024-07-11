@@ -122,7 +122,7 @@ jobs:
         #   run: |
         #     docker exec promptflow python call_assistant.py
 
-        # - name: Run tests
+        # - name: Run tests 
         #   run: |
         #     env > .env 
         #     docker exec promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
