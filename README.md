@@ -136,7 +136,7 @@ We are in a phase of research to identify and improve recipes, but for now the s
 
 ### Adding your own files for the assistant to analyze
 
-The assistant can be configured to analyze your own files, either in searching them or using them when analyzing data on-the-fly. To add your won files, place them in one of the following folders:
+The assistant can be configured to analyze your own files, either in searching them or using them when analyzing data on-the-fly. To add your own files, place them in one of the following folders:
 
 `./assistants/chat_ui/files/file_search/custom` : The assistant will search these files
 `./assistants/chat_ui/files/code_interpreter/custom` : The assistant can use these files when generating and running code
@@ -173,33 +173,15 @@ Then run ingestion in download only mode ...
 
 5. `python ingest.py --skip_processing --skip_uploading`
 
-
-# To start the environment
-
-You can also access the recipe server monitoring endpoint:
-
-- Recipes server: [http://localhost:4001/](http://localhost:4001/)
-
-## Resetting your environment
-
-If running locally, you can reset your environment - removing any data for your databases, which means re-registration - by running `./cleanup.sh`.
-
-# Development
-
-## Managing recipes
+# Managing recipes
 
 The management of recipes is part of the human in the loop approach of this repo. New recipes are created in status pending and only get marked as approved, once they have been verified by a recipe manager. Recipe managers can 'check out' recipes from the database into their local development environment such as VS Code to run, debug, and edit the recipes, before checking them back in. To make this process platform independent, recipes are checked out into a docker container, which can be used as the runtime environment to run the recipes via VSCode. 
 
-Recipes are managed using the recipes Command Line Interface (CLI), which allows you to check out recipes, run and refine, the commit them back to the recipes database for use in data recipes AI.
+Recipes are managed using the recipes Command Line Interface (CLI), which allows you to check out recipes, run and refine with LLM assistance, then commit them back to the recipes database for use in data recipes AI.
 
-To run the cli, you will need to install some packages ...
+To run the CLI, you will need to start the docker environment as described in the 'Quick Start', then
 
-`pip3 install typer`
-
-Once this is done, and you have your docker environment running as  described above, you start the recipes CLI with ...
-
-`cd management`
-`python cli.py`
+`docker compose exec -it manager python cli.py`
 
 When you first log in, you will be asked for your name. This is used when checking in recipes. Once in, you will be presented with a menu like this ...
 
@@ -208,16 +190,23 @@ When you first log in, you will be asked for your name. This is used when checki
 Welcome to the recipes management CLI, matt!
 
     Here are the commands you can run:
-    
-    'checkout': Check out recipes for you to work on
-    'list': List all recipes that are checked out
-    'run': Run a recipe, you will be prompted to choose which one
-    'add': Add a new recipe
-    'delete': Delete a recipe, you will be prompted to choose which one
-    'checkin': Check in recipes you have completed
-    'makemem': Create a memory using recipe sample output
-    'help': Show a list of commands
-    'quit': Exit this recipes CLI
+
+       'checkout': Check out recipes for you to work on
+       'list': List all recipes that are checked out
+       'run': Run a recipe, you'll be prompted, or use 'run 5' to run 5.
+       'add': Add a new recipe (using LLM)
+       'edit': Edit a recipe (using LLM). You'll be prompted, or use 'edit 5' to edit 5.
+       'delete': Delete a recipe, you will be prompted to choose which one
+       'checkin': Check in recipes you have completed
+       'makemem': Create a memory using recipe sample output
+       'rebuild': Removes database data, runs all local recipes and checks them in
+       'dumpdb': Dump embedding, recipe and memory tables to DB upgrade files so included in build
+       'help': Show a list of commands
+       'quit': Exit this recipes CLI
+
+    Chat with Data Mode:
+
+       'chat': Enter data chat mode to ask questions about the data
 
     Type one of the commands above to do some stuff.
 
@@ -225,28 +214,13 @@ Welcome to the recipes management CLI, matt!
 >> 
 ```
 
-The first thing you will want to do is run 'checkout' to get all the recipe code from the database onto your computer so you can run them. Once you have them locally, you can edit them in tools like Visual Studio code. 
+The first thing you will want to do is run 'checkout' to get all the recipe code from the database onto your computer so you can run them. Once you have them locally, you can edit them in tools like Visual Studio code. They will appear in folder './management/work'.
 
 To run recipes locally you can use the CLI 'run' command. This will run the recipe in the same environment, and will save the results like sample outputs, for you so they can be published back to the database.
 
 You can create new recipes by entering 'add', where you'll be prompted for an intent. This will call an LLM to generate a first pass at your recipe, using the data that's in the data recipes environment.
 
 When ready, you can check in your new and edited recipes with 'checkin'.
-
-### Other approaches
-
-You can also configure VS Code to connect to the recipe-manage container for running recipes ...
-
-1. Install the DevContainers VSCode extension 
-2. Build data recipes using the `docker compose` command mentioned above
-3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
-
-   `Dev Containers: Attach to remote container`. 
-
-   Select the recipe-manager container. This opens a new VSCode window - use it for the next steps.
-4. Open folder `/app`
-5. Navigate to your recipe in sub-folder `checked_out`
-6. Run the `recipe.py` in a terminal or set up the docker interpretor
 
 # Autogen Studio and autogen agent teams for creating data recipes
 
