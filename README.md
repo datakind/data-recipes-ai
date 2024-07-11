@@ -39,6 +39,15 @@ This repo contains a docker-compose environment that will run the following comp
 - (Azure) Open AI Assistant creation tools to create assistants that are aware of the data sources available in the data recipes ai environment 
 - Autogen studio agent team for helping creating recipes [ In progress ]
 
+# What can features are supported?
+
+- Ability to create data recipes using LLMs, these can be served to end users via chat
+- Ability for end users to access memories and recipes using a chat interface. Memories will present saved results, recipes will run to get latest results
+- Ingestion of openapi standard datasets to a database to enable conversational data analysis using Text-To-SQL
+- Ability to provide the assistant documents (eg PDF, DOCX) and datafiles (eg CSV, XLSX) for analysis in all chats
+- Ability for user to upload their own documents for analysis
+- Attribution and footers to indicate where caution is needed on LLM analysis, versus a recipe a user created
+
 # Quick start
 
 1. Install Docker if you don't have it already, see [here](https://www.docker.com/products/docker-desktop/)
