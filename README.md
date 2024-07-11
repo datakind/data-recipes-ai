@@ -147,16 +147,15 @@ Once you have put your files in the above folders, you can update your assistant
 
 ### Analysis on Ingested Data 
 
-By default, the repo comes with some demo HAPI data. To run the ingestion module for ingested datasets yourself, so assistants and plugins can analysis data on-the-fly as an experimental feature:
+By default, the repo comes with some demo HAPI data. To run the ingestion module for ingested datasets yourself ...
 
-1. `docker exec -it haa-ingestion /bin/bash`
-2. `python3 ingest.py`
+`docker compose exec ingestion python ingest.py`
 
 It may take a while!
 
 Note: By default, rerunning the ingestion will not download data if the file already exists locally. To override this, you can run with ...
 
-`python3 ingest.py --force_download`
+`docker compose exec ingestion python ingest.py --force_download`
 
 #### Running ingestion without running full environment
 
