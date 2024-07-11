@@ -31,13 +31,14 @@ jobs:
         POSTGRES_RECIPE_PASSWORD: ${{ secrets.POSTGRES_RECIPE_PASSWORD }} 
 
         RECIPE_DB_CONN_STRING: "postgresql://${{ secrets.POSTGRES_RECIPE_USER }}:${{ secrets.POSTGRES_RECIPE_PASSWORD }}@${{ secrets.POSTGRES_RECIPE_HOST }}:${{ secrets.POSTGRES_RECIPE_PORT }}/${{ secrets.POSTGRES_RECIPE_DB }}"
-
+        RECIPES_BASE_URL: ${{ secrets.RECIPES_BASE_URL }}
         RECIPES_OPENAI_API_TYPE: ${{ secrets.RECIPES_OPENAI_API_TYPE }} 
         RECIPES_OPENAI_API_KEY: ${{ secrets.RECIPES_OPENAI_API_KEY }} 
         RECIPES_MODEL: ${{ secrets.RECIPES_MODEL }} 
         RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME: ${{ secrets.RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME }} 
         RECIPES_OPENAI_API_ENDPOINT: ${{ secrets.RECIPES_OPENAI_API_ENDPOINT }}
         RECIPES_OPENAI_API_VERSION: ${{ secrets.RECIPES_OPENAI_API_VERSION }}
+
 
         RECIPES_MEMORY_SIMILARITY_CUTOFF: ${{ secrets.RECIPES_MEMORY_SIMILARITY_CUTOFF }} 
         RECIPES_RECIPE_SIMILARITY_CUTOFF: ${{ secrets.RECIPES_RECIPE_SIMILARITY_CUTOFF }} 
@@ -51,8 +52,6 @@ jobs:
         CHAINLIT_AUTH_SECRET: ${{ secrets.CHAINLIT_AUTH_SECRET }} 
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
-
-        COLUMNS: 150
 
       steps:
 
@@ -108,15 +107,3 @@ jobs:
             echo "exec into container ..."
             docker compose exec server bash -c "cd tests/ && pytest -vv"
 
-        - name: Check logs after tests
-          run: |
-            docker ps
-
-            echo "logs datadb ..."
-            docker compose logs datadb
-
-            echo "logs recipedb ..."
-            docker compose logs recipedb
-
-            echo "logs server ..."
-            docker compose logs server
