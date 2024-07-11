@@ -91,7 +91,7 @@ jobs:
                          --build-arg CHAT_URL=$CHAT_URL \
                          --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT \
                          --no-cache -t promptflow -f ./flows/chainlit-ui-evaluation/Dockerfile  .
-                         
+
             docker run --env RECIPES_MODEL_MAX_TOKENS=${RECIPES_MODEL_MAX_TOKENS} \
                        --env RECIPES_MODEL_TEMP=${RECIPES_MODEL_TEMP} \
                        --env RECIPES_OPENAI_API_TYPE=${ASSISTANTS_API_TYPE} \
@@ -135,9 +135,9 @@ jobs:
         #- name: DEBUG - Setup upterm session
         #  uses: lhotari/action-upterm@v1
 
-        - name: DEBUG - Run Selenium outside of promptflow
-         run: |
-            docker exec promptflow python call_assistant.py
+        #- name: DEBUG - Run Selenium outside of promptflow
+        #  run: |
+        #    docker exec promptflow python call_assistant.py
 
         - name: Run tests 
           run: |
