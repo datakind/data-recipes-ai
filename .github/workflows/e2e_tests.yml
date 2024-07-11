@@ -95,6 +95,7 @@ jobs:
                        --env RECIPES_MODEL_TEMP=${RECIPES_MODEL_TEMP} \
                        --env RECIPES_OPENAI_API_TYPE=${ASSISTANTS_API_TYPE} \
                        --env RECIPES_OPENAI_API_KEY=${ASSISTANTS_API_KEY} \
+                       --env RECIPES_OPENAI_API_VERSION=${ASSISTANTS_API_VERSION} \
                        --env RECIPES_MODEL=${RECIPES_MODEL} \
                        --env RECIPES_BASE_URL=${RECIPES_BASE_URL} \
                        --env USER_LOGIN=${USER_LOGIN} \
