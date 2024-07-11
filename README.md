@@ -89,6 +89,8 @@ This repo contains a docker-compose environment that will run the following comp
     ASSISTANTS_BOT_NAME=<Your assistant name, eg "Humanitarian AI Assistant">
     ```
 
+    Be aware that lower-power models such as GPT-3.5-Turbo can serve recipes and carry out basic chat, but perform poorly for analysis and code generation.
+
     Not needed for quick start, but if you want to run ingestion of data with the new HDX API, then you will need to set ...
 
     `HAPI_API_TOKEN=<See https://hdx-hapi.readthedocs.io/en/latest/getting-started/>`
@@ -113,7 +115,7 @@ This repo contains a docker-compose environment that will run the following comp
 
     Make note of the assitant ID, then edit your `.env` file and using it set variable `ASSISTANTS_ID`.
 
-    Note: (i) If you rerun `create_update_assistant.py` once `ASSISTANTS_ID` is set, the script will update the assistant rather than create a new one; (ii) You can also add your own data, pdf, docx, csv, xlsx files for the assistant to use, see section 'Adding your own files for the assistant to analyze' below.
+    Note: (i) If you rerun `create_update_assistant.py` once `ASSISTANTS_ID` is set, the script will update the assistant rather than create a new one. You will need to do this if trying different models; (ii) You can also add your own data, pdf, docx, csv, xlsx files for the assistant to use, see section 'Adding your own files for the assistant to analyze' below.
 
 7. Restart so the assistant ID is set, `docker compose up -d`
 
@@ -126,7 +128,6 @@ The steps above are mostly one-time. Going forward you only need to stop and sta
 - To stop the environment `docker compose stop`
 - To start the environment `docker compose up -d`, then go to [http://localhost:8000/](http://localhost:8000/)
 - To start with rebuild `docker compose up -d --build` (for more details about development, see [CONTRIBUTION](CONTRIBUTION.md))
-
 
 ## Using Recipes
 
