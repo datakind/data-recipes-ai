@@ -10,6 +10,7 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ASSISTANTS_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ASSISTANTS_API_TYPE: ${{ secrets.ASSISTANTS_API_TYPE }}
+        ASSISTANTS_API_VERSION: ${{ secrets.ASSISTANTS_API_VERSION }}
         ASSISTANTS_ID: ${{ secrets.ASSISTANTS_ID }} 
         ASSISTANTS_BASE_URL: ${{ secrets.ASSISTANTS_BASE_URL }} 
         ASSISTANTS_MODEL: ${{ secrets.ASSISTANTS_MODEL }} 
