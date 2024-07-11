@@ -4,8 +4,9 @@ services:
       context: .
       dockerfile: ./flows/chainlit-ui-evaluation/Dockerfile
       args:
-        OPENAI_API_KEY: ${OPENAI_API_KEY}
+        OPENAI_API_KEY: ${ASSISTANTS_API_KEY}
         OPENAI_API_ENDPOINT: ${ASSISTANTS_BASE_URL}
+        OPENAI_API_VERSION: ${ASSISTANTS_API_VERSION}
     container_name: recipes-ai-promptflow
     env_file:
       - .env
