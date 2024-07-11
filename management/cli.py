@@ -51,7 +51,7 @@ commands_help = """
 to_be_deleted_file = "work/checked_out/to_be_deleted.txt"
 cli_config_file = ".cli_config"
 checked_out_dir = "work/checked_out"
-env_cmd = "docker exec recipes-ai-manager python "
+env_cmd = "python "
 
 environment = Environment(loader=FileSystemLoader("../templates/"))
 
@@ -72,15 +72,16 @@ def _get_checkout_folders():
     else:
 
         # list directory in chronological orger
-        checked_out_folders = sorted(
-            os.listdir(checked_out_dir),
-            key=lambda x: os.path.getctime(os.path.join(checked_out_dir, x)),
-        )
-        checked_out_folders = [
-            folder
-            for folder in checked_out_folders
-            if os.path.isdir(os.path.join(checked_out_dir, folder))
-        ]
+        # checked_out_folders = sorted(
+        #    os.listdir(checked_out_dir),
+        #    key=lambda x: os.path.getctime(os.path.join(checked_out_dir, x)),
+        # )
+        # checked_out_folders = [
+        #    folder
+        #    for folder in checked_out_folders
+        #    if os.path.isdir(os.path.join(checked_out_dir, folder))
+        # ]
+        checked_out_folders = os.listdir(checked_out_dir)
         count = 0
         for folder in checked_out_folders:
             recipes[count] = folder
@@ -206,6 +207,8 @@ def run(recipe_index: Optional[int] = typer.Argument(None)):
     cmd = f"{env_cmd} recipe_sync.py --run_recipe --recipe_path work/checked_out/{recipe}/recipe.py"
     typer.echo(f"Running recipe {recipe} ...\n\n")
     os.system(cmd)
+    typer.echo("\n\n ========== DONE ==========\n\n")
+    typer.echo(f"Now check folder './work/checked_out/{recipe}' for the output\n\n")
 
 
 def edit(recipe_index: Optional[int] = typer.Argument(None)):
