@@ -123,6 +123,22 @@ jobs:
             env > .env 
             docker exec promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
+        - name: Check logs post-tests
+          run: |
+            docker ps
+
+            echo "logs datadb ..."
+            docker compose logs datadb
+
+            echo "logs promptflow ..."
+            docker logs promptflow
+
+            echo "logs chat ..."
+            docker compose logs chat
+
+            echo "logs server ..."
+            docker compose logs server  
+
         - name: Show results
           run: |
             docker exec promptflow pf run show-details -n base_run
