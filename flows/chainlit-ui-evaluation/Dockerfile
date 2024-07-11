@@ -32,6 +32,9 @@ COPY ./templates /app/chainlit-ui-evaluation/templates
 COPY ./management/skills.py /app/chainlit-ui-evaluation/recipes/skills.py
 COPY ./ui/chat-chainlit-assistant/app.py /app/chainlit-ui-evaluation/app.py
 
+# Install vim
+RUN apt-get update && apt-get install -y vim
+
 RUN pip3 install --upgrade pip
 
 WORKDIR /app/chainlit-ui-evaluation

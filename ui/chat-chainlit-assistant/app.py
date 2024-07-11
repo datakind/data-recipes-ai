@@ -53,8 +53,8 @@ def setup(cl):
     """
 
     if os.environ.get("ASSISTANTS_API_TYPE") == "openai":
-        async_openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-        sync_openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        async_openai_client = AsyncOpenAI(api_key=os.environ.get("ASSISTANTS_API_KEY"))
+        sync_openai_client = OpenAI(api_key=os.environ.get("ASSISTANTS_API_KEY"))
     else:
         async_openai_client = AsyncAzureOpenAI(
             azure_endpoint=os.getenv("ASSISTANTS_BASE_URL"),
