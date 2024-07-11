@@ -85,8 +85,22 @@ jobs:
             docker-compose up -d --build datadb recipedb server chat
 
             # TODO: For some reason, maybe buildkit, in Github docker compose builds the image differently, and it doesn't work. Individual image build works.
-            docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg CHAT_URL=$CHAT_URL --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT --no-cache -t promptflow -f ./flows/chainlit-ui-evaluation/Dockerfile  .
-            docker run --env RECIPES_MODEL_MAX_TOKENS=${RECIPES_MODEL_MAX_TOKENS} --env RECIPES_MODEL_TEMP=${RECIPES_MODEL_TEMP} --env RECIPES_OPENAI_API_TYPE=${ASSISTANTS_API_TYPE} --env RECIPES_OPENAI_API_KEY=${ASSISTANTS_API_KEY} --env RECIPES_MODEL=${RECIPES_MODEL} --env RECIPES_BASE_URL=${RECIPES_BASE_URL} --env USER_LOGIN=${USER_LOGIN} --env USER_PASSWORD=${USER_PASSWORD} --env CHAT_URL=${CHAT_URL} --network=data-recipes-ai_default -d --name promptflow promptflow 
+            docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY \
+                         --build-arg OPENAI_API_ENDPOINT=$ASSISTANTS_BASE_URL \
+                         --build-arg OPENAI_API_VERSION=$ASSISTANTS_API_VERSION \
+                         --build-arg CHAT_URL=$CHAT_URL \
+                         --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT \
+                         --no-cache -t promptflow -f ./flows/chainlit-ui-evaluation/Dockerfile  .
+            docker run --env RECIPES_MODEL_MAX_TOKENS=${RECIPES_MODEL_MAX_TOKENS} \
+                       --env RECIPES_MODEL_TEMP=${RECIPES_MODEL_TEMP} \
+                       --env RECIPES_OPENAI_API_TYPE=${ASSISTANTS_API_TYPE} \
+                       --env RECIPES_OPENAI_API_KEY=${ASSISTANTS_API_KEY} \
+                       --env RECIPES_MODEL=${RECIPES_MODEL} \
+                       --env RECIPES_BASE_URL=${RECIPES_BASE_URL} \
+                       --env USER_LOGIN=${USER_LOGIN} \
+                       --env USER_PASSWORD=${USER_PASSWORD} \
+                       --env CHAT_URL=${CHAT_URL} \
+                       --network=data-recipes-ai_default -d --name promptflow promptflow 
 
         - name: Check logs
           run: |
@@ -116,40 +130,40 @@ jobs:
         #
         # ssh -i <YOUR GITHUB SSH KEY> <CONN STRING ON ACTIONS>
         #
-        - name: DEBUG - Setup upterm session
-          uses: lhotari/action-upterm@v1
+        #- name: DEBUG - Setup upterm session
+        #  uses: lhotari/action-upterm@v1
 
-        #- name: DEBUG - Run Selenium outside of promptflow
-        #  run: |
-        #     docker exec promptflow python call_assistant.py
+        - name: DEBUG - Run Selenium outside of promptflow
+         run: |
+            docker exec promptflow python call_assistant.py
 
-        # - name: Run tests 
-        #   run: |
-        #     env > .env 
-        #     docker exec promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
+        - name: Run tests 
+          run: |
+            env > .env 
+            docker exec promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
-        # - name: Check logs post-tests
-        #   run: |
-        #     docker ps
+        - name: Check logs post-tests
+          run: |
+            docker ps
 
-        #     echo "logs datadb ..."
-        #     docker compose logs datadb
+            echo "logs datadb ..."
+            docker compose logs datadb
 
-        #     echo "logs promptflow ..."
-        #     docker logs promptflow
+            echo "logs promptflow ..."
+            docker logs promptflow
 
-        #     echo "logs chat ..."
-        #     docker compose logs chat
+            echo "logs chat ..."
+            docker compose logs chat
 
-        #     echo "logs server ..."
-        #     docker compose logs server  
+            echo "logs server ..."
+            docker compose logs server  
 
-        # - name: Show results
-        #   run: |
-        #     docker exec promptflow pf run show-details -n base_run
-        #     echo "Getting metrics ..."
-        #     docker exec promptflow  pf run show-metrics -n base_run
-        #     ##docker exec promptflow  pf run visualize -n base_run
-        #     echo "Checking results ..."
-        #     docker exec promptflow python3 check_evaluation_results.py
+        - name: Show results
+          run: |
+            docker exec promptflow pf run show-details -n base_run
+            echo "Getting metrics ..."
+            docker exec promptflow  pf run show-metrics -n base_run
+            ##docker exec promptflow  pf run visualize -n base_run
+            echo "Checking results ..."
+            docker exec promptflow python3 check_evaluation_results.py
  
