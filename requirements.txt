@@ -23,9 +23,9 @@ plotly==5.22.0
 psycopg2_binary==2.9.9
 pyarrow==16.1.0
 python-dotenv==1.0.0
-robocorp
-robocorp-actions
-robocorp-truststore
+#robocorp
+#robocorp-actions
+#robocorp-truststore
 seaborn==0.13.2
 sqlalchemy==2.0.30
 pytest==8.2.2

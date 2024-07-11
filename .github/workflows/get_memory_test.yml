@@ -75,22 +75,32 @@ jobs:
             ls data/datadb
             
             echo "Starting docker containers for dbs and server ..."
-            docker-compose -f ./docker-compose-github.yml pull
-            docker-compose -f ./docker-compose-github.yml up -d --build 
-            echo "logs datadb ..."
-            docker-compose -f docker-compose-github.yml  logs datadb
+            docker-compose pull
+            docker-compose up -d --build datadb recipedb server datadb
+
+            sleep 10
+
             docker ps
 
-        - name: Run tests
-          uses: actions/setup-python@v4
-          with:
-            python-version: "3.11.4"
-        - run: |
-            pip3 install pytest==8.2.2
-            pip3 install requests==2.32.3
-            pip3 install python-dotenv==1.0.1
+            
+        - name: Check logs
+          run: |
 
-        - run: |
+            docker ps
+
+            echo "logs datadb ..."
+            docker compose logs datadb
+
+            echo "logs recipedb ..."
+            docker compose logs recipedb
+
+            echo "logs server ..."
+            docker compose logs server
+
+            sleep 10
+
+        - name: Run tests
+          run: |
             echo "exec into container ..."
-            docker exec recipes-ai-server bash -c "cd tests/ && pytest"
+            docker compose exec server bash -c "cd tests/ && pytest"
  

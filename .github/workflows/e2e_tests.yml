@@ -1,4 +1,4 @@
-name: End-to-End Tests
+name: End-to-End tests
 
 #on: [push, pull_request]
 
@@ -10,7 +10,7 @@ on: [push]
 
 jobs:
   test:
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-latest 
       environment: "GitHub Actions 1"
       env: 
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -49,93 +49,86 @@ jobs:
 
         IMAGE_HOST: ${{ secrets.IMAGE_HOST }} 
         RECIPE_SERVER_API: ${{ secrets.RECIPE_SERVER_API_FROM_GH_HOST }} 
+        CHAT_URL: ${{ secrets.CHAT_URL }}
 
         CHAINLIT_AUTH_SECRET: ${{ secrets.CHAINLIT_AUTH_SECRET }} 
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
-
-        COLUMNS: 150
 
       steps:
 
         - name: Checkout
           uses: actions/checkout@v3
 
-        #- name: Checkout integration tests data
-        #  uses: actions/checkout@master
-        #  with:
-        #    repository: datakind/recipes-ai-test-data
-        #    ssh-key: ${{ secrets.GITHUB_SSH_PRIVATE_KEY}} 
-        #    path: recipes-ai-test-data
-
         - name: Expose GitHub Runtime
           uses: crazy-max/ghaction-github-runtime@v2
             
-        - name: Spin up DB and recipes server
+        - name: Spin up Docker containers
           run: |
             env > .env 
 
             echo "Installing demo data ..."
+
+            # Get demo data
             pip3 install gdown==5.2.0
             cd data && python3 download_demo_data.py && cd ..
-            ls data/datadb
 
-            mkdir -p ./flows/chainlit-ui-evaluation/recipes/public
-            
             # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
             # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
             echo "Starting docker containers for dbs and server ..."
-            docker-compose -f ./docker-compose-github.yml pull
-            docker-compose -f ./docker-compose-github.yml up -d --build 
-            echo "logs datadb ..."
-            docker-compose -f docker-compose-github.yml  logs datadb
+            docker-compose pull
+            docker-compose up -d --build 
+
+            # TODO: For some reason, maybe buildkit, in Github docker compose builds the image differently, and it doesn't work. Individual image build works.
+            docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY --build-arg CHAT_URL=$CHAT_URL --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT --no-cache -t promptflow -f ./flows/chainlit-ui-evaluation/Dockerfile  .
+            docker run --env RECIPES_MODEL_MAX_TOKENS=${RECIPES_MODEL_MAX_TOKENS} --env RECIPES_MODEL_TEMP=${RECIPES_MODEL_TEMP} --env RECIPES_OPENAI_API_TYPE=${ASSISTANTS_API_TYPE} --env RECIPES_OPENAI_API_KEY=${ASSISTANTS_API_KEY} --env RECIPES_MODEL=${RECIPES_MODEL} --env RECIPES_BASE_URL=${RECIPES_BASE_URL} --env USER_LOGIN=${USER_LOGIN} --env USER_PASSWORD=${USER_PASSWORD} --env CHAT_URL=${CHAT_URL} --network=data-recipes-ai_default -d --name promptflow promptflow 
+
+        - name: Check logs
+          run: |
+
             docker ps
 
-        # TODO The promptflow docker build wasn't working in GH actions, so deploying promptflow to host for now
-        - name: Set up promtpflow and run tests
-          uses: actions/setup-python@v4
-          with:
-            python-version: "3.11.4"
-        - run: |
-            echo "Installing promptflow packages ..."
-            pip3 install promptflow==1.12.0
-            pip3 install promptflow-tools==1.4.0
-            pip3 install chainlit==1.1.305
-            pip3 install langchain==0.2.1
-            pip3 install langchain_openai==0.1.7
-            pip3 install psycopg2_binary==2.9.9
-            pip3 install keyrings.alt
-            pip3 list
-        - run: |
+            echo "logs datadb ..."
+            docker compose logs datadb
 
-            echo "Setting up folders ..."
-            cd flows/chainlit-ui-evaluation/
-            cp ../../ui/chat-chainlit-assistant/app.py .
-            cp -r ../../utils .
-            cp -r ../../templates .
-            cp ../../management/skills.py .
+            echo "logs promptflow ..."
+            docker logs promptflow
 
-            echo "Setting up Promptflow connections ..."
-            pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
-            pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_openai 
+            echo "logs chat ..."
+            docker compose logs chat
 
-            # Test running one node with default inputs. Good for debugging GH actions
-            #pf flow test --flow . --node call_assistant
-            #python3 call_assistant.py --chat_history '[{"author": "user","content": "Hi!"}, {"author": "user","content": "What is the total population of Mali"}]'
-            #python3 call_assistant.py --chat_history '[{"author": "user","content": "plot a line chart of fatalities by month for Chad using HDX data as an image"}]'
-            # This runs a few, with the script kill, like promptflow, but prints all debug. Good for testing.
-            python3 call_assistant_debug.py
+            echo "logs server ..."
+            docker compose logs server
 
-            echo "Starting Promptflow batch run  using data.jsonl ..."
-            pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
+            docker ps
 
-        - run: |
-            echo "Promptflow results ..."
-            cd flows/chainlit-ui-evaluation/
-            pf run show-details -n base_run
+            sleep 10
+
+        # Debugging GitHUb actions interactively, by connecting to the runner ...
+        # Get ssh connection details for runner
+        # See here https://github.com/marketplace/actions/debugging-with-ssh
+        # Basically, uncomment this, then get connection string in actions output, then connect with
+        #
+        # ssh -i <YOUR GITHUB SSH KEY> <CONN STRING ON ACTIONS>
+        #
+        #- name: DEBUG - Setup upterm session
+        #  uses: lhotari/action-upterm@v1
+
+        # - name: DEBUG - Run Selenium outside of promptflow
+        #   run: |
+        #     docker exec promptflow python call_assistant.py
+
+        - name: Run tests
+          run: |
+            env > .env 
+            docker exec promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
+
+        - name: Show results
+          run: |
+            docker exec promptflow COLUMNS=150 pf run show-details -n base_run
             echo "Getting metrics ..."
-            pf run show-metrics -n base_run
-            ##pf run visualize -n base_run
+            docker exec promptflow  pf run show-metrics -n base_run
+            ##docker exec promptflow  pf run visualize -n base_run
             echo "Checking results ..."
-            python3 check_evaluation_results.py
+            docker exec promptflow python3 check_evaluation_results.py
  

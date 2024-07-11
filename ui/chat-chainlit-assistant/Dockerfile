@@ -7,7 +7,6 @@ WORKDIR /app
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-
 COPY ./utils/ ./utils
 COPY ./templates ./templates
 #

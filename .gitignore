@@ -27,4 +27,8 @@ data
 server/fastapi/recipes/
 assistants/chat_ui/files/file_search/custom
 assistants/chat_ui/files/code_interpreter/custom
-
+flows/chainlit-ui-evaluation/app.py
+flows/chainlit-ui-evaluation/data.new.jsonl
+flows/chainlit-ui-evaluation/recipes/
+flows/chainlit-ui-evaluation/temp.png
+ui/chat-chainlit-assistant/.files/

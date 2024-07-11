@@ -25,6 +25,7 @@ sql_rows_cap = 100
 template_dir = "../templates"
 if not os.path.exists(template_dir):
     template_dir = "./templates"
+
 environment = Environment(loader=FileSystemLoader(template_dir))
 sql_prompt_template = environment.get_template("gen_sql_prompt.jinja2")
 
@@ -85,7 +86,7 @@ def get_models():
     return embedding_model, chat
 
 
-def call_llm(instructions, prompt, image=None):
+def call_llm(instructions, prompt, image=None, debug=False):
     """
     Call the LLM (Language Learning Model) API with the given instructions and prompt.
 
@@ -93,6 +94,7 @@ def call_llm(instructions, prompt, image=None):
         instructions (str): The instructions to provide to the LLM API.
         prompt (str): The prompt to provide to the LLM API.
         chat (Langchain Open AI model): Chat model used for AI judging
+        debug (bool): Whether to print debug information. Defaults to False.
 
     Returns:
         dict or None: The response from the LLM API as a dictionary, or None if an error occurred.
@@ -107,7 +109,7 @@ def call_llm(instructions, prompt, image=None):
     # Multimodal
     if image:
         if os.getenv("RECIPES_MODEL") == "gpt-4o":
-            print("Sending image to LLM ...")
+            print("         Sending image to LLM ...")
             with open(image, "rb") as image_file:
                 encoded_string = base64.b64encode(image_file.read()).decode()
 
@@ -164,13 +166,14 @@ def call_llm(instructions, prompt, image=None):
                 response["message"] = message
             else:
                 # Finally just send it back
-                print("LLM response unparsable, using raw results")
-                print(response)
+                if debug:
+                    print("LLM response unparsable, using raw results")
+                    print(response)
                 response = {"content": response}
         return response
 
     except Exception as e:
-        # print(response)
+        print(response)
         print("Error calling LLM: ", e)
         response = None
 

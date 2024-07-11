@@ -1,4 +1,4 @@
-# Contributing to DOT
+# Contributing to Data Recipes AI
 
 Hi! Thanks for your interest in contributing to Data Recipes AI, we're really excited to see you! In this document we'll try to summarize everything that you need to know to do a good job.
 
@@ -40,6 +40,8 @@ GitHub has an action to run the pre-commit tests to ensure code adheres to stand
 
 ## Tests
 
+### Unit tests
+
 You should write tests for every feature you add or bug you solve in the code.
 Having automated tests for every line of our code lets us make big changes
 without worries: there will always be tests to verify if the changes introduced
@@ -53,11 +55,9 @@ the desired feature.
 
 You can use `pytest` to run your tests, no matter which type of test it is.
 
-### End-to-end tests
+### End-to-end tests (using Selenium and Promptflow)
 
-End-to-end tests have been configured in GitHub actions which use promptflow to call a wrapper around the chainlit UI, or order to test when memories/recipes are used as well as when the assistant does some on-the-fly analysis. To do this, the chainlit class is patched heavily, and there are limitations in how
-cleanly this could be done, so it isn't an exact replica of the true application, but does capture changes
-with the flow as well as test the assistant directly. The main body of integration tests will test recipes server and the assistant independently.
+End-to-end tests have been configured in GitHub actions which use promptflow to call a wrapper around the chainlit UI, or order to test when memories/recipes are used as well as when the assistant does some on-the-fly analysis. To do this, the chainlit class is patched heavily, and there are limitations in how cleanly this could be done, so it isn't an exact replica of the true application, but does capture changes with the flow as well as test the assistant directly. The main body of integration tests will test recipes server and the assistant independently.
 
 Additionally, there were some limitation when implementing in GitHub actions where workarounds were implemented
 until a lter data, namely: promptflow is run on the GitHub actions host rather than in docker, and the promptflow wrapper to call chainlit has to run as a script and kill the script based on a STDOUT string. These should be fixed in future.
@@ -66,14 +66,30 @@ Code for e2e tests can be found in `flows/chainlit-ui-evaluation` as run by `.gi
 
 The tests work using promptflow evaluation and a call to an LLM to guage groundedness, due to the fact LLM assistants can produce slightly different results if not providing answers from memory/recipes. The promptflow evaluation test data can be found in `flows/chainlit-ui-evaluation/data.jsonl`. 
 
-A useful way to test a new scenario and to get the 'expected' output for `data.jsonl`, is to add it to `call_assistant_debug.py`.
+See "Evaluating with Promptflow" below to see how to run e2e tests locally.
 
-TODO, future work:
+#### Running Promptflow evaluation locally
 
-- Add promptflow to docker-compose-github.yml and update action to use this env (time was short and wasn't working). This will reduce overhead and complexity
-- Figure out how to make call_assistant.py exit async look so it doesn't have to run in a wrapper that then kills process
-- Push docker containers to a registry so flow doesn't run build every time
-- Bug the chainlit folks to see if they can do something more formal around testing, to avoid complex monkey patching
+First, you will need to build the environment to include Prompt Flow ...
+
+`docker compose -f docker-compose.yml -f docker-compose-dev.yml up -d --build`
+
+Then ...
+
+1. Install the DevContainers VSCode extension 
+2. Build data recipes using the `docker compose` command mentioned above
+3. Open the command palette in VSCode (CMD + Shift + P on Mac; CTRL + Shift + P on Windows) and select 
+
+   `Dev Containers: Attach to remote container`. 
+
+   Select the promptflow container. This opens a new VSCode window - use it for the next steps.
+4. Install Promptflow add-in
+5. Open folder `/app`
+6. Click on `flow.dag.yaml`
+7. Top left of main pane, click on 'Visual editor'
+     - If you are taken to the promptflow 'Install dependencies'' screen, change the Python runtime to be ` /azureml-envs/prompt-flow/runtime/bin/python` 'runtime', then close and re-open `flow.dag.yaml`
+8. On the Groundedness node, select your new connection
+9. You can no run by clicking the play icon. See Promptflow documentation for more details
 
 ## GitHub Workflow
 
