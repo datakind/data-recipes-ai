@@ -23,6 +23,9 @@ ENV OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT
 ARG CHAT_URL
 ENV CHAT_URL=$CHAT_URL
 
+# Needed for promptflow detail report in GitHub actions
+ENV COLUMNS=150 
+
 COPY ./flows /app
 COPY ./utils /app/chainlit-ui-evaluation/utils
 COPY ./templates /app/chainlit-ui-evaluation/templates
