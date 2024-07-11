@@ -116,12 +116,12 @@ jobs:
         #
         # ssh -i <YOUR GITHUB SSH KEY> <CONN STRING ON ACTIONS>
         #
-        #- name: DEBUG - Setup upterm session
-        #  uses: lhotari/action-upterm@v1
+        - name: DEBUG - Setup upterm session
+          uses: lhotari/action-upterm@v1
 
-        - name: DEBUG - Run Selenium outside of promptflow
-          run: |
-             docker exec promptflow python call_assistant.py
+        #- name: DEBUG - Run Selenium outside of promptflow
+        #  run: |
+        #     docker exec promptflow python call_assistant.py
 
         # - name: Run tests 
         #   run: |
