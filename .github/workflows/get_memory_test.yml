@@ -105,5 +105,5 @@ jobs:
         - name: Run tests
           run: |
             echo "exec into container ..."
-            docker compose exec server bash -c "cd tests/ && pytest"
+            docker compose exec server bash -c "cd tests/ && pytest -vv"
  
