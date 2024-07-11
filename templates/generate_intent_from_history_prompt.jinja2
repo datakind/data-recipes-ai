@@ -40,7 +40,7 @@ Here is the chat history:
 
 [{"author": "user","content": "Hi"},{"author": "user","content": "What is the total population of Mali"}]
 
-Output:
+Output is a JSON record with no other text like this:
 
 {
     "intent": "provide the total population of Mali",
@@ -57,7 +57,7 @@ Here is the chat history:
 
 [{"author": "user","content": "Can you give me average commodity prices by year for 2022-2023 for Haiti?"}]
 
-Output:
+Output is a JSON record with no other text like this:
 
 {
     "intent": "generate a line chart of average commodity prices by year for 2022-2023 for Haiti",
@@ -74,7 +74,7 @@ Here is the chat history:
 
 [{"author": "user","content": "Do you have data on conflicts in Ethiopia"}, {"author": "user","content": "Plot a map for the population of Nigeria by admin 1"}]
 
-Output:
+Output is a JSON record with no other text like this:
 
 {
     "intent": "plot a bar chart of population by state in Nigeria for 2023 using HDX(HAPI) data, highlighting top 5 states as an image",
@@ -91,7 +91,7 @@ Here is the chat history:
 
 [{"author": "user","content": "What's the total populkation of Nigeria?"}, {"author": "user","content": "Plot that by state on a map"}]
 
-Output:
+Output is a JSON record with no other text like this:
 
 {
     "intent": "plot a map of the total population of Nigeria by state as an image",
@@ -104,6 +104,7 @@ Important:
 
 - The user's last input is the most important, but pay attention to the chat history to see if they changed context are are asking something entirely new, or are asking a follow-up question
 - include all entities such as places
+- You ONLY output a confirmat JSON record, no other text
 
 Task:
 

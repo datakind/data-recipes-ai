@@ -86,9 +86,9 @@ def get_models():
     return embedding_model, chat
 
 
-def call_llm(instructions, prompt, image=None, debug=False):
+def call_llm(instructions, prompt, image=None, debug=True):
     """
-    Call the LLM (Language Learning Model) API with the given instructions and prompt.
+    Call the LLM (Language Learning Modqel) API with the given instructions and prompt.
 
     Args:
         instructions (str): The instructions to provide to the LLM API.
@@ -128,54 +128,51 @@ def call_llm(instructions, prompt, image=None, debug=False):
             print("Multimodal not supported for this model")
             return None
 
+    messages = [
+        SystemMessage(content=instructions),
+        human_message,
+    ]
+    response = chat(messages)
+
+    if hasattr(response, "content"):
+        response = response.content
+
+    if "content" in response and not response.startswith("```"):
+        response = json.loads(response)
+        response = response["content"]
+
+    # Some silly things that sometimes happen
+    response = response.replace(",}", "}")
+
+    # Different models do different things when prompted for JSON. Here we try and handle this
     try:
-        messages = [
-            SystemMessage(content=instructions),
-            human_message,
-        ]
-        response = chat(messages)
-
-        if hasattr(response, "content"):
-            response = response.content
-
-        if "content" in response and not response.startswith("```"):
+        # Is it already JSON?
+        response = json.loads(response)
+    except json.decoder.JSONDecodeError:
+        if debug:
+            print("LLM response not JSON")
+        # Did the LLM provide JSON in ```json```?
+        if "```json" in response:
+            # print("LLM responded with JSON in ```json```")
+            response = response.split("```json")[1]
+            response = response.replace("\n", "").split("```")[0]
             response = json.loads(response)
-            response = response["content"]
+        elif "```python" in response:
+            # print("LLM responded with Python in ```python```")
+            all_sections = response.split("```python")[1]
+            code = all_sections.replace("\n", "").split("```")[0]
+            message = all_sections.split("```")[0]
+            response = {}
+            response["code"] = code
+            response["message"] = message
+        else:
+            # Finally just send it back
+            if debug:
+                print("LLM response unparsable, using raw results")
+                print(response)
+            response = {"content": response}
 
-        # Some silly things that sometimes happen
-        response = response.replace(",}", "}")
-
-        # Different models do different things when prompted for JSON. Here we try and handle this
-        try:
-            # Is it already JSON?
-            response = json.loads(response)
-        except json.decoder.JSONDecodeError:
-            # Did the LLM provide JSON in ```json```?
-            if "```json" in response:
-                # print("LLM responded with JSON in ```json```")
-                response = response.split("```json")[1]
-                response = response.replace("\n", "").split("```")[0]
-                response = json.loads(response)
-            elif "```python" in response:
-                # print("LLM responded with Python in ```python```")
-                all_sections = response.split("```python")[1]
-                code = all_sections.replace("\n", "").split("```")[0]
-                message = all_sections.split("```")[0]
-                response = {}
-                response["code"] = code
-                response["message"] = message
-            else:
-                # Finally just send it back
-                if debug:
-                    print("LLM response unparsable, using raw results")
-                    print(response)
-                response = {"content": response}
-        return response
-
-    except Exception as e:
-        print(response)
-        print("Error calling LLM: ", e)
-        response = None
+    return response
 
 
 def gen_sql(input, chat_history, output):
