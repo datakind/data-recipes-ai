@@ -158,6 +158,14 @@ Note: By default, rerunning the ingestion will not download data if the file alr
 
 `docker compose exec ingestion python ingest.py --force_download`
 
+### Analysis on Uploaded files
+
+As mentioned below, it is possible to add files the assistant can use on its creation. These can be used for all chats.
+
+Additionally, you can upload CSV, Excel files for LLM-poweered analysis, as well as documents. Please note though, this is LLM analysis rather than recipes and the results should be treated with caution. 
+
+
+
 #### Running ingestion without running full environment
 
 If you want to *just* download data and not run the full environment, this is possible as follows:
@@ -172,6 +180,10 @@ First setup conda environment ...
 Then run ingestion in download only mode ...
 
 5. `python ingest.py --skip_processing --skip_uploading`
+
+#### Adding new data sources
+
+To add new ingestion data sources, please refer to [CONTRIBUTION](CONTRIBUTION.md)
 
 # Managing recipes
 
