@@ -58,14 +58,14 @@ This repo contains a docker-compose environment that will run the following comp
     RECIPES_OPENAI_API_TYPE=azure
     RECIPES_OPENAI_API_KEY=<The API key>
     RECIPES_OPENAI_API_ENDPOINT=<eg https://<YOUR DEPLOYMENT NAME>.openai.azure.com/>
-    RECIPES_OPENAI_API_VERSION=<The API version in your deployment, eg 2024-02-15-preview>
+    RECIPES_OPENAI_API_VERSION=<The API version in your deployment, eg 2024-05-01-preview>
     RECIPES_MODEL=<The deployment name you created in Azure, eg gpt-4o>
 
     ASSISTANTS_API_TYPE=azure  
     ASSISTANTS_API_KEY=<API Key as found on the Azure OpenAI resource>
     ASSISTANTS_ID=<ID of the assistant you created in OpenAI. Leave blank if you do not have one yet>
     ASSISTANTS_BASE_URL=<eg https://<YOUR DEPLOYMENT NAME>.openai.azure.com/>
-    ASSISTANTS_API_VERSION=2024-02-15-preview
+    ASSISTANTS_API_VERSION=<The API version in your deployment, eg 2024-05-01-preview>
     ASSISTANTS_MODEL=<The deployment name of the model you created in Azure which the assitant uses, eg gpt-4o>
     ASSISTANTS_BOT_NAME=<Your assistant name, eg "Humanitarian AI Assistant">
 
