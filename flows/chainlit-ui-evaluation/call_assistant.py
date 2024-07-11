@@ -333,7 +333,7 @@ if __name__ == "__main__":
         user_input = d["query"]
         chat_history = d["chat_history"]
         output = call_assistant(user_input, "[]")
-        d["output"] = str(output)
+        d["context"] = str(output)
         data_new.append(d)
 
     with open("data.new.jsonl", "w") as f:
