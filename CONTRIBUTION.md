@@ -24,6 +24,10 @@ in the paragraphs below.
 
 The easiest way to develop is to run in the Docker environment, see [README](./README.md) for more details. 
 
+### Resetting your environment
+
+If running locally, you can reset your environment - removing any data for your databases, which means re-registration - by running `./cleanup.sh`.
+
 ## Code quality tests
 
 The repo has been set up with black and flake8 pre-commit hooks. These are configured in the ``.pre-commit-config.yaml` file and initialized with `pre-commit autoupdate`.
@@ -31,6 +35,8 @@ The repo has been set up with black and flake8 pre-commit hooks. These are confi
 On a new repo, you must run `pre-commit install` to add pre-commit hooks.
 
 To run code quality tests, you can run `pre-commit run --all-files`
+
+GitHub has an action to run the pre-commit tests to ensure code adheres to standards. See folder `'github/workflows` for more details.
 
 ## Tests
 
@@ -46,10 +52,6 @@ where you write your tests **before** writing the actual code that implements
 the desired feature.
 
 You can use `pytest` to run your tests, no matter which type of test it is.
-
-### Code quality tests
-
-GitHub has an action to run the pre-commit tests to ensure code adheres to standards. See folder `'github/workflows` for more details.
 
 ### End-to-end tests
 
@@ -146,15 +148,6 @@ To download demo data ...
 1. `docker compose stop datadb`
 2. `cd data && python3 download_demo_data.py && cd ..`
 3. `docker compose start datadb` 
-
-## Misc.
-
-### Testing connection to actions server
-
-1. `docker exec -it haa-libre-chat  /bin/sh`
-2. To test the SQL query action, run `curl -X POST -H "Content-Type: application/json"  -d '{"query": "select 1"}' "http://actions:8080/api/actions/postgresql-universal-actions/execute-query/run"`
-3. To get get-memory action, run ... `curl -X POST -H "Content-Type: application/json"  -d '{"chat_history": "[]", "user_input":"population of Mali", "generate_intent":"true"}'  "http://actions:8080/api/actions/get-data-recipe-memory/get-memory-recipe/run"`
-
 
 # Evaluation with Prompt Flow
 
