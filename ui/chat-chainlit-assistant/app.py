@@ -733,18 +733,17 @@ async def add_message_to_thread(thread_id, role, content, message=None):
 
     print(f"Content: {content}")
 
+    params = {"thread_id": thread_id, "role": role, "content": content}
+
     attachments = []
 
-    # Check is message has elemnts attribute
+    # Process user-uploaded files
     if message is not None and hasattr(message, "elements"):
-        attachments = await process_files(message.elements)
+        if len(message.elements) > 0:
+            attachments = await process_files(message.elements)
+            params["attachments"] = attachments
 
-    await async_openai_client.beta.threads.messages.create(
-        thread_id=thread_id,
-        role=role,
-        content=content,
-        attachments=attachments,
-    )
+    await async_openai_client.beta.threads.messages.create(**params)
 
 
 @cl.on_message
