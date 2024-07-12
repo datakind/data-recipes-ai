@@ -85,11 +85,11 @@ jobs:
             docker-compose up -d --build datadb recipedb server chat
 
             # TODO: For some reason, maybe buildkit, in Github docker compose builds the image differently, and it doesn't work. Individual image build works.
-            docker build --build-arg OPENAI_API_KEY=$OPENAI_API_KEY \
+            docker build --build-arg OPENAI_API_KEY=$ASSISTANTS_API_KEY \
                          --build-arg OPENAI_API_ENDPOINT=$ASSISTANTS_BASE_URL \
                          --build-arg OPENAI_API_VERSION=$ASSISTANTS_API_VERSION \
                          --build-arg CHAT_URL=$CHAT_URL \
-                         --build-arg OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT \
+                         --build-arg OPENAI_API_ENDPOINT=$ASSISTANTS_BASE_URL \
                          --no-cache -t promptflow -f ./flows/chainlit-ui-evaluation/Dockerfile  .
 
             docker run --env RECIPES_MODEL_MAX_TOKENS=${RECIPES_MODEL_MAX_TOKENS} \
