@@ -60,6 +60,11 @@ jobs:
         USER_LOGIN: ${{ secrets.USER_LOGIN }} 
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }} 
 
+        # For e2e tests because Azure models still not multimodal via API
+        IMAGE_SUMMARY_OPENAI_API_KEY: ${{ secrets.IMAGE_SUMMARY_OPENAI_API_KEY }}
+        IMAGE_SUMMARY_MODEL: ${{ secrets.IMAGE_SUMMARY_MODEL }}
+        IMAGE_SUMMARY_OPENAI_API_TYPE: ${{ secrets.IMAGE_SUMMARY_OPENAI_API_TYPE }}
+
       steps:
 
         - name: Checkout
@@ -94,10 +99,10 @@ jobs:
 
             docker run --env RECIPES_MODEL_MAX_TOKENS=${RECIPES_MODEL_MAX_TOKENS} \
                        --env RECIPES_MODEL_TEMP=${RECIPES_MODEL_TEMP} \
-                       --env RECIPES_OPENAI_API_TYPE=${ASSISTANTS_API_TYPE} \
-                       --env RECIPES_OPENAI_API_KEY=${ASSISTANTS_API_KEY} \
+                       --env RECIPES_OPENAI_API_TYPE=${IMAGE_SUMMARY_OPENAI_API_TYPE} \
+                       --env RECIPES_OPENAI_API_KEY=${IMAGE_SUMMARY_OPENAI_API_KEY} \
                        --env RECIPES_OPENAI_API_VERSION=${ASSISTANTS_API_VERSION} \
-                       --env RECIPES_MODEL=${RECIPES_MODEL} \
+                       --env RECIPES_MODEL=${IMAGE_SUMMARY_MODEL} \
                        --env RECIPES_BASE_URL=${RECIPES_BASE_URL} \
                        --env USER_LOGIN=${USER_LOGIN} \
                        --env USER_PASSWORD=${USER_PASSWORD} \
