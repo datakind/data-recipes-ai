@@ -39,6 +39,15 @@ This repo contains a docker-compose environment that will run the following comp
 - (Azure) Open AI Assistant creation tools to create assistants that are aware of the data sources available in the data recipes ai environment 
 - Autogen studio agent team for helping creating recipes [ In progress ]
 
+# What can features are supported?
+
+- Ability to create data recipes using LLMs, these can be served to end users via chat
+- Ability for end users to access memories and recipes using a chat interface. Memories will present saved results, recipes will run to get latest results
+- Ingestion of openapi standard datasets to a database to enable conversational data analysis using Text-To-SQL
+- Ability to provide the assistant documents (eg PDF, DOCX) and datafiles (eg CSV, XLSX) for analysis in all chats
+- Ability for user to upload their own documents for analysis
+- Attribution and footers to indicate where caution is needed on LLM analysis, versus a recipe a user created
+
 # Quick start
 
 1. Install Docker if you don't have it already, see [here](https://www.docker.com/products/docker-desktop/)
@@ -89,6 +98,8 @@ This repo contains a docker-compose environment that will run the following comp
     ASSISTANTS_BOT_NAME=<Your assistant name, eg "Humanitarian AI Assistant">
     ```
 
+    Be aware that lower-power models such as GPT-3.5-Turbo can serve recipes and carry out basic chat, but perform poorly for analysis and code generation.
+
     Not needed for quick start, but if you want to run ingestion of data with the new HDX API, then you will need to set ...
 
     `HAPI_API_TOKEN=<See https://hdx-hapi.readthedocs.io/en/latest/getting-started/>`
@@ -113,7 +124,7 @@ This repo contains a docker-compose environment that will run the following comp
 
     Make note of the assitant ID, then edit your `.env` file and using it set variable `ASSISTANTS_ID`.
 
-    Note: (i) If you rerun `create_update_assistant.py` once `ASSISTANTS_ID` is set, the script will update the assistant rather than create a new one; (ii) You can also add your own data, pdf, docx, csv, xlsx files for the assistant to use, see section 'Adding your own files for the assistant to analyze' below.
+    Note: (i) If you rerun `create_update_assistant.py` once `ASSISTANTS_ID` is set, the script will update the assistant rather than create a new one. You will need to do this if trying different models; (ii) You can also add your own data, pdf, docx, csv, xlsx files for the assistant to use, see section 'Adding your own files for the assistant to analyze' below.
 
 7. Restart so the assistant ID is set, `docker compose up -d`
 
@@ -126,7 +137,6 @@ The steps above are mostly one-time. Going forward you only need to stop and sta
 - To stop the environment `docker compose stop`
 - To start the environment `docker compose up -d`, then go to [http://localhost:8000/](http://localhost:8000/)
 - To start with rebuild `docker compose up -d --build` (for more details about development, see [CONTRIBUTION](CONTRIBUTION.md))
-
 
 ## Using Recipes
 
@@ -157,6 +167,14 @@ Note: By default, rerunning the ingestion will not download data if the file alr
 
 `docker compose exec ingestion python ingest.py --force_download`
 
+### Analysis on Uploaded files
+
+As mentioned below, it is possible to add files the assistant can use on its creation. These can be used for all chats.
+
+Additionally, you can upload CSV, Excel files for LLM-poweered analysis, as well as documents. Please note though, this is LLM analysis rather than recipes and the results should be treated with caution. 
+
+
+
 #### Running ingestion without running full environment
 
 If you want to *just* download data and not run the full environment, this is possible as follows:
@@ -171,6 +189,10 @@ First setup conda environment ...
 Then run ingestion in download only mode ...
 
 5. `python ingest.py --skip_processing --skip_uploading`
+
+#### Adding new data sources
+
+To add new ingestion data sources, please refer to [CONTRIBUTION](CONTRIBUTION.md)
 
 # Managing recipes
 

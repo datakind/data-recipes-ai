@@ -108,7 +108,7 @@ def call_llm(instructions, prompt, image=None, debug=True):
 
     # Multimodal
     if image:
-        if os.getenv("RECIPES_MODEL") == "gpt-4o":
+        if os.getenv("RECIPES_MODEL").replace("-", "") == "gpt4o":
             print("         Sending image to LLM ...")
             with open(image, "rb") as image_file:
                 encoded_string = base64.b64encode(image_file.read()).decode()

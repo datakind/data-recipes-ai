@@ -83,13 +83,17 @@ Then ...
    `Dev Containers: Attach to remote container`. 
 
    Select the promptflow container. This opens a new VSCode window - use it for the next steps.
-4. Install Promptflow add-in
+4. It should happen automatically, but if not, install Promptflow add-in
 5. Open folder `/app`
 6. Click on `flow.dag.yaml`
 7. Top left of main pane, click on 'Visual editor'
      - If you are taken to the promptflow 'Install dependencies'' screen, change the Python runtime to be ` /azureml-envs/prompt-flow/runtime/bin/python` 'runtime', then close and re-open `flow.dag.yaml`
 8. On the Groundedness node, select your new connection
 9. You can no run by clicking the play icon. See Promptflow documentation for more details
+
+#### Changing between Azure OpenAI <> OpenAI
+
+As noted in the README, the repo supports assistants on OpenAI or Azure OpenAI. The README has instructions on how to change in the `.env` file, but you will also have to change the connection in the promptflow groundedness node accordingly.
 
 ## GitHub Workflow
 
@@ -186,6 +190,20 @@ Then ...
 7. Top left of main pane, click on 'Visual editor'
 8. On the Groundedness node, select your new connection
 9. You can no run by clicking the play icon. See Promptflow documentation for more details
+
+# Adding new Data sources
+
+## Open API (not OpenAI!) data sources
+
+As mentioned in the main [README](README.md), the assistant can be used with openapi standard API, such as the included HDX API. To add another, extend the configuration in [iningestion/ingest.config](iningestion/ingest.config). The ingestion script will process this data and import into the Data Recipes AI database. This works for simple APIs with relatively low data volumes, and may need some adjustment depending on the complexity of the API.
+
+## API interaction without ingestion
+
+Some APIs are too extensive to ingest. These can be defined as tools (functions) for the assistant, which can query the API on request to get data. See [assistants/recipes_agents/create_update_assistant.py](assistants/recipes_agents/create_update_assistant.py) which already has a couple of functions which integrate with APIs which you could extend for new data sources.
+
+## Files for the assistant
+
+As mentioned in the main [README](README.md), the assistant can be provided your data in the form of data files (eg CSV, Excel) and documents (eg PDF and word). These are available to the assistant for all interactions. Additionally, users can upload files during conversation. In both cases analysis is done by the LLM assistant and should be treated with caution.
 
 # Deployment
 

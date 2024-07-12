@@ -421,18 +421,29 @@ async def process_files(files: List[Element]):
     Returns:
         List[dict]: A list of dictionaries containing the file_id and tools for each file.
     """
-    # Upload files if any and get file_ids
+
+    code_interpretor_types = ["xlsx", "csv", "json", "txt"]
+
     file_ids = []
     if len(files) > 0:
         file_ids = await upload_files(files)
 
-    return [
-        {
-            "file_id": file_id,
-            "tools": [{"type": "code_interpreter"}, {"type": "file_search"}],
-        }
-        for file_id in file_ids
-    ]
+    results = []
+    for i in range(len(files)):
+        file = files[i]
+        file_use = "file_search"
+        for ci_type in code_interpretor_types:
+            if ci_type in file.path:
+                file_use = "code_interpreter"
+                break
+        results.append(
+            {
+                "file_id": file_ids[i],
+                "tools": [{"type": file_use}],
+            }
+        )
+
+    return results
 
 
 @cl.on_chat_start
@@ -722,19 +733,17 @@ async def add_message_to_thread(thread_id, role, content, message=None):
 
     print(f"Content: {content}")
 
+    params = {"thread_id": thread_id, "role": role, "content": content}
+
     attachments = []
 
-    # Azure doesn't yet support attachments
-    if os.getenv("ASSISTANTS_API_TYPE") == "openai":
-        if message is not None:
+    # Process user-uploaded files
+    if message is not None and hasattr(message, "elements"):
+        if len(message.elements) > 0:
             attachments = await process_files(message.elements)
+            params["attachments"] = attachments
 
-    await async_openai_client.beta.threads.messages.create(
-        thread_id=thread_id,
-        role=role,
-        content=content,
-        attachments=attachments,
-    )
+    await async_openai_client.beta.threads.messages.create(**params)
 
 
 @cl.on_message

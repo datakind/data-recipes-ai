@@ -4,3 +4,4 @@ type: azure_open_ai
 api_key: "<user-input>"
 api_base: "<user-input>"
 api_type: "azure"
+api_version: "<user-input>"

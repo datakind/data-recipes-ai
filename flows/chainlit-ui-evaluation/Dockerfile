@@ -20,6 +20,9 @@ ENV OPENAI_API_KEY=$OPENAI_API_KEY
 ARG OPENAI_API_ENDPOINT
 ENV OPENAI_API_ENDPOINT=$OPENAI_API_ENDPOINT
 
+ARG OPENAI_API_VERSION
+ENV OPENAI_API_VERSION=$OPENAI_API_VERSION
+
 ARG CHAT_URL
 ENV CHAT_URL=$CHAT_URL
 
@@ -48,7 +51,7 @@ RUN pip3 install keyrings.alt
 
 # Set up Connections
 RUN pf connection create --file ./openai.yaml --set api_key=$OPENAI_API_KEY  --name open_ai_connection 
-RUN pf connection create --file ./azure_openai.yaml --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_open_ai_connection 
+RUN pf connection create --file ./azure_openai.yaml --set api_version=$OPENAI_API_VERSION --set api_key=$OPENAI_API_KEY --set api_base=$OPENAI_API_ENDPOINT --name azure_open_ai_connection 
 
 RUN echo "DEBUG DOCKER"
 RUN which python
