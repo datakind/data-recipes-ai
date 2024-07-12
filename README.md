@@ -13,11 +13,24 @@ For more information on the recipes concept, please see see [here](https://towar
 - [Demo video](https://www.loom.com/share/e27ae40a73e9470597e2d58176ecc4b9?sid=8421a557-fbdd-47f2-85eb-4e96da96b55f) showing AI-assisted coding for managing recipes
 - [Demo video](https://www.loom.com/share/bd63433f977c4f21b2b7d44e7305473f?sid=9ad945ef-cbbd-469d-b4b5-dc8c6859fd75) showing end-user prototype
 
+# Table of Contents
+- [Design Concepts](#design-concepts)
+- [What's in this repo?](#whats-in-this-repo)
+- [What features are supported?](#what-features-are-supported)
+- [Quick start](#quick-start)
+- [Stoping/Starting the environment](#stopingstarting-the-environment)
+- [Using Recipes](#using-recipes)
+- [Additional Features](#additional-features)
+- [Managing recipes](#managing-recipes)
+- [Autogen Studio and autogen agent teams for creating data recipes](#autogen-studio-and-autogen-agent-teams-for-creating-data-recipes)
+
+For additional information, check out [CONTRIBUTION.md](CONTRIBUTION.md)
+
 # Design Concepts
 
 Data recipes have two types: (i) Exact memories, eg '*What is the population of Mali?*' which can be served directly to the user when they ask this question; (ii) Generic skills which can be run when requested for a scenario not in memory, eg a skill for 'What is the population of country X?' which can be called when the user asks something like '*What is the population of Nigeria?*'. In both cases the match to the user's intent is made using semantic search with LLM-reranking.
 
-Given the rapidly changing landscape of LLMs, we have tried as much as possible to implement data recipes in such a way that it can be integrated with various semantic architectures and frameworks. By implementing recipes using a recipes server (powered by FastAPI), it can be called from [Open AI assistant](https://platform.openai.com/docs/assistants/overview) actions and [Copilot Studio](https://www.microsoft.com/en-us/microsoft-copilot/microsoft-copilot-studio) as well from any custom code. Also included in this repo is an example of using recipes via OpenAI format plugins, as supported by frameworks such as [semantic kernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/?tabs=Csharp). 
+Given the rapidly changing landscape of LLMs, we have tried as much as possible to implement data recipes in such a way that it can be integrated with various semantic architectures and frameworks. By implementing recipes using a recipes server (powered by FastAPI), it can be called from [Open AI assistant](https://platform.openai.com/docs/assistants/overview) actions and [Copilot Studio](https://www.microsoft.com/en-us/microsoft-copilot/microsoft-copilot-studio) as well as from any custom code. Also included in this repo is an example of using recipes via OpenAI format plugins, as supported by frameworks such as [semantic kernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/?tabs=Csharp). 
 
 Data recipes supports datasources accessed via API, but in some cases it is preferable to ingest data in order to leverage LLM SQL capabilities. We include an initial set of data sources specific to humanitarian response in the ingestion module, which can be extended to include additional sources as required.
 
@@ -39,7 +52,7 @@ This repo contains a docker-compose environment that will run the following comp
 - (Azure) Open AI Assistant creation tools to create assistants that are aware of the data sources available in the data recipes ai environment 
 - Autogen studio agent team for helping creating recipes [ In progress ]
 
-# What can features are supported?
+# What features are supported?
 
 - Ability to create data recipes using LLMs, these can be served to end users via chat
 - Ability for end users to access memories and recipes using a chat interface. Memories will present saved results, recipes will run to get latest results
@@ -98,7 +111,7 @@ This repo contains a docker-compose environment that will run the following comp
     ASSISTANTS_BOT_NAME=<Your assistant name, eg "Humanitarian AI Assistant">
     ```
 
-    Be aware that lower-power models such as GPT-3.5-Turbo can serve recipes and carry out basic chat, but perform poorly for analysis and code generation.
+    *Be aware that lower-power models such as GPT-3.5-Turbo can serve recipes and carry out basic chat, but perform poorly for analysis and code generation.
 
     Not needed for quick start, but if you want to run ingestion of data with the new HDX API, then you will need to set ...
 
@@ -106,7 +119,7 @@ This repo contains a docker-compose environment that will run the following comp
 
 4. Download sample Humanitarian Data Exchange (HDX) API data
 
-    For a quick start, we have prepared a sample dataset extracted from the new [HDX API](https://hdx-hapi.readthedocs.io/en/latest/). You can also run the ingestion yourself (see below), but this demo file should get you started quickly.
+    For a quick start, we have prepared a sample dataset extracted from the new [HDX API](https://hdx-hapi.readthedocs.io/en/latest/). You can also run the ingestion yourself [see below](#analysis-on-ingested-data), but this demo file should get you started quickly.
 
     From [this Google folder](https://drive.google.com/drive/folders/1E4G9HM-QzxdXVNkgP3fQXsuNcABWzdus?usp=sharing), download the file starting with 'datadb' and save it into the 'data' folder of your repo.
 
@@ -122,9 +135,9 @@ This repo contains a docker-compose environment that will run the following comp
 
     In a terminal, navigate to the repo top folder and run `docker compose exec chat python create_update_assistant.py`
 
-    Make note of the assitant ID, then edit your `.env` file and using it set variable `ASSISTANTS_ID`.
+    Make note of the assitant ID, then set it as the `ASSISTANTS_ID` variable in your `.env` file.
 
-    Note: (i) If you rerun `create_update_assistant.py` once `ASSISTANTS_ID` is set, the script will update the assistant rather than create a new one. You will need to do this if trying different models; (ii) You can also add your own data, pdf, docx, csv, xlsx files for the assistant to use, see section 'Adding your own files for the assistant to analyze' below.
+    Note: (i) If you rerun `create_update_assistant.py` once `ASSISTANTS_ID` is set, the script will update the assistant rather than create a new one. You will need to do this if trying different models; (ii) You can also add your own data, pdf, docx, csv, xlsx files for the assistant to use, see section [Adding your own files for the assistant to analyze](#adding-your-own-files-for-the-assistant-to-analyze) below.
 
 7. Restart so the assistant ID is set, `docker compose up -d`
 
