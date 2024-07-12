@@ -13,8 +13,7 @@ jobs:
       runs-on: ubuntu-latest 
       environment: "GitHub Actions 1"
       env: 
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        ASSISTANTS_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ASSISTANTS_API_KEY: ${{ secrets.ASSISTANTS_API_KEY }}
         ASSISTANTS_API_VERSION: ${{ secrets.ASSISTANTS_API_VERSION }}
         ASSISTANTS_API_TYPE: ${{ secrets.ASSISTANTS_API_TYPE }}
         ASSISTANTS_ID: ${{ secrets.ASSISTANTS_ID }} 
