@@ -108,6 +108,8 @@ This repo contains a docker-compose environment that will run the following comp
 
     Note: (i) If you rerun `create_update_assistant.py` once `ASSISTANTS_ID` is set, the script will update the assistant rather than create a new one. You will need to do this if trying different models; (ii) You can also add your own data, pdf, docx, csv, xlsx files for the assistant to use, see section 'Adding your own files for the assistant to analyze' below.
 
+    *Warning! If using **Azure**, at time of writing July 2024, [the documented approach](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/file-search?tabs=python#update-the-assistant-to-use-the-new-vector-store) for uploading files in Python does not work while assistants in preview model. Though the python runs, the files do not appear in the UI. We recommedn you upload files in [./assistants/chat_ui/files](./assistants/chat_ui/files) in the UI yourself.*
+
 7. Restart so the assistant ID is set, `docker compose up -d`
 
 8. Go to [http://localhost:8000/](http://localhost:8000/) and sign-in using the values in your `.env` file for `USER_LOGIN` and `USER_PASSWORD`
