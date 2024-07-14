@@ -104,7 +104,7 @@ This repo contains a docker-compose environment that will run the following comp
 
     In a terminal, navigate to the repo top folder and run `docker compose exec chat python create_update_assistant.py`
 
-    Make note of the assitant ID, then edit your `.env` file and using it set variable `ASSISTANTS_ID`.
+    Make note of the assitant ID printed, then edit your `.env` file and using it set variable `ASSISTANTS_ID`.
 
     Note: (i) If you rerun `create_update_assistant.py` once `ASSISTANTS_ID` is set, the script will update the assistant rather than create a new one. You will need to do this if trying different models; (ii) You can also add your own data, pdf, docx, csv, xlsx files for the assistant to use, see section 'Adding your own files for the assistant to analyze' below.
 
