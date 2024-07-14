@@ -61,42 +61,24 @@ This repo contains a docker-compose environment that will run the following comp
 
     First, copy `.env.example` in your repo to `.env` in the same location, then adjust the following valriables.
 
-    If using **Azure OpenAI**, you will need to set these in your `.env` ...
-
     ```
-    RECIPES_OPENAI_API_TYPE=azure
-    RECIPES_OPENAI_API_KEY=<The API key>
-    RECIPES_OPENAI_API_ENDPOINT=<eg https://<YOUR DEPLOYMENT NAME>.openai.azure.com/>
-    RECIPES_OPENAI_API_VERSION=<The API version in your deployment, eg 2024-05-01-preview>
-    RECIPES_MODEL=<The deployment name you created in Azure, eg gpt-4o>
+    RECIPES_OPENAI_API_TYPE=<azure or openai>
+    RECIPES_OPENAI_API_KEY=<API Key>
+    RECIPES_OPENAI_API_ENDPOINT=<only for Azure, eg https://<YOUR DEPLOYMENT NAME>.openai.azure.com/>
+    RECIPES_OPENAI_API_VERSION=<only for Azure, eg 2024-02-15-preview>
+    RECIPES_MODEL=<On Opne AI model name, on Azure the deployment name you created in Azure, eg gpt-4o>
 
-    ASSISTANTS_API_TYPE=azure  
+    ASSISTANTS_API_TYPE=<azure or openai>  
     ASSISTANTS_API_KEY=<API Key as found on the Azure OpenAI resource>
     ASSISTANTS_ID=<ID of the assistant you created in OpenAI. Leave blank if you do not have one yet>
-    ASSISTANTS_BASE_URL=<eg https://<YOUR DEPLOYMENT NAME>.openai.azure.com/>
-    ASSISTANTS_API_VERSION=<The API version in your deployment, eg 2024-05-01-preview>
-    ASSISTANTS_MODEL=<The deployment name of the model you created in Azure which the assitant uses, eg gpt-4o>
+    ASSISTANTS_BASE_URL=<for Azure only, eg https://<YOUR DEPLOYMENT NAME>.openai.azure.com/>
+    ASSISTANTS_API_VERSION=<For Azure only, eg 2024-02-15-preview>
+    ASSISTANTS_MODEL=<On Open AI, the model name, on Azure the deployment name of the model you created in Azure which the assitant uses, eg gpt-4o>
     ASSISTANTS_BOT_NAME=<Your assistant name, eg "Humanitarian AI Assistant">
 
     ```
 
     Note: In Azure Playground, you can view code for your assistant which provide most of the variables above
-
-    If using **OpenAI directly***, you will instead need to set these ...
-
-    ```
-    RECIPES_OPENAI_API_TYPE=openai
-    RECIPES_OPENAI_API_KEY=<The API key you created on OpenAI>
-    RECIPES_MODEL=<model name, we recommend gpt-4o>
-    RECIPES_OPENAI_TEXT_COMPLETION_DEPLOYMENT_NAME=text-embedding-ada-002
-
-    ASSISTANTS_API_TYPE=openai 
-    OPENAI_API_KEY=<The API key you created on OpenAI>
-    ASSISTANTS_API_KEY=${OPENAI_API_KEY}
-    ASSISTANTS_ID=<ID of the assistant you created in OpenAI. Leave blank if you do not have one yet>
-    ASSISTANTS_MODEL=<The model your assistant uses>
-    ASSISTANTS_BOT_NAME=<Your assistant name, eg "Humanitarian AI Assistant">
-    ```
 
     Be aware that lower-power models such as GPT-3.5-Turbo can serve recipes and carry out basic chat, but perform poorly for analysis and code generation.
 
