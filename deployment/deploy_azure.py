@@ -72,8 +72,8 @@ def deploy():
         sys.exit()
 
     tags = {
-        "recipes-ai-server": [f"{container_registry}/{repo}", "server"],
-        "recipes-ai-chat": [f"{container_registry}/{repo}", "chat"],
+        "data-recipes-ai-server": [f"{container_registry}/{repo}", "server"],
+        "data-recipes-ai-chat": [f"{container_registry}/{repo}", "chat"],
     }
 
     run_cmd("az login")
