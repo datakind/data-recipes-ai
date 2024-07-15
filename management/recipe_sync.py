@@ -1020,8 +1020,6 @@ def create_new_recipe(recipe_intent, recipe_author):
 
     print("Running recipe to capture errors for LLM ...")
     result = run_recipe(recipe_path)
-    print("JJJJJJ")
-    sys.exit()
     print(result.stderr)
 
     # If there was an error, call edit recipe to try and fix it one round
