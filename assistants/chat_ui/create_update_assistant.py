@@ -221,7 +221,7 @@ def create_update_assistant():
         f.write(instructions)
 
     # Upload any local files needed by assistant for file_search (RAG)
-    vector_store_id = upload_files_to_vector_store("local_files_vectore_store", client)
+    vector_store_id = upload_files_to_vector_store("local_files_vector_store", client)
 
     # Upload any files that will be used for code_interpretor
     code_interpreter_file_ids = upload_files_for_code_interpreter(client)
@@ -258,23 +258,24 @@ def create_update_assistant():
     if "code_interpreter" in tool_resources or "file_search" in tool_resources:
         params["tool_resources"] = tool_resources
 
-    # If we were provided an ID in .env, pass it in to update existing assistant
-    if assistant_id is not None:
-        params["assistant_id"] = assistant_id
+    print(json.dumps(params, indent=2))
 
-    print(json.dumps(params, indent=4))
-
-    if assistant_id is None:
+    if (
+        assistant_id is None
+        or assistant_id == ""
+        or assistant_id.replace(" ", "") == ""
+    ):
         print(
-            f"Calling assistant API for ID: {assistant_id}, name: {bot_name} and model {model} ..."
+            f"Calling CREATE assistant API for ID: {assistant_id}, name: {bot_name} and model {model} ..."
         )
         assistant = client.beta.assistants.create(**params)
         print("Assistant created!! Here is the assistant ID:\n")
         print(assistant.id)
         print("\nNow update ASSISTANTS_ID in your .env file with this ID")
     else:
+        params["assistant_id"] = assistant_id
         print(
-            f"Calling assistant API for ID: {assistant_id}, name: {bot_name} and model {model} ..."
+            f"Calling UPDATE assistant API for ID: {assistant_id}, name: {bot_name} and model {model} ..."
         )
         assistant = client.beta.assistants.update(**params)
         print("Assistant updated!!")
