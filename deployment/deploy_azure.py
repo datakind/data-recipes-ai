@@ -65,9 +65,15 @@ def deploy():
     Note: The variables 'container_registry', 'repo', 'azure_platform', and 'docker_compose_file'
     should be defined before calling this function.
     """
+
+    # if container resistry not set
+    if container_registry is None or container_registry == "":
+        print("You must set your AZURE_CONTAINER_REGISTER in .env")
+        sys.exit()
+
     tags = {
-        "data-recipes-ai-cli-server": [f"{container_registry}/{repo}", "server"],
-        "data-recipes-ai-cli-chat": [f"{container_registry}/{repo}", "chat"],
+        "data-recipes-ai-server": [f"{container_registry}/{repo}", "server"],
+        "data-recipes-ai-chat": [f"{container_registry}/{repo}", "chat"],
     }
 
     run_cmd("az login")
