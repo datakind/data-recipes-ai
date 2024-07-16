@@ -35,7 +35,7 @@ TMP_IMAGE = "temp.png"
 CHAT_URL = os.getenv("CHAT_URL")
 
 IMAGE_SUMMARIZATION_PROMPT = (
-    "Summarize the image. Where possible list maximum or mimum values and any trends."
+    "Summarize the image. Where possible list maximum or minimum values and any trends."
 )
 
 
