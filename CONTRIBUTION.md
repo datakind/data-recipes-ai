@@ -93,7 +93,7 @@ Then ...
 
 #### Changing between Azure OpenAI <> OpenAI
 
-As noted in the README, the repo supports assistants on OpenAI or Azure OpenAI. The README has instructions on how to change in the `.env` file, but you will also have to change the connection in the promptflow groundedness node accordingly.
+As noted in the README, the repo supports assistants on OpenAI or Azure OpenAI. The README has instructions on how to change in the `.env` file, remeber to change ASSISTANT_ID as well as the API settings, but you will **also have to change the connection in the promptflow groundedness node accordingly.**
 
 ## GitHub Workflow
 
