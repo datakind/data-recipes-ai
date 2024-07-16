@@ -1,6 +1,9 @@
 name: End-to-End tests
 
 on:
+  push:
+    branches:
+      - develop
   pull_request:
     branches:
       - master
