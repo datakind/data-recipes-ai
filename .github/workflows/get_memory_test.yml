@@ -101,8 +101,18 @@ jobs:
 
             sleep 10
 
-        - name: Run tests
-          run: |
-            echo "exec into container ..."
-            docker compose exec server bash -c "cd tests/ && pytest -vv"
+        # Debugging GitHUb actions interactively, by connecting to the runner ...
+        # Get ssh connection details for runner.
+        # See here https://github.com/marketplace/actions/debugging-with-ssh
+        # Basically, uncomment this, then get connection string in actions output, then connect with
+        #
+        # ssh -i <YOUR GITHUB SSH KEY> <CONN STRING ON ACTIONS>
+        #
+        - name: DEBUG - Setup upterm session
+          uses: lhotari/action-upterm@v1
+
+        #- name: Run tests
+        #  run: |
+        #    echo "exec into container ..."
+        #    docker compose exec server bash -c "cd tests/ && pytest -vv"
 
