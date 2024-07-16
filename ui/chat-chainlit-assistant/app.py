@@ -201,6 +201,8 @@ def get_event_handler(cl, assistant_name, sync_openai_client):  # noqa: C901
                 None
             """
 
+            citations = None
+
             # Check for citations
             if hasattr(message.content[0], "text"):
                 message_content = message.content[0].text
@@ -232,7 +234,7 @@ def get_event_handler(cl, assistant_name, sync_openai_client):  # noqa: C901
 
             word_count = len(self.current_message_text.split())
             if word_count > 10:
-                if citations is not None:
+                if citations is not None and len(citations) > 0:
                     citations = "; Sources: " + "; ".join(citations)
                 else:
                     citations = ""
