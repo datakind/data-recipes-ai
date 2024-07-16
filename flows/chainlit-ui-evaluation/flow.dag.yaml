@@ -55,7 +55,7 @@ nodes:
     context: ${inputs.context}
     temperature: 0
     model: gpt-4o
-  connection: azure_open_ai_connection
+  connection: open_ai_connection
   api: chat
 - name: concat_scores
   type: python

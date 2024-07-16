@@ -45,7 +45,7 @@
       "expected_output": {
         "result": {
           "type": "image",
-          "file": "http://localhost:8000/public/images/memory_image_e9d3e3ee-977f-4291-a51a-7e4e3e4cd5f3.png",
+          "file": "http://localhost:8000/public/images/memory_image_1f62a50e-59fa-4ab4-b5bf-5b5aa48a57dd.png",
           "value": ""
         },
         "metadata": "{\"params\": {\"region\": \"Wadi Fira\"}, \"attribution\": \"https://data.humdata.org/dataset/682c3db6-e253-430f-a3f3-305ef079e2de\", \"data_url\": \"https://data.humdata.org/dataset/682c3db6-e253-430f-a3f3-305ef079e2de/resource/1e3ba1f4-2dbc-4f46-9ce7-2274e157188e/download/3w-tcd-20240508.xlsx\", \"time_period\": {\"start\": \"2023-12-01\", \"end\": \"2024-05-31T23:59:59.999999\"}}",
