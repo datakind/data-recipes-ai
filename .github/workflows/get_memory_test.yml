@@ -108,11 +108,11 @@ jobs:
         #
         # ssh -i <YOUR GITHUB SSH KEY> <CONN STRING ON ACTIONS>
         #
-        - name: DEBUG - Setup upterm session
-          uses: lhotari/action-upterm@v1
+        #- name: DEBUG - Setup upterm session
+        #  uses: lhotari/action-upterm@v1
 
-        #- name: Run tests
-        #  run: |
-        #    echo "exec into container ..."
-        #    docker compose exec server bash -c "cd tests/ && pytest -vv"
+        - name: Run tests
+          run: |
+            echo "exec into container ..."
+            docker compose exec server bash -c "cd tests/ && pytest -vv"
 
