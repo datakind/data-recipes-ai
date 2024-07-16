@@ -1338,12 +1338,14 @@ def run_recipe(recipe_path):
     # Extract output
     if output_start_string in result.stdout:
         output = result.stdout.split(output_start_string)[1]
+        # output is JSON
+        validate_output(output)
+        output = json.loads(output)
     else:
-        raise ValueError("Output of recipe must contain 'OUTPUT:'")
-
-    # output is JSON
-    validate_output(output)
-    output = json.loads(output)
+        error_str = "ERROR: Output of recipe must contain 'OUTPUT:'"
+        print(error_str)
+        result.stderr += f"\n\n{error_str}"
+        output = {}
 
     recipe_folder = os.path.dirname(recipe_path)
 

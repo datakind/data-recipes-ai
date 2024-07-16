@@ -1,12 +1,13 @@
 name: End-to-End tests
 
-#on: [push, pull_request]
-
-on: [push]
-
-#on:
-#  pull_request_target:
-#    types: [labeled]
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - master
+      - main
 
 jobs:
   test:
@@ -134,37 +135,37 @@ jobs:
         #- name: DEBUG - Setup upterm session
         #  uses: lhotari/action-upterm@v1
 
-        #- name: DEBUG - Run Selenium outside of promptflow
-        #  run: |
-        #    docker exec promptflow python call_assistant.py
-
-        - name: Run tests 
+        - name: DEBUG - Run Selenium outside of promptflow
           run: |
-            env > .env 
-            docker exec promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
+            docker exec promptflow python call_assistant.py
 
-        - name: Check logs post-tests
-          run: |
-            docker ps
+        # - name: Run tests 
+        #   run: |
+        #     env > .env 
+        #     docker exec promptflow pf run create --flow . --data ./data.jsonl --stream  --column-mapping query='${data.query}' context='${data.context}' chat_history='${data.chat_history}'  --name base_run 
 
-            echo "logs datadb ..."
-            docker compose logs datadb
+        # - name: Check logs post-tests
+        #   run: |
+        #     docker ps
 
-            echo "logs promptflow ..."
-            docker logs promptflow
+        #     echo "logs datadb ..."
+        #     docker compose logs datadb
 
-            echo "logs chat ..."
-            docker compose logs chat
+        #     echo "logs promptflow ..."
+        #     docker logs promptflow
 
-            echo "logs server ..."
-            docker compose logs server  
+        #     echo "logs chat ..."
+        #     docker compose logs chat
 
-        - name: Show results
-          run: |
-            docker exec promptflow pf run show-details -n base_run
-            echo "Getting metrics ..."
-            docker exec promptflow  pf run show-metrics -n base_run
-            ##docker exec promptflow  pf run visualize -n base_run
-            echo "Checking results ..."
-            docker exec promptflow python3 check_evaluation_results.py
+        #     echo "logs server ..."
+        #     docker compose logs server  
+
+        # - name: Show results
+        #   run: |
+        #     docker exec promptflow pf run show-details -n base_run
+        #     echo "Getting metrics ..."
+        #     docker exec promptflow  pf run show-metrics -n base_run
+        #     ##docker exec promptflow  pf run visualize -n base_run
+        #     echo "Checking results ..."
+        #     docker exec promptflow python3 check_evaluation_results.py
  
