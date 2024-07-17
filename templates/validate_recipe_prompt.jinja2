@@ -1,0 +1,23 @@
+{# templates/validate_recipe_prompt.jinja2 #}
+
+The user requested this:
+
+{{ user_input }}
+
+The recipe code is:
+
+{{ recipe_code }}
+
+The recipe output is:
+
+{{ recipe_result }}
+
+Did the recipe output match the user request?
+
+Provide your answer as a valid JSON string in the following format:
+
+{
+    "answer": "<yes>",
+    "reason": "<reason for your answer>"
+    "user_input": "<user_input>",
+}
