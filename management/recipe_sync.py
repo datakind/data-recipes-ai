@@ -294,7 +294,6 @@ def extract_code_sections(recipe_path):
         raise ValueError(
             f"Code separator '{code_separator}' not found in the recipe file '{recipe_path}'."
         )
-        sys.exit()
 
     content = content.split("\n")
 
@@ -319,7 +318,6 @@ def extract_code_sections(recipe_path):
         raise ValueError(
             f"Function code or calling code not found in the recipe file '{recipe_path}'."
         )
-        sys.exit()
 
     return {
         "function_code": function_code,
@@ -1020,7 +1018,6 @@ def create_new_recipe(recipe_intent, recipe_author):
 
     print("Running recipe to capture errors for LLM ...")
     result = run_recipe(recipe_path)
-    print(result.stderr)
 
     # If there was an error, call edit recipe to try and fix it one round
     if result.returncode != 0:
@@ -1101,6 +1098,41 @@ def llm_edit_recipe(recipe_path, llm_prompt, recipe_author):
     print("\n\nRecipe editing done")
 
 
+def llm_validate_recipe(user_input, recipe_path):
+
+    recipe_folder = os.path.dirname(recipe_path)
+
+    with open(recipe_path, "r") as file:
+        recipe_code = file.read()
+
+    metadata_path = os.path.join(recipe_folder, "metadata.json")
+    with open(metadata_path, "r") as file:
+        metadata = json.load(file)
+
+    result_type = metadata["sample_result_type"]
+    result = metadata["sample_result"]
+
+    validation_prompt = environment.get_template("validate_recipe_prompt.jinja2")
+    prompt = validation_prompt.render(
+        user_input=user_input, recipe_code=recipe_code, recipe_result=result
+    )
+
+    if len(prompt.split(" ")) > 8000:
+        return {
+            "answer": "error",
+            "user_input": user_input,
+            "reason": "Prompt too long, please shorten recipe code or result",
+        }
+
+    if result_type == "image":
+        llm_result = call_llm("", prompt, image=result)
+    else:
+        llm_result = call_llm("", prompt)
+
+    print(llm_result)
+    return llm_result
+
+
 def update_metadata_file_results(recipe_folder, output):
     """
     Update the metadata file for a given recipe folder with the provided result.
@@ -1117,6 +1149,8 @@ def update_metadata_file_results(recipe_folder, output):
 
     with open(metadata_path, "r") as file:
         metadata = json.load(file)
+
+    print(output)
 
     if output["result"]["type"] == "image":
 
@@ -1304,18 +1338,26 @@ def validate_output(output):
     # Remove any lines with DEBUG in them
     output = re.sub(r"DEBUG.*\n", "", output)
 
+    error = None
+
     try:
         output = json.loads(output)
         print("JSON output parsed successfully")
+        # Now check for required fields
+        for f in required_output_json_fields:
+            if f not in output:
+                error = f"Output of recipe must contain field {f}"
+                print(error)
+        if "type" not in output["result"]:
+            error = 'Output of recipe must contain field "type" in output["result"]'
+            print(error)
     except json.JSONDecodeError:
         print("Output: \n\n")
         print(output)
-        raise ValueError("Output of recipe must be JSON")
+        error = "Output of recipe must be JSON"
+        print(error)
 
-    # Now check for required fields
-    for f in required_output_json_fields:
-        if f not in output:
-            raise ValueError(f"Output of recipe must contain field {f}")
+    return error
 
 
 def run_recipe(recipe_path):
@@ -1339,8 +1381,23 @@ def run_recipe(recipe_path):
     if output_start_string in result.stdout:
         output = result.stdout.split(output_start_string)[1]
         # output is JSON
-        validate_output(output)
-        output = json.loads(output)
+        error = validate_output(output)
+        if error is None:
+            output = json.loads(output)
+
+            # Check for required fields
+            required_output_json_fields = ["result"]
+            for f in required_output_json_fields:
+                if f not in output:
+                    error = f"Output of recipe must contain field {f}"
+                    print(error)
+                    result.stderr += f"{error}"
+                    result.returncode = 1
+                    break
+
+        else:
+            result.stderr += f"{error}"
+            result.returncode = 1
     else:
         error_str = "ERROR: Output of recipe must contain 'OUTPUT:'"
         print(error_str)
@@ -1637,6 +1694,9 @@ def main():
         "--edit_recipe", action="store_true", help="Create a new blank recipe"
     )
     group.add_argument(
+        "--validate_recipe", action="store_true", help="Validate a recipe using LLM"
+    )
+    group.add_argument(
         "--info", action="store_true", help="Get information about the data available"
     )
     group.add_argument(
@@ -1673,7 +1733,7 @@ def main():
     elif args.check_in:
         check_in(args.recipe_author)
     elif args.create_recipe:
-        recipe_intent = args.recipe_intent.lower().replace(" ", "_")
+        recipe_intent = args.recipe_intent.replace(" ", "_").lower()
         create_new_recipe(recipe_intent, args.recipe_author)
     elif args.delete_recipe:
         delete_recipe(args.recipe_custom_id)
@@ -1683,6 +1743,9 @@ def main():
         save_as_memory(args.recipe_path)
     elif args.edit_recipe:
         llm_edit_recipe(args.recipe_path, args.llm_prompt, args.recipe_author)
+    elif args.validate_recipe:
+        recipe_intent = args.recipe_intent
+        llm_validate_recipe(recipe_intent, args.recipe_path)
     elif args.rebuild:
         rebuild(args.recipe_author)
     elif args.dump_db:
