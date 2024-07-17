@@ -34,7 +34,9 @@ MESSAGES_CLASS = "message-content"
 TMP_IMAGE = "temp.png"
 CHAT_URL = os.getenv("CHAT_URL")
 
-IMAGE_SUMMARIZATION_PROMPT = "Summarize the image"
+IMAGE_SUMMARIZATION_PROMPT = (
+    "Summarize the image. Where possible list maximum or minimum values and any trends."
+)
 
 
 def set_chrome_options() -> Options:
@@ -319,7 +321,7 @@ if __name__ == "__main__":
     # user_input = chat_history[4]
     # print(user_input)
 
-    # user_input="Is your data updated in real time?"
+    # user_input="How many rows does the population table have for Nigeria"
     # call_assistant(user_input, "[]")
     # sys.exit()
 
