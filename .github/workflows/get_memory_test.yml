@@ -77,8 +77,8 @@ jobs:
             ls data/datadb
             
             echo "Starting docker containers for dbs and server ..."
-            docker-compose pull
-            docker-compose up -d --build datadb recipedb server datadb
+            docker compose pull
+            docker compose up -d --build datadb recipedb server datadb
 
             sleep 10
 
