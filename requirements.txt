@@ -18,7 +18,7 @@ langchain_openai==0.1.7
 literalai==0.0.604
 matplotlib==3.9.0
 pandas==2.2.2
-pgvector==0.2.4
+pgvector==0.2.5
 plotly==5.22.0
 psycopg2_binary==2.9.9
 pyarrow==16.1.0
