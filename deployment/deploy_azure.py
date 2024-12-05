@@ -19,10 +19,6 @@ load_dotenv()
 
 container_registry = os.getenv("AZURE_CONTAINER_REGISTRY")
 repo = os.getenv("AZURE_CONTAINER_REGISTRY_REPO")
-print('### DEBUG ###')
-print(f'container_registry: {container_registry}')
-print(f'repo: {repo}')
-print(f'postgres data host: {os.getenv("POSTGRES_DATA_HOST")}')
 
 # Script is run from top directory
 docker_compose_file = "docker-compose-deploy.yml"

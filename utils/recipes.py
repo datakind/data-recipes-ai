@@ -98,9 +98,9 @@ def initialize_vector_db():
         COLLECTION_NAME = f"{mem_type}_embedding"
         db[mem_type] = PGVector(
             collection_name=COLLECTION_NAME,
-            connection_string=CONNECTION_STRING,git 
+            connection_string=CONNECTION_STRING,
             embedding_function=embedding_model,
-            create_extension=False
+            create_extension=False,
         )
         print(f'### {mem_type} SUCCESS ###')
 
