@@ -88,15 +88,21 @@ def initialize_vector_db():
     db = {}
 
     embedding_model, chat = get_models()
+    print(f'### embedding model: {embedding_model} ###')
+    print(f'### chat: {chat} ###')
 
     # This will create store tables if they don't exist
+    print('### create store tables ###')
     for mem_type in similarity_cutoff.keys():
+        print(f'### {mem_type} ###')
         COLLECTION_NAME = f"{mem_type}_embedding"
         db[mem_type] = PGVector(
             collection_name=COLLECTION_NAME,
-            connection_string=CONNECTION_STRING,
+            connection_string=CONNECTION_STRING,git 
             embedding_function=embedding_model,
+            create_extension=False
         )
+        print(f'### {mem_type} SUCCESS ###')
 
     return db
 
@@ -176,6 +182,7 @@ def check_recipe_memory(intent, debug=True):
         if debug:
             print(f"======= Checking {mem_type} for intent: {intent}")
         docs = db[mem_type].similarity_search_with_score(intent, k=3)
+        print('### docs SUCCESS ###')
         for d in docs:
             score = d[1]
             content = d[0].page_content
