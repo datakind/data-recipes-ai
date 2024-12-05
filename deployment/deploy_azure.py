@@ -14,10 +14,15 @@ import sys
 import docker
 from dotenv import load_dotenv
 
+# client = docker.from_env()
 load_dotenv()
 
 container_registry = os.getenv("AZURE_CONTAINER_REGISTRY")
 repo = os.getenv("AZURE_CONTAINER_REGISTRY_REPO")
+print('### DEBUG ###')
+print(f'container_registry: {container_registry}')
+print(f'repo: {repo}')
+print(f'postgres data host: {os.getenv("POSTGRES_DATA_HOST")}')
 
 # Script is run from top directory
 docker_compose_file = "docker-compose-deploy.yml"
@@ -25,8 +30,11 @@ azure_platform = "linux/amd64"
 
 if sys.platform == "darwin":
     print("Running on Mac")
+    print(f"container_registry: {container_registry}")
+    print(f"repo: {repo}")
     client = docker.DockerClient(
-        base_url="unix:///Users/matthewharris/.docker/run/docker.sock "
+        # base_url="unix:///Users/matthewharris/.docker/run/docker.sock "
+        base_url="unix:///Users/t.o./.docker/run/docker.sock "
     )
 else:
     client = docker.from_env()
@@ -72,8 +80,8 @@ def deploy():
         sys.exit()
 
     tags = {
-        "data-recipes-ai-server": [f"{container_registry}/{repo}", "server"],
-        "data-recipes-ai-chat": [f"{container_registry}/{repo}", "chat"],
+        "data-recipes-ai-server:latest": [f"{container_registry}/{repo}", "server"],
+        "data-recipes-ai-chat:latest": [f"{container_registry}/{repo}", "chat"],
     }
 
     run_cmd("az login")
@@ -87,13 +95,15 @@ def deploy():
         f"DOCKER_DEFAULT_PLATFORM={azure_platform} && docker compose -f {docker_compose_file} build"
     )
 
+    # run_cmd("docker compose build")
+
     for image in tags.keys():
         print(f"Tagging {image} image ... with tag {tags[image][0]}:{tags[image][1]}")
         client.images.get(image).tag(tags[image][0], tags[image][1])
         print(f"Pushing {image} image ... to {tags[image][0]}:{tags[image][1]}")
         client.images.push(tags[image][0], tags[image][1])
 
-    sys.exit()
+    # sys.exit()
 
     run_cmd(f"docker compose -f {docker_compose_file} down")
     run_cmd(f"docker compose -f {docker_compose_file} pull")
