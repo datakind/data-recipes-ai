@@ -81,8 +81,8 @@ jobs:
             # TODO this should be enhanced to use a buildx bake to leverage layer caching for faster builds, or push to repo and simply have a pull for the run
             # TODO docker-compose files should be refactored to use scopes instead of different versions for each environment
             echo "Starting docker containers for dbs and server ..."
-            docker compose pull
-            docker compose up -d --build datadb recipedb server chat
+            docker-compose pull
+            docker-compose up -d --build datadb recipedb server chat
 
             # TODO: For some reason, maybe buildkit, in Github docker compose builds the image differently, and it doesn't work. Individual image build works.
             docker build --build-arg OPENAI_API_KEY=$ASSISTANTS_API_KEY \
