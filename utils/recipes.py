@@ -96,6 +96,7 @@ def initialize_vector_db():
             collection_name=COLLECTION_NAME,
             connection_string=CONNECTION_STRING,
             embedding_function=embedding_model,
+            create_extension=False,
         )
 
     return db
