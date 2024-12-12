@@ -697,24 +697,24 @@ async def on_audio_end(elements: list[Element]):
     ).send()
 
 
-@cl.password_auth_callback
-def auth_callback(username: str, password: str):
-    """
-    Authenticates a user based on the provided username and password.
+# @cl.password_auth_callback
+# def auth_callback(username: str, password: str):
+#     """
+#     Authenticates a user based on the provided username and password.
 
-    Args:
-        username (str): The username of the user.
-        password (str): The password of the user.
+#     Args:
+#         username (str): The username of the user.
+#         password (str): The password of the user.
 
-    Returns:
-        cl.User or None: If the authentication is successful, returns a User object with the user's identifier, role, and provider. Otherwise, returns None.
-    """
-    if (username, password) == (user, password):
-        return cl.User(
-            identifier=user, metadata={"role": "admin", "provider": "credentials"}
-        )
-    else:
-        return None
+#     Returns:
+#         cl.User or None: If the authentication is successful, returns a User object with the user's identifier, role, and provider. Otherwise, returns None.
+#     """
+#     if (username, password) == (user, password):
+#         return cl.User(
+#             identifier=user, metadata={"role": "admin", "provider": "credentials"}
+#         )
+#     else:
+#         return None
 
 
 async def add_message_to_thread(thread_id, role, content, message=None):
