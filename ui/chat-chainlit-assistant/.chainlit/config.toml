@@ -94,6 +94,7 @@ custom_css = "/public/elastic.css"
 # custom_build = "./public/build"
 
 [UI.theme]
+    default = "light"
     #layout = "wide"
     #font_family = "Inter, sans-serif"
 # Override default MUI light theme. (Check theme.ts)
@@ -107,11 +108,11 @@ custom_css = "/public/elastic.css"
         #light = "#FFE7EB"
 
 # Override default MUI dark theme. (Check theme.ts)
-[UI.theme.dark]
+#[UI.theme.dark]
     #background = "#FAFAFA"
     #paper = "#FFFFFF"
 
-    [UI.theme.dark.primary]
+    #[UI.theme.dark.primary]
         #main = "#F80061"
         #dark = "#980039"
         #light = "#FFE7EB"
