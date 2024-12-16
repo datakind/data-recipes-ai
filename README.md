@@ -63,7 +63,8 @@ This repo contains a docker-compose environment that will run the following comp
 
 # Quick start
 
-1. Install Docker if you don't have it already, see [here](https://www.docker.com/products/docker-desktop/)
+1. Install Docker if you don't have it already, see [here](https://www.docker.com/products/docker-desktop/). It will also be helpful to get Docker Desktop to manage the different containers. In addition, ensure you have python installed (version not later than 3.11.9).
+
 2. Check out the Data Recipes AI GitHub repo
 
     Go to the [repo](https://github.com/datakind/data-recipes-ai) in Github, and click the big green '<> Code' button. This provides a few options, you can download a zip file, or check the code out with git. If you have Git installed, a common method would be ...
@@ -125,7 +126,9 @@ This repo contains a docker-compose environment that will run the following comp
 
 7. Restart so the assistant ID is set, `docker compose up -d`
 
-8. Go to [http://localhost:8000/](http://localhost:8000/) and sign-in using the values in your `.env` file for `USER_LOGIN` and `USER_PASSWORD`
+8. Go to [http://localhost:8000/](http://localhost:8000/). 
+
+9. It will also be helpful to have a database tool like [DBeaver](https://dbeaver.io) to access and interact with your data and recipes. 
 
 ## Stoping/Starting the environment
 
@@ -134,6 +137,8 @@ The steps above are mostly one-time. Going forward you only need to stop and sta
 - To stop the environment `docker compose stop`
 - To start the environment `docker compose up -d`, then go to [http://localhost:8000/](http://localhost:8000/)
 - To start with rebuild `docker compose up -d --build` (for more details about development, see [CONTRIBUTION](CONTRIBUTION.md))
+
+You can also do the above through Docker Desktop.
 
 ## Using Recipes
 

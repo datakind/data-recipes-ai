@@ -2,6 +2,7 @@
 autogenstudio==0.0.56
 black==22.1.0
 chainlit==1.1.301
+pydantic==2.10.1
 click==8.1.7
 datetime==4.3
 fastparquet==2024.5.0 
