@@ -1,0 +1,86 @@
+user_input,expected_output
+Which organizations work in the top 3 most populated regions with severe food insecurity in Chad?,"List organizations in the top 3 states by population in IPC Phase 3+ in Chad, using HAPI data"
+Can you list the main groups operating in the 3 most affected regions in Chad?,"List organizations in the top 3 states by population in IPC Phase 3+ in Chad, using HAPI data"
+Who is helping in the areas with the highest population under severe food crisis in Chad?,"List organizations in the top 3 states by population in IPC Phase 3+ in Chad, using HAPI data"
+Identify the organizations in the most populous areas suffering from food insecurity in Chad.,"List organizations in the top 3 states by population in IPC Phase 3+ in Chad, using HAPI data"
+What are the top organizations working in the highly populated and food-insecure regions of Chad?,"List organizations in the top 3 states by population in IPC Phase 3+ in Chad, using HAPI data"
+Summarize the data about Wadi Fira.,provide a text summary of metadata for Wadi Fira using HAPI data as text
+What information do we have about Wadi Fira?,provide a text summary of metadata for Wadi Fira using HAPI data as text
+Give me a summary of the details on Wadi Fira.,provide a text summary of metadata for Wadi Fira using HAPI data as text
+Provide an overview of the data regarding Wadi Fira.,provide a text summary of metadata for Wadi Fira using HAPI data as text
+What are the key points about Wadi Fira's data?,provide a text summary of metadata for Wadi Fira using HAPI data as text
+Show the monthly changes in commodity prices in Chad since 2008.,plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image
+How have commodity prices varied monthly in Chad since 2008?,plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image
+I need the trend of monthly commodity price changes in Chad from 2008.,plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image
+What are the monthly commodity price changes in Chad starting 2008?,plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image
+Display the monthly relative change in commodity prices for Chad from 2008.,plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image
+How do food prices correlate with fatalities in Chad?,"plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image"
+Is there a relationship between food prices and the number of deaths in Chad?,"plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image"
+I want to see how food price changes affect fatality rates in Chad.,"plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image"
+Can you compare food price movements to fatality rates in Chad?,"plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image"
+What's the connection between food prices and fatalities in Chad?,"plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image"
+Show which humanitarian groups are active in Wadi Fira by their sector.,plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image
+What sectors are the humanitarian organizations in Wadi Fira working in?,plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image
+List the humanitarian organizations in Wadi Fira and their sectors.,plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image
+Who is doing what in Wadi Fira among the humanitarian groups?,plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image
+Categorize the humanitarian organizations in Wadi Fira by their area of work.,plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image
+Can you show the migration patterns for Kenya?,create a sankey plot of refugee migration by country for Kenya using HAPI data as an image
+I want to understand where migrants from Kenya are going.,create a sankey plot of refugee migration by country for Kenya using HAPI data as an image
+Show the flow of refugees from Kenya to other countries.,create a sankey plot of refugee migration by country for Kenya using HAPI data as an image
+Where are the Kenyan migrants moving to?,create a sankey plot of refugee migration by country for Kenya using HAPI data as an image
+Explain the migration routes of refugees from Kenya.,create a sankey plot of refugee migration by country for Kenya using HAPI data as an image
+Show the food crisis levels by region in Chad.,plot a map of IPC phase 3 data by admin_1 in Chad using HDX data as an image
+What are the hunger levels across different regions in Chad?,plot a map of IPC phase 3 data by admin_1 in Chad using HDX data as an image
+Display the food insecurity data by region for Chad.,plot a map of IPC phase 3 data by admin_1 in Chad using HDX data as an image
+Can you map the areas in Chad based on food crisis severity?,plot a map of IPC phase 3 data by admin_1 in Chad using HDX data as an image
+Highlight the regions in Chad with severe food crises.,plot a map of IPC phase 3 data by admin_1 in Chad using HDX data as an image
+"List the organizations that are providing food aid in Wadi Fira, Chad.","provide a list of organizations providing food security in Wadi Fira, Chad"
+Who is helping with food security in Wadi Fira?,"provide a list of organizations providing food security in Wadi Fira, Chad"
+Identify the groups working on food security in Wadi Fira.,"provide a list of organizations providing food security in Wadi Fira, Chad"
+Which organizations are focused on food aid in Wadi Fira?,"provide a list of organizations providing food security in Wadi Fira, Chad"
+"Who is providing food assistance in Wadi Fira, Chad?","provide a list of organizations providing food security in Wadi Fira, Chad"
+Show the population distribution by region for Haiti.,plot a map of population by admin1 for Haiti using HAPI data as an image
+What is the population spread across different regions in Haiti?,plot a map of population by admin1 for Haiti using HAPI data as an image
+Display the population data by region for Haiti.,plot a map of population by admin1 for Haiti using HAPI data as an image
+Map the population distribution by region in Haiti.,plot a map of population by admin1 for Haiti using HAPI data as an image
+How is the population distributed across Haiti's regions?,plot a map of population by admin1 for Haiti using HAPI data as an image
+Show the age distribution for Chad's population.,plot population pyramids by age for Chad using HDX data as an image
+What does the age breakdown of Chad's population look like?,plot population pyramids by age for Chad using HDX data as an image
+I need the population pyramid for Chad.,plot population pyramids by age for Chad using HDX data as an image
+Display the age demographics of Chad's population.,plot population pyramids by age for Chad using HDX data as an image
+How is Chad's population structured by age?,plot population pyramids by age for Chad using HDX data as an image
+How do food prices correlate with fatalities in Chad?,"plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image"
+Is there a relationship between food prices and the number of deaths in Chad?,"plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image"
+I want to see how food price changes affect fatality rates in Chad.,"plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image"
+Can you compare food price movements to fatality rates in Chad?,"plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image"
+What's the connection between food prices and fatalities in Chad?,"plot a scatterplot of food price movements and number of fatalities in TCD from 2008-01-01 using HDXData data, including regression line as an image"
+How many deaths have occurred in Chad each month?,plot a line chart of fatalities by month for Chad using HDX data as an image
+Show the monthly trend of fatalities in Chad.,plot a line chart of fatalities by month for Chad using HDX data as an image
+I need to see the number of deaths by month in Chad.,plot a line chart of fatalities by month for Chad using HDX data as an image
+What are the monthly fatality numbers for Chad?,plot a line chart of fatalities by month for Chad using HDX data as an image
+Display the monthly fatalities for Chad.,plot a line chart of fatalities by month for Chad using HDX data as an image
+What is the total population of Mali?,provide the total population of Mali using HDX data as text
+How many people live in Mali?,provide the total population of Mali using HDX data as text
+Provide the population count for Mali.,provide the total population of Mali using HDX data as text
+What is Mali's population?,provide the total population of Mali using HDX data as text
+Tell me the total number of inhabitants in Mali.,provide the total population of Mali using HDX data as text
+Show me all the available pieces of information.,retrieve all recipes
+List all the pieces of information we have.,retrieve all recipes
+What pieces of information are available?,retrieve all recipes
+Give me all the pieces of information.,retrieve all recipes
+Retrieve the list of all pieces of information.,retrieve all recipes
+How many violent outbreaks were there in Chad in the last years?,plot a line chart of conflict events by month for Chad using HDX data as an image
+I need to know how many attacks happened in Chad.,plot a line chart of conflict events by month for Chad using HDX data as an image
+Please create an image that shows the number of conflict events in Chad.,plot a line chart of conflict events by month for Chad using HDX data as an image
+What is the trend of conflict events in Chad by month?,plot a line chart of conflict events by month for Chad using HDX data as an image
+Show the monthly count of conflict events in Chad.,plot a line chart of conflict events by month for Chad using HDX data as an image
+Show which humanitarian groups are active in Wadi Fira by their sector.,plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image
+What sectors are the humanitarian organizations in Wadi Fira working in?,plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image
+List the humanitarian organizations in Wadi Fira and their sectors.,plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image
+Who is doing what in Wadi Fira among the humanitarian groups?,plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image
+Categorize the humanitarian organizations in Wadi Fira by their area of work.,plot a bar chart of humanitarian organizations in Wadi Fira by sector using Humanitarian Data Exchange data as an image
+Show the monthly changes in commodity prices in Chad since 2008.,plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image
+How have commodity prices varied monthly in Chad since 2008?,plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image
+I need the trend of monthly commodity price changes in Chad from 2008.,plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image
+What are the monthly commodity price changes in Chad starting 2008?,plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image
+Display the monthly relative change in commodity prices for Chad from 2008.,plot a line chart of commodity prices monthly relative change for Chad from 2008-01-01 using HDX data as an image

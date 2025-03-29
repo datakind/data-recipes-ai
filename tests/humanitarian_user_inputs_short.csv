@@ -1,0 +1,5 @@
+user_input,expected_output
+Which organizations work in the top 3 most populated regions with severe food insecurity in Chad?,"List organizations in the top 3 states by population in IPC Phase 3+ in Chad, using HAPI data"
+Can you list the main groups operating in the 3 most affected regions in Chad?,"List organizations in the top 3 states by population in IPC Phase 3+ in Chad, using HAPI data"
+Who is helping in the areas with the highest population under severe food crisis in Chad?,"List organizations in the top 3 states by population in IPC Phase 3+ in Chad, using HAPI data"
+Identify the organizations in the most populous areas suffering from food insecurity in Chad.,"List organizations in the top 3 states by population in IPC Phase 3+ in Chad, using HAPI data"
